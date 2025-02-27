@@ -1,0 +1,25 @@
+{
+  "name": "prit-bot",
+  "version": "1.0.0",
+  "description": "Discord bot for P.R.I.T.",
+  "main": "src/bot.js",
+  "scripts": {
+    "start": "node .",
+    "startenv": "node --env-file=.env .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/olillin/prit-bot.git"
+  },
+  "author": "Olillin <oli@olillin.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/olillin/prit-bot/issues"
+  },
+  "homepage": "https://github.com/olillin/prit-bot#readme",
+  "dependencies": {
+    "discord.js": "^14.18.0",
+    "iamcal": "^1.0.2"
+  }
+}
