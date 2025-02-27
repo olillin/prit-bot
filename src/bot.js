@@ -1,6 +1,6 @@
 const fs = require('node:fs')
 const path = require('node:path')
-const { Client, GatewayIntentBits, TextChannel, Collection, Events, Routes, REST } = require('discord.js')
+const { Client, GatewayIntentBits, TextChannel, Collection, Events, Routes, REST, SlashCommandSubcommandGroupBuilder } = require('discord.js')
 
 const { TOKEN, CALENDAR_URL } = process.env
 if (!TOKEN) {
@@ -39,6 +39,7 @@ for (const file of commandFiles) {
     }
 }
 
+// Command executor
 client.on(Events.InteractionCreate, async interaction => {
     if (!interaction.isChatInputCommand()) return
 
@@ -81,6 +82,11 @@ function registerSlashCommands(guildId) {
         }
     })()
 }
+
+client.on('guildCreate', guild => {
+    console.log('Joined new guild')
+    registerSlashCommands(guild.id)
+})
 
 client.on('ready', () => {
     client.guilds.cache.forEach(guild => {
