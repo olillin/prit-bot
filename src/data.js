@@ -69,8 +69,10 @@ async function canUseRole(guild, role) {
     const botPermissions = botMember.permissions
 
     if (!botPermissions.has(PermissionFlagsBits.ManageRoles)) return false
+    if (botRole.position - role.position <= 0) return false
+    if (role.managed) return false
 
-    return botRole.comparePositionTo(role) < 0
+    return true
 }
 
-module.exports = { getData, writeData, getAnnouncementChannel, getAnsvarRole }
+module.exports = { getData, writeData, getAnnouncementChannel, getAnsvarRole, canUseRole }

@@ -90,16 +90,25 @@ async function assignRole(client, guild, users) {
 
     try {
         const members = await guild.members.fetch()
-        for (const [snowflake, member] of members) {
-            await member.roles.remove(role)
-        }
 
-        for (const [nick, user] of users) {
-            if (user) {
-                user.roles.add(role)
-                console.info(`Assigned role to ${nick} (${user.nickname ?? user.user.displayName})`)
-            } else console.warn(`Failed to assign role to ${nick}, unable to find user`)
-        }
+        console.log(`Removing role '${role.name}' from ${members.size} members`)
+        await Promise.all(
+            members.map(member => {
+                if (member?.roles?.cache.some(r => r.id === role.id)) {
+                    member.roles.remove(role)
+                }
+            })
+        )
+
+        console.log('Adding role to selected members')
+        await Promise.all(
+            users.map(async ([nick, user]) => {
+                if (user) {
+                    await user.roles.add(role)
+                    console.info(`Assigned role to ${nick} (${user.nickname ?? user.user.displayName})`)
+                } else console.warn(`Failed to assign role to ${nick}, unable to find user`)
+            })
+        )
     } catch (e) {
         console.error('Failed to assign roles')
         console.error(e)
