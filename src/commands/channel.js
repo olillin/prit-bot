@@ -1,6 +1,6 @@
 const { ChatInputCommandInteraction, MessageFlags, SlashCommandBuilder, ChannelType, PermissionsBitField, PermissionFlagsBits, SlashCommandStringOption } = require('discord.js')
 const { writeData, getData } = require('../data')
-const { getAnnouncementChannel } = require('../announce')
+const { getAnnouncementChannel } = require('../data')
 
 module.exports = {
     data: new SlashCommandBuilder()

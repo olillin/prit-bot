@@ -1,25 +1,7 @@
 // @ts-ignore
-const { Guild, GuildMember, Client, VoiceChannel, NewsChannel, StageChannel, TextChannel, GuildChannel } = require('discord.js')
-const { getData } = require('./data')
-const { lasVecka, ansvarsVecka } = require('./weekInfo')
-
-/**
- * @typedef {(NewsChannel | TextChannel)} AnnounceChannel
- */
-
-/**
- * @param {Client} client
- * @returns {Promise<AnnounceChannel | undefined>}
- */
-async function getAnnouncementChannel(client) {
-    const data = getData()
-    if (!data.announceGuild || !data.announceChannel) return undefined
-    const guild = await client.guilds.fetch(data.announceGuild)
-    const channel = await guild.channels.fetch(data.announceChannel)
-    if (channel?.isSendable()) {
-        return /** @type {AnnounceChannel}*/ (/** @type {unknown}*/ (channel))
-    } else return undefined
-}
+const { Guild, GuildMember, Client } = require('discord.js')
+const { getAnnouncementChannel, getAnsvarRole } = require('./data')
+const { lasVecka, ansvarsVecka, vecka } = require('./weekInfo')
 
 /**
  * Get a user in a guild from their nick
@@ -35,6 +17,15 @@ async function getUser(guild, nick) {
             return member
         }
     }
+}
+
+/**
+ * @param {string[]} nicks
+ * @param {Guild} guild
+ * @returns Promise<Array<[string, GuildMember | undefined]>>
+ */
+function getUsers(nicks, guild) {
+    return /** @type {Promise<Array<[string, GuildMember | undefined]>>} */ (/** @type {unknown} */ (Promise.all(nicks.map(async name => [name, await getUser(guild, name)]))))
 }
 
 /**
@@ -58,7 +49,7 @@ async function announceWeek(client) {
     const ansvar = await ansvarsVecka()
     let ansvarLine = ''
     if (ansvar) {
-        const users = /** @type {Array<[string, GuildMember | undefined]>} */ (/** @type {unknown} */ (await Promise.all(ansvar.map(async name => [name, await getUser(announceChannel.guild, name)]))))
+        const users = await getUsers(ansvar, announceChannel.guild)
         const stringUsers = users.map(([name, user]) => user?.toString() ?? `@${name}`)
 
         /** @type {string} */
@@ -71,6 +62,8 @@ async function announceWeek(client) {
         }
 
         ansvarLine = `${week} har ${userList} ansvarsvecka, gör ert bästa men slit inte ut er! :pixelnheart:`
+
+        assignRole(client, announceChannel.guild, users)
     } else {
         ansvarLine = `${week} gick det inte att hitta någon ansvarsvecka för :thinking:`
     }
@@ -84,6 +77,37 @@ ${ansvarLine}`
 }
 
 /**
+ * @param {Client} client
+ * @param {Guild} guild
+ * @param {Array<[string, GuildMember | undefined]>} users
+ */
+async function assignRole(client, guild, users) {
+    const role = await getAnsvarRole(client)
+    if (!role) {
+        console.warn('Failed to assign roles, could not get role')
+        return
+    }
+
+    try {
+        const members = await guild.members.fetch()
+        for (const [snowflake, member] of members) {
+            await member.roles.remove(role)
+        }
+
+        for (const [nick, user] of users) {
+            if (user) {
+                user.roles.add(role)
+                console.info(`Assigned role to ${nick} (${user.nickname ?? user.user.displayName})`)
+            } else console.warn(`Failed to assign role to ${nick}, unable to find user`)
+        }
+    } catch (e) {
+        console.error('Failed to assign roles')
+        console.error(e)
+        console.trace()
+    }
+}
+
+/**
  * Returns after a set time
  * @param {number} ms
  */
@@ -91,14 +115,7 @@ async function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-// @ts-ignore
-Date.prototype.getWeek = function () {
-    var onejan = new Date(this.getFullYear(), 0, 1)
-    // @ts-ignore
-    return Math.ceil(((this - onejan) / 86400000 + onejan.getDay() + 1) / 7)
-}
-
-/** @type {number} */
+/** @type {string} */
 let currentWeek
 /**
  * @param {Client} client
@@ -107,18 +124,17 @@ let currentWeek
 // @ts-ignore
 async function waitForWeekStart(client) {
     // @ts-ignore
-    currentWeek = new Date().getWeek()
+    currentWeek = await vecka()
     while (true) {
-        // @ts-ignore
-        const nowWeek = new Date().getWeek()
-        if (nowWeek !== currentWeek) {
+        const nowWeek = await vecka()
+        if (nowWeek && nowWeek !== currentWeek) {
             await announceWeek(client)
+
             currentWeek = nowWeek
         }
 
         await sleep(60 * 1000) // Wait 1 minute
-        console.log('Week:', currentWeek)
     }
 }
 
-module.exports = { getAnnouncementChannel, getUser, announceWeek, waitForWeekStart }
+module.exports = { getUser, announceWeek, waitForWeekStart }
