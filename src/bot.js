@@ -1,6 +1,7 @@
 const fs = require('node:fs')
 const path = require('node:path')
-const { Client, GatewayIntentBits, TextChannel, Collection, Events, Routes, REST, SlashCommandSubcommandGroupBuilder } = require('discord.js')
+const { Client, GatewayIntentBits, TextChannel, Collection, Events, Routes, REST, SlashCommandSubcommandGroupBuilder, MessageFlags } = require('discord.js')
+const { waitForWeekStart } = require('./announce')
 
 const { TOKEN, CALENDAR_URL } = process.env
 if (!TOKEN) {
@@ -92,6 +93,8 @@ client.on('ready', () => {
     client.guilds.cache.forEach(guild => {
         registerSlashCommands(guild.id)
     })
+
+    waitForWeekStart(client)
 
     console.log('Bot is ready')
 })
