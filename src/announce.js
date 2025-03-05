@@ -61,7 +61,7 @@ async function announceWeek(client) {
             userList = stringUsers.join(', ') + ' och ' + last
         }
 
-        ansvarLine = `${week} har ${userList} ansvarsvecka, gör ert bästa men slit inte ut er! :pixelnheart:`
+        ansvarLine = `${week} har ${userList} ansvarsvecka, gör ert bästa men slit inte ut er! <:pixelnheart:1318195394781384714>`
 
         assignRole(client, announceChannel.guild, users)
     } else {
