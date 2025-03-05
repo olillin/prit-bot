@@ -83,6 +83,9 @@ function scrapeWeek(url) {
     })
 }
 
+/**
+ * @returns {Promise<string | null>}
+ */
 async function vecka() {
     return new Promise(resolve => {
         scrapeWeek('https://vecka.nu')
@@ -94,6 +97,9 @@ async function vecka() {
     })
 }
 
+/**
+ * @returns {Promise<string | null>}
+ */
 async function lasVecka() {
     return new Promise(resolve => {
         scrapeWeek('https://läsvecka.nu')
