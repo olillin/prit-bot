@@ -1,7 +1,9 @@
 const fs = require('node:fs')
 const path = require('node:path')
-const { Client, GatewayIntentBits, TextChannel, Collection, Events, Routes, REST, SlashCommandSubcommandGroupBuilder, MessageFlags } = require('discord.js')
+// @ts-ignore
+const { Client, GatewayIntentBits, TextChannel, Collection, Events, Routes, REST, SlashCommandSubcommandGroupBuilder, MessageFlags, ActivityType } = require('discord.js')
 const { waitForWeekStart } = require('./announce')
+const { cycleActivities } = require('./activities')
 
 const { TOKEN, CALENDAR_URL } = process.env
 if (!TOKEN) {
@@ -22,6 +24,7 @@ const client = new Client({
     ],
 })
 
+// @ts-ignore
 client.commands = new Collection()
 const commands = []
 
@@ -33,6 +36,7 @@ for (const file of commandFiles) {
     const command = require(filePath)
     // Set a new item in the Collection with the key as the command name and the value as the exported module
     if ('data' in command && 'execute' in command) {
+        // @ts-ignore
         client.commands.set(command.data.name, command)
         commands.push(command.data.toJSON())
     } else {
@@ -44,6 +48,7 @@ for (const file of commandFiles) {
 client.on(Events.InteractionCreate, async interaction => {
     if (!interaction.isChatInputCommand()) return
 
+    // @ts-ignore
     const command = interaction.client.commands.get(interaction.commandName)
 
     if (!command) {
@@ -65,7 +70,9 @@ client.on(Events.InteractionCreate, async interaction => {
 
 function registerSlashCommands(guildId) {
     // Construct and prepare an instance of the REST module
+    // @ts-ignore
     const rest = new REST().setToken(TOKEN)
+    // @ts-ignore
     const clientId = client.user.id
 
     // and deploy your commands!
@@ -76,6 +83,7 @@ function registerSlashCommands(guildId) {
             // The put method is used to fully refresh all commands in the guild with the current set
             const data = await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commands })
 
+            // @ts-ignore
             console.log(`Successfully reloaded ${data.length} application (/) commands.`)
         } catch (error) {
             // And of course, make sure you catch and log any errors!
@@ -93,6 +101,10 @@ client.on('ready', () => {
     client.guilds.cache.forEach(guild => {
         registerSlashCommands(guild.id)
     })
+
+    const ONE_HOUR = 1 * 60 * 60 * 1000
+    // @ts-ignore
+    cycleActivities(client.user, ONE_HOUR)
 
     waitForWeekStart(client)
 
