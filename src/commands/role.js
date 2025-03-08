@@ -1,6 +1,5 @@
 const { ChatInputCommandInteraction, MessageFlags, SlashCommandBuilder, Guild } = require('discord.js')
-const { announceWeek } = require('../announce')
-const { getData, writeData, canUseRole } = require('../data')
+const { getGuildData, writeGuildData, canUseRole } = require('../data')
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -15,9 +14,12 @@ module.exports = {
     /** @param {ChatInputCommandInteraction} interaction */
     async execute(interaction) {
         const role = interaction.options.getRole('role')
+        /** @type {Guild} */
+        // @ts-ignore
+        const guild = interaction.guild
 
         // @ts-ignore
-        if (!(await canUseRole(interaction.guild, role))) {
+        if (role !== null && !(await canUseRole(guild, role))) {
             await interaction.reply({
                 content: 'Den rollen kan inte användas, saknar tillstånd',
                 flags: MessageFlags.Ephemeral,
@@ -25,9 +27,9 @@ module.exports = {
             return
         }
 
-        const data = getData()
+        const data = getGuildData(guild.id)
         data.ansvarRole = role?.id
-        writeData(data)
+        writeGuildData(guild.id, data)
 
         await interaction.reply({
             content: 'Roll för ansvarsvecka ' + (role ? 'uppdaterad' : 'borttagen'),
