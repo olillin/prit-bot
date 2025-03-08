@@ -29,17 +29,11 @@ function getUsers(nicks, guild) {
 }
 
 /**
- * Announce info this week
- * @param {Client} client
+ * Announce info this week in a guild
+ * @param {Guild} guild Guild to announce week for
  * @returns {Promise<boolean>} If the announcement was successful
  */
-async function announceWeek(client) {
-    const announceChannel = await getAnnouncementChannel(client)
-    if (!announceChannel) {
-        console.warn("Didn't make announcement, no channel set")
-        return false
-    }
-
+async function announceWeekIn(guild) {
     const week = await lasVecka()
     if (!week) {
         console.error(`Could not make announcement, week returned ${week}`)
@@ -47,6 +41,13 @@ async function announceWeek(client) {
     }
 
     const ansvar = await ansvarsVecka()
+
+    const announceChannel = await getAnnouncementChannel(guild)
+    if (!announceChannel) {
+        console.warn("Didn't make announcement in ${guild}, no channel set")
+        return false
+    }
+
     let ansvarLine = ''
     if (ansvar) {
         const users = await getUsers(ansvar, announceChannel.guild)
@@ -63,7 +64,7 @@ async function announceWeek(client) {
 
         ansvarLine = `${week} har ${userList} ansvarsvecka, gör ert bästa men slit inte ut er! <:pixelnheart:1318195394781384714>`
 
-        assignRole(client, announceChannel.guild, users)
+        assignRole(announceChannel.guild, users)
     } else {
         ansvarLine = `${week} gick det inte att hitta någon ansvarsvecka för :thinking:`
     }
@@ -77,12 +78,23 @@ ${ansvarLine}`
 }
 
 /**
+ * Announce info this week in all guilds
  * @param {Client} client
+ * @returns {Promise<boolean>} If any announcement was successful
+ */
+async function announceWeek(client) {
+    const guilds = await client.guilds.fetch()
+    const promises = guilds.map(async guild => announceWeekIn(await guild.fetch()))
+    const success = (await Promise.all(promises)).some(x => x)
+    return success
+}
+
+/**
  * @param {Guild} guild
  * @param {Array<[string, GuildMember | undefined]>} users
  */
-async function assignRole(client, guild, users) {
-    const role = await getAnsvarRole(client)
+async function assignRole(guild, users) {
+    const role = await getAnsvarRole(guild)
     if (!role) {
         console.warn('Failed to assign roles, could not get role')
         return
@@ -146,4 +158,4 @@ async function waitForWeekStart(client) {
     }
 }
 
-module.exports = { getUser, announceWeek, waitForWeekStart }
+module.exports = { getUser, announceWeekIn, announceWeek, waitForWeekStart }
