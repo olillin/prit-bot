@@ -3,19 +3,44 @@ const fs = require('fs')
 
 const DATA_FILE = 'data.json'
 
-if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify({}))
-}
-
+/**
+ * @returns {Object}
+ */
 function getData() {
+    if (!fs.existsSync(DATA_FILE)) {
+        return {}
+    }
     const text = fs.readFileSync(DATA_FILE, 'utf-8')
     const parsed = JSON.parse(text)
     return parsed
 }
 
+/**
+ * @param {Object} data
+ */
 function writeData(data) {
     const text = JSON.stringify(data)
     fs.writeFileSync(DATA_FILE, text, 'utf-8')
+}
+
+/**
+ * @param {string} guildId
+ * @returns {Object}
+ */
+function getGuildData(guildId) {
+    const guilds = getData().guilds
+    if (!guilds) return {}
+    return guilds[guildId] ?? {}
+}
+
+/**
+ * @param {string} guildId
+ * @param {Object} data
+ */
+function writeGuildData(guildId, data) {
+    const guilds = getData().guilds ?? {}
+    guilds[guildId] = data
+    writeData({ ...getData(), guilds })
 }
 
 /**
@@ -23,13 +48,12 @@ function writeData(data) {
  */
 
 /**
- * @param {Client} client
+ * @param {Guild} guild
  * @returns {Promise<AnnounceChannel | undefined>}
  */
-async function getAnnouncementChannel(client) {
-    const data = getData()
-    if (!data.announceGuild || !data.announceChannel) return undefined
-    const guild = await client.guilds.fetch(data.announceGuild)
+async function getAnnouncementChannel(guild) {
+    const data = getGuildData(guild.id)
+    if (!data.announceChannel) return undefined
 
     const botMember = await guild.members.fetchMe()
     const botPermissions = botMember.permissions
@@ -42,13 +66,12 @@ async function getAnnouncementChannel(client) {
 }
 
 /**
- * @param {Client} client
+ * @param {Guild} guild
  * @returns {Promise<Role | undefined>}
  */
-async function getAnsvarRole(client) {
-    const data = getData()
+async function getAnsvarRole(guild) {
+    const data = getGuildData(guild.id)
     if (!data.ansvarRole) return undefined
-    const guild = await client.guilds.fetch(data.announceGuild)
     const role = await guild.roles.fetch(data.ansvarRole)
 
     if (!role) return undefined
@@ -75,4 +98,4 @@ async function canUseRole(guild, role) {
     return true
 }
 
-module.exports = { getData, writeData, getAnnouncementChannel, getAnsvarRole, canUseRole }
+module.exports = { getGuildData, writeGuildData, getAnnouncementChannel, getAnsvarRole, canUseRole }
