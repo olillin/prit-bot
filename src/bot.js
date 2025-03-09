@@ -5,13 +5,9 @@ const { Client, GatewayIntentBits, TextChannel, Collection, Events, Routes, REST
 const { waitForWeekStart } = require('./announce')
 const { cycleActivities } = require('./activities')
 
-const { TOKEN, CALENDAR_URL } = process.env
+const { TOKEN } = process.env
 if (!TOKEN) {
     console.error('Missing required environment TOKEN')
-    process.exit()
-}
-if (!CALENDAR_URL) {
-    console.error('Missing required environment CALENDAR_URL')
     process.exit()
 }
 

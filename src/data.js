@@ -69,10 +69,10 @@ async function getAnnouncementChannel(guild) {
  * @param {Guild} guild
  * @returns {Promise<Role | undefined>}
  */
-async function getAnsvarRole(guild) {
+async function getResponsibleRole(guild) {
     const data = getGuildData(guild.id)
-    if (!data.ansvarRole) return undefined
-    const role = await guild.roles.fetch(data.ansvarRole)
+    if (!data.responsibleRole) return undefined
+    const role = await guild.roles.fetch(data.responsibleRole)
 
     if (!role) return undefined
     if (!canUseRole(guild, role)) return undefined
@@ -98,4 +98,4 @@ async function canUseRole(guild, role) {
     return true
 }
 
-module.exports = { getGuildData, writeGuildData, getAnnouncementChannel, getAnsvarRole, canUseRole }
+module.exports = { getGuildData, writeGuildData, getAnnouncementChannel, getResponsibleRole, canUseRole }

@@ -3,23 +3,23 @@ const { getGuildData, writeGuildData, canUseRole } = require('../data')
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('role')
-        .setDescription('Bestäm roll för ansvarsvecka')
+        .setName('calendar')
+        .setDescription('Hantera kalendern för ansvarsvecka')
         .addStringOption(option =>
             option
                 .setName('command') //
                 .setDescription('Vad du vill göra')
                 .setChoices(
-                    { name: 'Sätt roll', value: 'set' }, //
-                    { name: 'Ta bort roll', value: 'unset' },
-                    { name: 'Se roll', value: 'get' }
+                    { name: 'Sätt kalender', value: 'set' }, //
+                    { name: 'Ta bort kalender', value: 'unset' },
+                    { name: 'Se kalender', value: 'get' }
                 )
                 .setRequired(true)
         )
-        .addRoleOption(option =>
+        .addStringOption(option =>
             option
-                .setName('role') //
-                .setDescription('Rollen som ska användas')
+                .setName('url') //
+                .setDescription('URL till kalendern som ska användas')
         ),
 
     /** @param {ChatInputCommandInteraction} interaction */
@@ -38,33 +38,25 @@ module.exports = {
 
 /** @param {ChatInputCommandInteraction} interaction */
 async function set(interaction) {
-    const role = interaction.options.getRole('role')
+    const url = interaction.options.getString('url')
     /** @type {Guild} */
     // @ts-ignore
     const guild = interaction.guild
 
-    if (role === null) {
+    if (url === null) {
         await interaction.reply({
-            content: 'Du måste ange en roll',
+            content: 'Du måste ange en URL',
             flags: MessageFlags.Ephemeral,
         })
-    }
-
-    if (!(await canUseRole(guild, /** @type {Role} */ (role)))) {
-        await interaction.reply({
-            content: 'Den rollen kan inte användas, saknar tillstånd',
-            flags: MessageFlags.Ephemeral,
-        })
-        return
     }
 
     const data = getGuildData(guild.id)
     // @ts-ignore
-    data.responsibleRole = role.id
+    data.responsibleCalendarUrl = url
     writeGuildData(guild.id, data)
 
     await interaction.reply({
-        content: 'Roll för ansvarsvecka uppdaterad',
+        content: 'Kalender för ansvarsvecka uppdaterad',
         flags: MessageFlags.Ephemeral,
     })
 }
@@ -76,11 +68,11 @@ async function unset(interaction) {
     const guild = interaction.guild
 
     const data = getGuildData(guild.id)
-    data.responsibleRole = undefined
+    data.responsibleCalendarUrl = undefined
     writeGuildData(guild.id, data)
 
     await interaction.reply({
-        content: 'Roll för ansvarsvecka borttagen',
+        content: 'Kalender för ansvarsvecka borttagen',
         flags: MessageFlags.Ephemeral,
     })
 }
@@ -93,27 +85,18 @@ async function get(interaction) {
 
     const data = getGuildData(guild.id)
     /** @type {string | undefined} */
-    const roleId = data.responsibleRole
+    const url = data.responsibleCalendarUrl
 
-    if (!roleId) {
+    if (!url) {
         await interaction.reply({
-            content: 'Det finns ingen roll för ansvarsvecka',
-            flags: MessageFlags.Ephemeral,
-        })
-        return
-    }
-
-    const role = await guild.roles.fetch(roleId)
-    if (role === null) {
-        await interaction.reply({
-            content: 'Den sparade rollen för ansvarsvecka finns inte längre',
+            content: 'Det finns ingen kalender för ansvarsvecka',
             flags: MessageFlags.Ephemeral,
         })
         return
     }
 
     await interaction.reply({
-        content: `Roll för ansvarsvecka är ${role}`,
+        content: `Kalendern för ansvarsvecka finns på ${url}`,
         flags: MessageFlags.Ephemeral,
     })
 }

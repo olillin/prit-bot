@@ -1,4 +1,4 @@
-const { ChatInputCommandInteraction, MessageFlags, SlashCommandBuilder, ChannelType, PermissionsBitField, PermissionFlagsBits, SlashCommandStringOption, Guild } = require('discord.js')
+const { ChatInputCommandInteraction, MessageFlags, SlashCommandBuilder, ChannelType, PermissionFlagsBits, Guild } = require('discord.js')
 const { getGuildData, writeGuildData } = require('../data')
 const { getAnnouncementChannel } = require('../data')
 

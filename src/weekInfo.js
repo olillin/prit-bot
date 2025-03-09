@@ -1,17 +1,26 @@
+const { Guild } = require('discord.js')
 const { Calendar } = require('iamcal')
 const { parseCalendar } = require('iamcal/parse')
+const { getGuildData } = require('./data')
 
-/** @returns {Promise<Calendar>} */
-function getCalendar() {
+/**
+ * @param {Guild} guild
+ * @returns {Promise<Calendar|undefined>}
+ */
+function getCalendar(guild) {
     return new Promise(resolve => {
-        /** @type {string} */
-        // @ts-ignore
-        const url = process.env.CALENDAR_URL
-        fetch(url)
-            .then(response => response.text())
-            .then(text => {
-                resolve(parseCalendar(text))
-            })
+        const data = getGuildData(guild.id)
+        const url = data.responsibleCalendarUrl
+
+        if (!url) {
+            resolve(undefined)
+        } else {
+            fetch(url)
+                .then(response => response.text())
+                .then(text => {
+                    resolve(parseCalendar(text))
+                })
+        }
     })
 }
 
@@ -27,9 +36,14 @@ function parseDate(value) {
     )
 }
 
-/** @returns {Promise<string[]|undefined>} The current people who have ansvarsvecka */
-async function getCurrentlyResponsible() {
-    const calendar = await getCalendar()
+/**
+ * @param {Guild} guild
+ * @returns {Promise<string[]|undefined>} The people who are currently responsible
+ */
+async function getCurrentlyResponsible(guild) {
+    const calendar = await getCalendar(guild)
+    if (!calendar) return undefined
+
     const now = new Date().getTime()
     const nickListPattern = /^\s*(\w+)(?:\\?,\s*(\w+))?\s*$/
 

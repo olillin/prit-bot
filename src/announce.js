@@ -1,6 +1,6 @@
 // @ts-ignore
 const { Guild, GuildMember, Client } = require('discord.js')
-const { getAnnouncementChannel, getAnsvarRole } = require('./data')
+const { getAnnouncementChannel, getResponsibleRole } = require('./data')
 const { getWeek, getStudyWeek, getCurrentlyResponsible } = require('./weekInfo')
 
 /**
@@ -40,7 +40,7 @@ async function announceWeekIn(guild) {
         return false
     }
 
-    const responsible = await getCurrentlyResponsible()
+    const responsible = await getCurrentlyResponsible(guild)
 
     const announceChannel = await getAnnouncementChannel(guild)
     if (!announceChannel) {
@@ -94,7 +94,7 @@ async function announceWeek(client) {
  * @param {Array<[string, GuildMember | undefined]>} users
  */
 async function assignRole(guild, users) {
-    const role = await getAnsvarRole(guild)
+    const role = await getResponsibleRole(guild)
     if (!role) {
         console.warn('Failed to assign roles, could not get role')
         return
