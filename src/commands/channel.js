@@ -9,7 +9,7 @@ module.exports = {
         .addStringOption(option =>
             option
                 .setName('command') //
-                .setDescription('What to do')
+                .setDescription('Vad du vill göra')
                 .setChoices(
                     { name: 'Skicka uppdateringar i den här kanalen', value: 'set' }, //
                     { name: 'Sluta skicka uppdateringar', value: 'unset' },
@@ -94,7 +94,7 @@ async function get(interaction) {
         })
     } else {
         interaction.reply({
-            content: 'Uppdateringar skickas inte i någon kanal',
+            content: 'Det finns ingen kanal för uppdateringar',
             flags: MessageFlags.Ephemeral,
         })
     }
