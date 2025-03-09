@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, ChatInputCommandInteraction } = require('discord.js')
-const { vecka, lasVecka, ansvarsVecka } = require('../weekInfo')
+const { getWeek, getStudyWeek, getCurrentlyResponsible } = require('../weekInfo')
 
 module.exports = {
     data: new SlashCommandBuilder().setName('vecka').setDescription('Information om veckan'),
@@ -7,9 +7,9 @@ module.exports = {
     /** @param {ChatInputCommandInteraction} interaction */
     async execute(interaction) {
         const [week, lv, ansvar] = await Promise.all([
-            vecka(),
-            lasVecka(),
-            ansvarsVecka().then(names => {
+            getWeek(),
+            getStudyWeek(),
+            getCurrentlyResponsible().then(names => {
                 if (!names) return 'Saknas'
                 return names.join(', ')
             }),

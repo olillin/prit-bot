@@ -1,11 +1,13 @@
-const { Events } = require('discord.js')
 const { Calendar } = require('iamcal')
 const { parseCalendar } = require('iamcal/parse')
 
 /** @returns {Promise<Calendar>} */
 function getCalendar() {
     return new Promise(resolve => {
-        fetch(process.env.CALENDAR_URL)
+        /** @type {string} */
+        // @ts-ignore
+        const url = process.env.CALENDAR_URL
+        fetch(url)
             .then(response => response.text())
             .then(text => {
                 resolve(parseCalendar(text))
@@ -26,15 +28,17 @@ function parseDate(value) {
 }
 
 /** @returns {Promise<string[]|undefined>} The current people who have ansvarsvecka */
-async function ansvarsVecka() {
+async function getCurrentlyResponsible() {
     const calendar = await getCalendar()
     const now = new Date().getTime()
-    const pattern = /^\s*(\w+)(?:\\?,\s*(\w+))?\s*$/
+    const nickListPattern = /^\s*(\w+)(?:\\?,\s*(\w+))?\s*$/
 
     const dayInMs = 24 * 60 * 60 * 1000
 
     const event = calendar.events().find(event => {
+        // @ts-ignore
         const start = event.getProperty('DTSTART').value
+        // @ts-ignore
         const end = event.getProperty('DTEND').value
 
         if (!isNaN(new Date(start).getTime())) return false
@@ -50,7 +54,7 @@ async function ansvarsVecka() {
         const duration = endTime - startTime
         const isWeekLong = duration > 6 * dayInMs && duration < 8 * dayInMs
 
-        const matchesPattern = pattern.test(event.summary())
+        const matchesPattern = nickListPattern.test(event.summary())
 
         return isOngoing && isWeekLong && matchesPattern
     })
@@ -86,7 +90,7 @@ function scrapeWeek(url) {
 /**
  * @returns {Promise<string | null>}
  */
-async function vecka() {
+async function getWeek() {
     return new Promise(resolve => {
         scrapeWeek('https://vecka.nu')
             .then(resolve)
@@ -100,7 +104,7 @@ async function vecka() {
 /**
  * @returns {Promise<string | null>}
  */
-async function lasVecka() {
+async function getStudyWeek() {
     return new Promise(resolve => {
         scrapeWeek('https://läsvecka.nu')
             .then(resolve)
@@ -108,4 +112,4 @@ async function lasVecka() {
     })
 }
 
-module.exports = { ansvarsVecka, vecka, lasVecka }
+module.exports = { getCurrentlyResponsible, getWeek, getStudyWeek }

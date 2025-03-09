@@ -1,7 +1,7 @@
 // @ts-ignore
 const { Guild, GuildMember, Client } = require('discord.js')
 const { getAnnouncementChannel, getAnsvarRole } = require('./data')
-const { lasVecka, ansvarsVecka, vecka } = require('./weekInfo')
+const { getWeek, getStudyWeek, getCurrentlyResponsible } = require('./weekInfo')
 
 /**
  * Get a user in a guild from their nick
@@ -34,13 +34,13 @@ function getUsers(nicks, guild) {
  * @returns {Promise<boolean>} If the announcement was successful
  */
 async function announceWeekIn(guild) {
-    const week = await lasVecka()
+    const week = await getStudyWeek()
     if (!week) {
         console.error(`Could not make announcement, week returned ${week}`)
         return false
     }
 
-    const ansvar = await ansvarsVecka()
+    const responsible = await getCurrentlyResponsible()
 
     const announceChannel = await getAnnouncementChannel(guild)
     if (!announceChannel) {
@@ -48,9 +48,9 @@ async function announceWeekIn(guild) {
         return false
     }
 
-    let ansvarLine = ''
-    if (ansvar) {
-        const users = await getUsers(ansvar, announceChannel.guild)
+    let responsibleLine = ''
+    if (responsible) {
+        const users = await getUsers(responsible, announceChannel.guild)
         const stringUsers = users.map(([name, user]) => user?.toString() ?? `@${name}`)
 
         /** @type {string} */
@@ -62,16 +62,16 @@ async function announceWeekIn(guild) {
             userList = stringUsers.join(', ') + ' och ' + last
         }
 
-        ansvarLine = `${week} har ${userList} ansvarsvecka, gör ert bästa men slit inte ut er! <:pixelnheart:1318195394781384714>`
+        responsibleLine = `${week} har ${userList} ansvarsvecka, gör ert bästa men slit inte ut er! <:pixelnheart:1318195394781384714>`
 
         assignRole(announceChannel.guild, users)
     } else {
-        ansvarLine = `${week} gick det inte att hitta någon ansvarsvecka för :thinking:`
+        responsibleLine = `${week} gick det inte att hitta någon ansvarsvecka för :thinking:`
     }
 
     announceChannel.send(
         `### Det är en ny vecka!
-${ansvarLine}`
+${responsibleLine}`
     )
 
     return true
@@ -137,7 +137,7 @@ async function sleep(ms) {
 }
 
 /** @type {string} */
-let currentWeek
+let previousWeek
 /**
  * @param {Client} client
  * @returns {Promise<never>}
@@ -145,13 +145,13 @@ let currentWeek
 // @ts-ignore
 async function waitForWeekStart(client) {
     // @ts-ignore
-    currentWeek = await vecka()
+    previousWeek = await getWeek()
     while (true) {
-        const nowWeek = await vecka()
-        if (nowWeek && nowWeek !== currentWeek) {
+        const nowWeek = await getWeek()
+        if (nowWeek && nowWeek !== previousWeek) {
             await announceWeek(client)
 
-            currentWeek = nowWeek
+            previousWeek = nowWeek
         }
 
         await sleep(60 * 1000) // Wait 1 minute
