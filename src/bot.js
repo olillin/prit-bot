@@ -3,6 +3,7 @@ const path = require('node:path')
 const { Client, GatewayIntentBits, Collection, Events, Routes, REST, MessageFlags } = require('discord.js')
 const { waitForWeekStart } = require('./announce')
 const { cycleActivities } = require('./activities')
+const { addReaction } = require('./reactions')
 
 const { TOKEN } = process.env
 if (!TOKEN) {
@@ -17,7 +18,7 @@ const client = /** @type {any} */ (
             GatewayIntentBits.Guilds, //
             GatewayIntentBits.GuildMembers,
             GatewayIntentBits.GuildMessages,
-            GatewayIntentBits.DirectMessages,
+            GatewayIntentBits.MessageContent,
         ],
     })
 )
@@ -90,12 +91,16 @@ function registerSlashCommands(guildId) {
     })()
 }
 
-client.on('guildCreate', guild => {
+client.on(Events.GuildCreate, guild => {
     console.log('Joined new guild')
     registerSlashCommands(guild.id)
 })
 
-client.on('ready', () => {
+client.on(Events.MessageCreate, message => {
+    addReaction(message)
+})
+
+client.on(Events.ClientReady, () => {
     client.guilds.cache.forEach(guild => {
         registerSlashCommands(guild.id)
     })
