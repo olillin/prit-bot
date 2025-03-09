@@ -55,6 +55,7 @@ async function announceWeekIn(guild) {
     let responsibleLine = ''
     if (responsible) {
         const users = await getUsers(responsible, guild)
+
         const stringUsers = users.map(([name, user]) => user?.toString() ?? `@${name}`)
 
         /** @type {string} */
@@ -99,6 +100,7 @@ async function announceWeek(client) {
  */
 async function assignRole(guild, users) {
     const role = await getResponsibleRole(guild)
+
     if (!role) {
         console.warn('Failed to assign roles, could not get role')
         return
@@ -144,6 +146,7 @@ async function sleep(ms) {
 let previousWeek
 /**
  * @param {import('discord.js').Client} client
+
  * @returns {Promise<never>}
  */
 // @ts-ignore

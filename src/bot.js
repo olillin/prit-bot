@@ -5,6 +5,7 @@ const { Client, GatewayIntentBits, Collection, Events, Routes, REST, MessageFlag
 const { waitForWeekStart } = require('./announce')
 const { cycleActivities } = require('./activities')
 
+
 const { TOKEN } = process.env
 if (!TOKEN) {
     console.error('Missing required environment TOKEN')
