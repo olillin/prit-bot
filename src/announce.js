@@ -1,4 +1,3 @@
-// @ts-ignore
 const { getAnnouncementChannel, getResponsibleRole } = require('./data')
 const { getWeek, getStudyWeek, getCurrentlyResponsible } = require('./weekInfo')
 
@@ -55,7 +54,6 @@ async function announceWeekIn(guild) {
     let responsibleLine = ''
     if (responsible) {
         const users = await getUsers(responsible, guild)
-
         const stringUsers = users.map(([name, user]) => user?.toString() ?? `@${name}`)
 
         /** @type {string} */
@@ -100,7 +98,6 @@ async function announceWeek(client) {
  */
 async function assignRole(guild, users) {
     const role = await getResponsibleRole(guild)
-
     if (!role) {
         console.warn('Failed to assign roles, could not get role')
         return
@@ -144,12 +141,11 @@ async function sleep(ms) {
 
 /** @type {string} */
 let previousWeek
+
 /**
  * @param {import('discord.js').Client} client
-
  * @returns {Promise<never>}
  */
-// @ts-ignore
 async function waitForWeekStart(client) {
     // @ts-ignore
     previousWeek = await getWeek()

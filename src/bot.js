@@ -1,10 +1,8 @@
 const fs = require('node:fs')
 const path = require('node:path')
-// @ts-ignore
 const { Client, GatewayIntentBits, Collection, Events, Routes, REST, MessageFlags } = require('discord.js')
 const { waitForWeekStart } = require('./announce')
 const { cycleActivities } = require('./activities')
-
 
 const { TOKEN } = process.env
 if (!TOKEN) {
