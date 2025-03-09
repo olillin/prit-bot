@@ -1,12 +1,12 @@
-const { ChatInputCommandInteraction, MessageFlags, SlashCommandBuilder, Guild } = require('discord.js')
+const { MessageFlags, SlashCommandBuilder } = require('discord.js')
 const { announceWeekIn } = require('../announce')
 
 module.exports = {
     data: new SlashCommandBuilder().setName('announce').setDescription('Skicka uppdatering manuellt'),
 
-    /** @param {ChatInputCommandInteraction} interaction */
+    /** @param {import('discord.js').ChatInputCommandInteraction} interaction */
     async execute(interaction) {
-        /** @type {Guild} */
+        /** @type {import('discord.js').Guild} */
         // @ts-ignore
         const guild = interaction.guild
         const success = await announceWeekIn(guild)

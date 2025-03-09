@@ -1,4 +1,4 @@
-const { ChatInputCommandInteraction, MessageFlags, SlashCommandBuilder, ChannelType, PermissionFlagsBits, Guild } = require('discord.js')
+const { MessageFlags, SlashCommandBuilder, ChannelType, PermissionFlagsBits } = require('discord.js')
 const { getGuildData, writeGuildData } = require('../data')
 const { getAnnouncementChannel } = require('../data')
 
@@ -18,7 +18,7 @@ module.exports = {
                 .setRequired(true)
         ),
 
-    /** @param {ChatInputCommandInteraction} interaction */
+    /** @param {import('discord.js').ChatInputCommandInteraction} interaction */
     async execute(interaction) {
         const command = interaction.options.getString('command', true)
 
@@ -32,7 +32,7 @@ module.exports = {
     },
 }
 
-/** @param {ChatInputCommandInteraction} interaction */
+/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
 async function set(interaction) {
     const correctChannelType = interaction.channel?.type === ChannelType.GuildText || interaction.channel?.type === ChannelType.GuildAnnouncement
     if (!correctChannelType) {
@@ -65,7 +65,7 @@ async function set(interaction) {
     })
 }
 
-/** @param {ChatInputCommandInteraction} interaction */
+/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
 async function unset(interaction) {
     /** @type {string} */
     // @ts-ignore
@@ -80,9 +80,9 @@ async function unset(interaction) {
     })
 }
 
-/** @param {ChatInputCommandInteraction} interaction */
+/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
 async function get(interaction) {
-    /** @type {Guild} */
+    /** @type {import('discord.js').Guild} */
     // @ts-ignore
     const guild = interaction.guild
     const channel = await getAnnouncementChannel(guild)

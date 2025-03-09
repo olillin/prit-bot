@@ -1,4 +1,4 @@
-const { Client, NewsChannel, TextChannel, Role, Guild, PermissionsBitField, PermissionFlagsBits } = require('discord.js')
+const { PermissionFlagsBits } = require('discord.js')
 const fs = require('fs')
 
 const DATA_FILE = 'data.json'
@@ -44,11 +44,11 @@ function writeGuildData(guildId, data) {
 }
 
 /**
- * @typedef {(NewsChannel | TextChannel)} AnnounceChannel
+ * @typedef {(import('discord.js').NewsChannel | import('discord.js').TextChannel)} AnnounceChannel
  */
 
 /**
- * @param {Guild} guild
+ * @param {import('discord.js').Guild} guild
  * @returns {Promise<AnnounceChannel | undefined>}
  */
 async function getAnnouncementChannel(guild) {
@@ -66,8 +66,8 @@ async function getAnnouncementChannel(guild) {
 }
 
 /**
- * @param {Guild} guild
- * @returns {Promise<Role | undefined>}
+ * @param {import('discord.js').Guild} guild
+ * @returns {Promise<import('discord.js').Role | undefined>}
  */
 async function getResponsibleRole(guild) {
     const data = getGuildData(guild.id)
@@ -82,8 +82,8 @@ async function getResponsibleRole(guild) {
 
 /**
  *
- * @param {Guild} guild
- * @param {Role} role
+ * @param {import('discord.js').Guild} guild
+ * @param {import('discord.js').Role} role
  * @returns {Promise<boolean>}
  */
 async function canUseRole(guild, role) {

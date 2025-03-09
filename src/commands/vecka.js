@@ -1,12 +1,12 @@
-const { SlashCommandBuilder, ChatInputCommandInteraction, Guild } = require('discord.js')
+const { SlashCommandBuilder } = require('discord.js')
 const { getWeek, getStudyWeek, getCurrentlyResponsible } = require('../weekInfo')
 
 module.exports = {
     data: new SlashCommandBuilder().setName('vecka').setDescription('Information om veckan'),
 
-    /** @param {ChatInputCommandInteraction} interaction */
+    /** @param {import('discord.js').ChatInputCommandInteraction} interaction */
     async execute(interaction) {
-        /** @type {Guild} */
+        /** @type {import('discord.js').Guild} */
         // @ts-ignore
         const guild = interaction.guild
         const [week, studyWeek, responsible] = await Promise.all([

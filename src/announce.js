@@ -1,13 +1,12 @@
 // @ts-ignore
-const { Guild, GuildMember, Client } = require('discord.js')
 const { getAnnouncementChannel, getResponsibleRole } = require('./data')
 const { getWeek, getStudyWeek, getCurrentlyResponsible } = require('./weekInfo')
 
 /**
  * Get a user in a guild from their nick
- * @param {Guild} guild
+ * @param {import('discord.js').Guild} guild
  * @param {string} nick
- * @returns {Promise<GuildMember|undefined>}
+ * @returns {Promise<import('discord.js').GuildMember|undefined>}
  */
 async function getUser(guild, nick) {
     const members = await guild.members.fetch()
@@ -21,16 +20,21 @@ async function getUser(guild, nick) {
 
 /**
  * @param {string[]} nicks
- * @param {Guild} guild
+ * @param {import('discord.js').Guild} guild
  * @returns Promise<Array<[string, GuildMember | undefined]>>
  */
+/**
+ * @param {string[]} nicks
+ * @param {import('discord.js').Guild} guild
+ * @returns {Promise<Array<[string, import('discord.js').GuildMember | undefined]>>}
+ */
 function getUsers(nicks, guild) {
-    return /** @type {Promise<Array<[string, GuildMember | undefined]>>} */ (/** @type {unknown} */ (Promise.all(nicks.map(async name => [name, await getUser(guild, name)]))))
+    return /** @type {Promise<Array<[string, import('discord.js').GuildMember | undefined]>>} */ (/** @type {unknown} */ (Promise.all(nicks.map(async name => [name, await getUser(guild, name)]))))
 }
 
 /**
  * Announce info this week in a guild
- * @param {Guild} guild Guild to announce week for
+ * @param {import('discord.js').Guild} guild Guild to announce week for
  * @returns {Promise<boolean>} If the announcement was successful
  */
 async function announceWeekIn(guild) {
@@ -50,7 +54,7 @@ async function announceWeekIn(guild) {
 
     let responsibleLine = ''
     if (responsible) {
-        const users = await getUsers(responsible, announceChannel.guild)
+        const users = await getUsers(responsible, guild)
         const stringUsers = users.map(([name, user]) => user?.toString() ?? `@${name}`)
 
         /** @type {string} */
@@ -64,7 +68,7 @@ async function announceWeekIn(guild) {
 
         responsibleLine = `${week} har ${userList} ansvarsvecka, gör ert bästa men slit inte ut er! <:pixelnheart:1318195394781384714>`
 
-        assignRole(announceChannel.guild, users)
+        assignRole(guild, users)
     } else {
         responsibleLine = `${week} gick det inte att hitta någon ansvarsvecka för :thinking:`
     }
@@ -79,7 +83,7 @@ ${responsibleLine}`
 
 /**
  * Announce info this week in all guilds
- * @param {Client} client
+imClient} client
  * @returns {Promise<boolean>} If any announcement was successful
  */
 async function announceWeek(client) {
@@ -90,8 +94,8 @@ async function announceWeek(client) {
 }
 
 /**
- * @param {Guild} guild
- * @param {Array<[string, GuildMember | undefined]>} users
+ * @param {import('discord.js').Guild} guild
+ * @param {Array<[string, import('discord.js').GuildMember | undefined]>} users
  */
 async function assignRole(guild, users) {
     const role = await getResponsibleRole(guild)
@@ -139,7 +143,7 @@ async function sleep(ms) {
 /** @type {string} */
 let previousWeek
 /**
- * @param {Client} client
+ * @param {import('discord.js').Client} client
  * @returns {Promise<never>}
  */
 // @ts-ignore

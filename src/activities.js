@@ -1,4 +1,4 @@
-const { ClientUser, ActivityType } = require('discord.js')
+const { ActivityType } = require('discord.js')
 const fs = require('fs')
 const { sleep } = require('./util')
 
@@ -35,7 +35,7 @@ function getActivities(filename = 'activities.json') {
 
 /**
  * Cycles through activities at a set interval
- * @param {ClientUser} clientUser Discord client user to change activity for
+ * @param {import('discord.js').ClientUser} clientUser Discord client user to change activity for
  * @param {number} interval Delay between activity changes in milliseconds
  * @returns {Promise<never>}
  */

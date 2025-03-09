@@ -1,5 +1,5 @@
-const { ChatInputCommandInteraction, MessageFlags, SlashCommandBuilder, Guild, Role } = require('discord.js')
-const { getGuildData, writeGuildData, canUseRole } = require('../data')
+const { MessageFlags, SlashCommandBuilder } = require('discord.js')
+const { getGuildData, writeGuildData } = require('../data')
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -22,7 +22,7 @@ module.exports = {
                 .setDescription('URL till kalendern som ska användas')
         ),
 
-    /** @param {ChatInputCommandInteraction} interaction */
+    /** @param {import('discord.js').ChatInputCommandInteraction} interaction */
     async execute(interaction) {
         const command = interaction.options.getString('command', true)
 
@@ -36,10 +36,10 @@ module.exports = {
     },
 }
 
-/** @param {ChatInputCommandInteraction} interaction */
+/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
 async function set(interaction) {
     const url = interaction.options.getString('url')
-    /** @type {Guild} */
+    /** @type {import('discord.js').Guild} */
     // @ts-ignore
     const guild = interaction.guild
 
@@ -61,9 +61,9 @@ async function set(interaction) {
     })
 }
 
-/** @param {ChatInputCommandInteraction} interaction */
+/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
 async function unset(interaction) {
-    /** @type {Guild} */
+    /** @type {import('discord.js').Guild} */
     // @ts-ignore
     const guild = interaction.guild
 
@@ -77,9 +77,9 @@ async function unset(interaction) {
     })
 }
 
-/** @param {ChatInputCommandInteraction} interaction */
+/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
 async function get(interaction) {
-    /** @type {Guild} */
+    /** @type {import('discord.js').Guild} */
     // @ts-ignore
     const guild = interaction.guild
 

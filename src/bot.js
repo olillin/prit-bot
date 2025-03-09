@@ -1,7 +1,7 @@
 const fs = require('node:fs')
 const path = require('node:path')
 // @ts-ignore
-const { Client, GatewayIntentBits, TextChannel, Collection, Events, Routes, REST, SlashCommandSubcommandGroupBuilder, MessageFlags, ActivityType } = require('discord.js')
+const { Client, GatewayIntentBits, Collection, Events, Routes, REST, MessageFlags } = require('discord.js')
 const { waitForWeekStart } = require('./announce')
 const { cycleActivities } = require('./activities')
 
@@ -11,14 +11,17 @@ if (!TOKEN) {
     process.exit()
 }
 
-const client = new Client({
-    intents: [
-        GatewayIntentBits.Guilds, //
-        GatewayIntentBits.GuildMembers,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.DirectMessages,
-    ],
-})
+/** @type {import('discord.js').Client} */
+const client = /** @type {any} */ (
+    new Client({
+        intents: [
+            GatewayIntentBits.Guilds, //
+            GatewayIntentBits.GuildMembers,
+            GatewayIntentBits.GuildMessages,
+            GatewayIntentBits.DirectMessages,
+        ],
+    })
+)
 
 // @ts-ignore
 client.commands = new Collection()

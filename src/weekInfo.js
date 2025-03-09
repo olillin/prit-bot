@@ -1,11 +1,9 @@
-const { Guild } = require('discord.js')
-const { Calendar } = require('iamcal')
 const { parseCalendar } = require('iamcal/parse')
 const { getGuildData } = require('./data')
 
 /**
- * @param {Guild} guild
- * @returns {Promise<Calendar|undefined>}
+ * @param {import('discord.js').Guild} guild
+ * @returns {Promise<import('iamcal').Calendar|undefined>}
  */
 function getCalendar(guild) {
     return new Promise(resolve => {
@@ -37,7 +35,7 @@ function parseDate(value) {
 }
 
 /**
- * @param {Guild} guild
+ * @param {import('discord.js').Guild} guild
  * @returns {Promise<string[]|undefined>} The people who are currently responsible
  */
 async function getCurrentlyResponsible(guild) {
