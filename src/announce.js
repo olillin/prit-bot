@@ -1,13 +1,11 @@
-// @ts-ignore
-const { Guild, GuildMember, Client } = require('discord.js')
-const { getAnnouncementChannel, getAnsvarRole } = require('./data')
-const { lasVecka, ansvarsVecka, vecka } = require('./weekInfo')
+const { getAnnouncementChannel, getResponsibleRole } = require('./data')
+const { getWeek, getStudyWeek, getCurrentlyResponsible } = require('./weekInfo')
 
 /**
  * Get a user in a guild from their nick
- * @param {Guild} guild
+ * @param {import('discord.js').Guild} guild
  * @param {string} nick
- * @returns {Promise<GuildMember|undefined>}
+ * @returns {Promise<import('discord.js').GuildMember|undefined>}
  */
 async function getUser(guild, nick) {
     const members = await guild.members.fetch()
@@ -21,35 +19,41 @@ async function getUser(guild, nick) {
 
 /**
  * @param {string[]} nicks
- * @param {Guild} guild
+ * @param {import('discord.js').Guild} guild
  * @returns Promise<Array<[string, GuildMember | undefined]>>
  */
+/**
+ * @param {string[]} nicks
+ * @param {import('discord.js').Guild} guild
+ * @returns {Promise<Array<[string, import('discord.js').GuildMember | undefined]>>}
+ */
 function getUsers(nicks, guild) {
-    return /** @type {Promise<Array<[string, GuildMember | undefined]>>} */ (/** @type {unknown} */ (Promise.all(nicks.map(async name => [name, await getUser(guild, name)]))))
+    return /** @type {Promise<Array<[string, import('discord.js').GuildMember | undefined]>>} */ (/** @type {unknown} */ (Promise.all(nicks.map(async name => [name, await getUser(guild, name)]))))
 }
 
 /**
- * Announce info this week
- * @param {Client} client
+ * Announce info this week in a guild
+ * @param {import('discord.js').Guild} guild Guild to announce week for
  * @returns {Promise<boolean>} If the announcement was successful
  */
-async function announceWeek(client) {
-    const announceChannel = await getAnnouncementChannel(client)
-    if (!announceChannel) {
-        console.warn("Didn't make announcement, no channel set")
-        return false
-    }
-
-    const week = await lasVecka()
+async function announceWeekIn(guild) {
+    const week = await getStudyWeek()
     if (!week) {
         console.error(`Could not make announcement, week returned ${week}`)
         return false
     }
 
-    const ansvar = await ansvarsVecka()
-    let ansvarLine = ''
-    if (ansvar) {
-        const users = await getUsers(ansvar, announceChannel.guild)
+    const responsible = await getCurrentlyResponsible(guild)
+
+    const announceChannel = await getAnnouncementChannel(guild)
+    if (!announceChannel) {
+        console.warn("Didn't make announcement in ${guild}, no channel set")
+        return false
+    }
+
+    let responsibleLine = ''
+    if (responsible) {
+        const users = await getUsers(responsible, guild)
         const stringUsers = users.map(([name, user]) => user?.toString() ?? `@${name}`)
 
         /** @type {string} */
@@ -61,28 +65,39 @@ async function announceWeek(client) {
             userList = stringUsers.join(', ') + ' och ' + last
         }
 
-        ansvarLine = `${week} har ${userList} ansvarsvecka, gör ert bästa men slit inte ut er! :pixelnheart:`
+        responsibleLine = `${week} har ${userList} ansvarsvecka, gör ert bästa men slit inte ut er! <:pixelnheart:1318195394781384714>`
 
-        assignRole(client, announceChannel.guild, users)
+        assignRole(guild, users)
     } else {
-        ansvarLine = `${week} gick det inte att hitta någon ansvarsvecka för :thinking:`
+        responsibleLine = `${week} gick det inte att hitta någon ansvarsvecka för :thinking:`
     }
 
     announceChannel.send(
         `### Det är en ny vecka!
-${ansvarLine}`
+${responsibleLine}`
     )
 
     return true
 }
 
 /**
- * @param {Client} client
- * @param {Guild} guild
- * @param {Array<[string, GuildMember | undefined]>} users
+ * Announce info this week in all guilds
+imClient} client
+ * @returns {Promise<boolean>} If any announcement was successful
  */
-async function assignRole(client, guild, users) {
-    const role = await getAnsvarRole(client)
+async function announceWeek(client) {
+    const guilds = await client.guilds.fetch()
+    const promises = guilds.map(async guild => announceWeekIn(await guild.fetch()))
+    const success = (await Promise.all(promises)).some(x => x)
+    return success
+}
+
+/**
+ * @param {import('discord.js').Guild} guild
+ * @param {Array<[string, import('discord.js').GuildMember | undefined]>} users
+ */
+async function assignRole(guild, users) {
+    const role = await getResponsibleRole(guild)
     if (!role) {
         console.warn('Failed to assign roles, could not get role')
         return
@@ -125,25 +140,25 @@ async function sleep(ms) {
 }
 
 /** @type {string} */
-let currentWeek
+let previousWeek
+
 /**
- * @param {Client} client
+ * @param {import('discord.js').Client} client
  * @returns {Promise<never>}
  */
-// @ts-ignore
 async function waitForWeekStart(client) {
     // @ts-ignore
-    currentWeek = await vecka()
+    previousWeek = await getWeek()
     while (true) {
-        const nowWeek = await vecka()
-        if (nowWeek && nowWeek !== currentWeek) {
+        const nowWeek = await getWeek()
+        if (nowWeek && nowWeek !== previousWeek) {
             await announceWeek(client)
 
-            currentWeek = nowWeek
+            previousWeek = nowWeek
         }
 
         await sleep(60 * 1000) // Wait 1 minute
     }
 }
 
-module.exports = { getUser, announceWeek, waitForWeekStart }
+module.exports = { getUser, announceWeekIn, announceWeek, waitForWeekStart }

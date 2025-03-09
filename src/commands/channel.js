@@ -1,5 +1,5 @@
-const { ChatInputCommandInteraction, MessageFlags, SlashCommandBuilder, ChannelType, PermissionsBitField, PermissionFlagsBits, SlashCommandStringOption } = require('discord.js')
-const { writeData, getData } = require('../data')
+const { MessageFlags, SlashCommandBuilder, ChannelType, PermissionFlagsBits } = require('discord.js')
+const { getGuildData, writeGuildData } = require('../data')
 const { getAnnouncementChannel } = require('../data')
 
 module.exports = {
@@ -9,7 +9,7 @@ module.exports = {
         .addStringOption(option =>
             option
                 .setName('command') //
-                .setDescription('What to do')
+                .setDescription('Vad du vill göra')
                 .setChoices(
                     { name: 'Skicka uppdateringar i den här kanalen', value: 'set' }, //
                     { name: 'Sluta skicka uppdateringar', value: 'unset' },
@@ -18,7 +18,7 @@ module.exports = {
                 .setRequired(true)
         ),
 
-    /** @param {ChatInputCommandInteraction} interaction */
+    /** @param {import('discord.js').ChatInputCommandInteraction} interaction */
     async execute(interaction) {
         const command = interaction.options.getString('command', true)
 
@@ -32,7 +32,7 @@ module.exports = {
     },
 }
 
-/** @param {ChatInputCommandInteraction} interaction */
+/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
 async function set(interaction) {
     const correctChannelType = interaction.channel?.type === ChannelType.GuildText || interaction.channel?.type === ChannelType.GuildAnnouncement
     if (!correctChannelType) {
@@ -52,10 +52,12 @@ async function set(interaction) {
         return
     }
 
-    const data = getData()
-    data.announceGuild = interaction.guildId
+    /** @type {string} */
+    // @ts-ignore
+    const guildId = interaction.guildId
+    const data = getGuildData(guildId)
     data.announceChannel = interaction.channelId
-    writeData(data)
+    writeGuildData(guildId, data)
 
     await interaction.reply({
         content: 'Framtida uppdateringar kommer skickas i den här kanalen',
@@ -63,12 +65,14 @@ async function set(interaction) {
     })
 }
 
-/** @param {ChatInputCommandInteraction} interaction */
+/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
 async function unset(interaction) {
-    const data = getData()
-    data.announceGuild = undefined
+    /** @type {string} */
+    // @ts-ignore
+    const guildId = interaction.guildId
+    const data = getGuildData(guildId)
     data.announceChannel = undefined
-    writeData(data)
+    writeGuildData(guildId, data)
 
     await interaction.reply({
         content: 'Uppdateringar kommer inte längre skickas',
@@ -76,9 +80,12 @@ async function unset(interaction) {
     })
 }
 
-/** @param {ChatInputCommandInteraction} interaction */
+/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
 async function get(interaction) {
-    const channel = await getAnnouncementChannel(interaction.client)
+    /** @type {import('discord.js').Guild} */
+    // @ts-ignore
+    const guild = interaction.guild
+    const channel = await getAnnouncementChannel(guild)
 
     if (channel) {
         interaction.reply({
@@ -87,7 +94,7 @@ async function get(interaction) {
         })
     } else {
         interaction.reply({
-            content: 'Uppdateringar skickas inte i någon kanal',
+            content: 'Det finns ingen kanal för uppdateringar',
             flags: MessageFlags.Ephemeral,
         })
     }

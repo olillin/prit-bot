@@ -1,35 +1,59 @@
-const { Client, NewsChannel, TextChannel, Role, Guild, PermissionsBitField, PermissionFlagsBits } = require('discord.js')
+const { PermissionFlagsBits } = require('discord.js')
 const fs = require('fs')
 
 const DATA_FILE = 'data.json'
 
-if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify({}))
-}
-
+/**
+ * @returns {Object}
+ */
 function getData() {
+    if (!fs.existsSync(DATA_FILE)) {
+        return {}
+    }
     const text = fs.readFileSync(DATA_FILE, 'utf-8')
     const parsed = JSON.parse(text)
     return parsed
 }
 
+/**
+ * @param {Object} data
+ */
 function writeData(data) {
     const text = JSON.stringify(data)
     fs.writeFileSync(DATA_FILE, text, 'utf-8')
 }
 
 /**
- * @typedef {(NewsChannel | TextChannel)} AnnounceChannel
+ * @param {string} guildId
+ * @returns {Object}
+ */
+function getGuildData(guildId) {
+    const guilds = getData().guilds
+    if (!guilds) return {}
+    return guilds[guildId] ?? {}
+}
+
+/**
+ * @param {string} guildId
+ * @param {Object} data
+ */
+function writeGuildData(guildId, data) {
+    const guilds = getData().guilds ?? {}
+    guilds[guildId] = data
+    writeData({ ...getData(), guilds })
+}
+
+/**
+ * @typedef {(import('discord.js').NewsChannel | import('discord.js').TextChannel)} AnnounceChannel
  */
 
 /**
- * @param {Client} client
+ * @param {import('discord.js').Guild} guild
  * @returns {Promise<AnnounceChannel | undefined>}
  */
-async function getAnnouncementChannel(client) {
-    const data = getData()
-    if (!data.announceGuild || !data.announceChannel) return undefined
-    const guild = await client.guilds.fetch(data.announceGuild)
+async function getAnnouncementChannel(guild) {
+    const data = getGuildData(guild.id)
+    if (!data.announceChannel) return undefined
 
     const botMember = await guild.members.fetchMe()
     const botPermissions = botMember.permissions
@@ -42,14 +66,13 @@ async function getAnnouncementChannel(client) {
 }
 
 /**
- * @param {Client} client
- * @returns {Promise<Role | undefined>}
+ * @param {import('discord.js').Guild} guild
+ * @returns {Promise<import('discord.js').Role | undefined>}
  */
-async function getAnsvarRole(client) {
-    const data = getData()
-    if (!data.ansvarRole) return undefined
-    const guild = await client.guilds.fetch(data.announceGuild)
-    const role = await guild.roles.fetch(data.ansvarRole)
+async function getResponsibleRole(guild) {
+    const data = getGuildData(guild.id)
+    if (!data.responsibleRole) return undefined
+    const role = await guild.roles.fetch(data.responsibleRole)
 
     if (!role) return undefined
     if (!canUseRole(guild, role)) return undefined
@@ -59,8 +82,8 @@ async function getAnsvarRole(client) {
 
 /**
  *
- * @param {Guild} guild
- * @param {Role} role
+ * @param {import('discord.js').Guild} guild
+ * @param {import('discord.js').Role} role
  * @returns {Promise<boolean>}
  */
 async function canUseRole(guild, role) {
@@ -75,4 +98,4 @@ async function canUseRole(guild, role) {
     return true
 }
 
-module.exports = { getData, writeData, getAnnouncementChannel, getAnsvarRole, canUseRole }
+module.exports = { getGuildData, writeGuildData, getAnnouncementChannel, getResponsibleRole, canUseRole }
