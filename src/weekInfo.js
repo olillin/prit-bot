@@ -43,7 +43,6 @@ async function getCurrentlyResponsible(guild) {
     if (!calendar) return undefined
 
     const now = new Date().getTime()
-    const validateNickList = /^\s*([^,]+?)(?:\s*\\?,\s*([^,]+?))*\s*$/
     const extractNicks = /\b[^,\n]+\b/g
 
     const dayInMs = 24 * 60 * 60 * 1000
@@ -67,9 +66,7 @@ async function getCurrentlyResponsible(guild) {
         const duration = endTime - startTime
         const isWeekLong = duration > 6 * dayInMs && duration < 8 * dayInMs
 
-        const matchesPattern = validateNickList.test(event.summary())
-
-        return isOngoing && isWeekLong && matchesPattern
+        return isOngoing && isWeekLong
     })
 
     if (!event) return undefined
