@@ -157,7 +157,8 @@ async function waitForWeekStart(client) {
             previousWeek = nowWeek
         }
 
-        await sleep(60 * 1000) // Wait 1 minute
+        const ONE_DAY = 24 * 60 * 60 * 1000
+        await sleep(ONE_DAY) // Wait 1 day
     }
 }
 

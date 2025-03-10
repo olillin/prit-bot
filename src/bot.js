@@ -11,6 +11,49 @@ if (!TOKEN) {
     process.exit()
 }
 
+const announceTimeString = process.env.ANNOUNCE_TIME ?? '09'
+/** @type {Date} */
+let announceFrom
+try {
+    announceFrom = getNextTime(announceTimeString)
+} catch (e) {
+    console.error('Invalid ANNOUNCE_TIME:', e.message)
+    process.exit()
+}
+
+/**
+ * @param {string} timeString The time as a string such as "09:00"
+ * @param {number} [after=Date.now()] Time to start from
+ * @returns {Date}
+ */
+function getNextTime(timeString, after = Date.now()) {
+    const parts = timeString.split(':').map(Number)
+    if (parts.length > 4) {
+        throw new Error('Invalid time string, too many parts')
+    } else if (parts.length === 0) {
+        throw new Error('Invalid time string, too many parts')
+    }
+
+    let time = 0
+    const ONE_HOUR = 60 * 60 * 1000
+    parts.forEach((part, index) => {
+        const msIndex = 3
+        if (index < msIndex) {
+            time += (ONE_HOUR * part) / 60 ** index
+        } else {
+            time += part
+        }
+    })
+
+    const ONE_DAY = 24 * ONE_HOUR
+    const afterDay = after - (after % ONE_DAY) // Remove time part of after
+    const next = afterDay + time
+    if (next < after) {
+        return new Date(next + ONE_DAY)
+    }
+    return new Date(next)
+}
+
 /** @type {import('discord.js').Client} */
 const client = /** @type {any} */ (
     new Client({
@@ -109,7 +152,9 @@ client.on(Events.ClientReady, () => {
     // @ts-ignore
     cycleActivities(client.user, ONE_HOUR)
 
-    waitForWeekStart(client)
+    setTimeout(() => {
+        waitForWeekStart(client)
+    }, announceFrom.getTime() - Date.now())
 
     console.log('Bot is ready')
 })
