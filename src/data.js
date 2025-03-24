@@ -125,6 +125,7 @@ async function setReactionDiscoveredBy(guildId, id, userId) {
     const data = getGuildData(guildId)
     const discovered = data?.discoveredReactions ?? {}
     discovered[id] = userId
+    data.discoveredReactions = discovered
     writeGuildData(guildId, data)
 }
 
