@@ -98,4 +98,53 @@ async function canUseRole(guild, role) {
     return true
 }
 
-module.exports = { getGuildData, writeGuildData, getAnnouncementChannel, getResponsibleRole, canUseRole }
+/**
+ *
+ * @param {import('discord.js').Guild} guild
+ * @returns {{[id: string]: string}}
+ */
+function getDiscoveredReactions(guild) {
+    const data = getGuildData(guild.id)
+    return data?.discoveredReactions ?? {}
+}
+
+/**
+ * Get who discovered a reaction
+ * @param {import('discord.js').Guild} guild
+ * @param {string} id
+ * @returns {Promise<import('discord.js').GuildMember|undefined>} Get the guild member who discovered the reaction
+ */
+async function getReactionDiscoveredBy(guild, id) {
+    const discovered = getDiscoveredReactions(guild)
+    const userId = discovered[id]
+    if (!userId) {
+        return undefined
+    }
+    const user = (await guild.members.fetch()).get(userId)
+    return user
+}
+
+/**
+ * Set who discovered a reaction
+ * @param {string} guildId
+ * @param {string} id
+ * @param {string|undefined} userId
+ */
+async function setReactionDiscoveredBy(guildId, id, userId) {
+    const data = getGuildData(guildId)
+    const discovered = data?.discoveredReactions ?? {}
+    discovered[id] = userId
+    data.discoveredReactions = discovered
+    writeGuildData(guildId, data)
+}
+
+module.exports = {
+    getGuildData,
+    writeGuildData,
+    getAnnouncementChannel,
+    getResponsibleRole,
+    canUseRole,
+    getDiscoveredReactions,
+    getReactionDiscoveredBy,
+    setReactionDiscoveredBy,
+}
