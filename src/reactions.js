@@ -36,6 +36,8 @@ function getReactions() {
  * @param {import('discord.js').Message} message
  */
 function addReaction(message) {
+    if (message.author.bot) return
+
     const reactions = getReactions()
     const guild = /** @type {import('discord.js').Guild} */ (message.guild)
 
