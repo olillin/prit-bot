@@ -21,12 +21,16 @@ module.exports = {
         const undiscoveredCount =
             Object.keys(reactions).length - Object.keys(discovered).length
 
-        const body = Object.entries(discovered)
-            .map(([id, discoveredBy]) => {
+        const discoveredPretty = Object.entries(discovered).map(
+            ([id, discoveredBy]) => {
                 const { emoji } = reactions[id]
                 return `${emoji} **${id}** upptäckt av <@${discoveredBy}>`
-            })
-            .join('\n')
+            }
+        )
+        const body =
+            discoveredPretty.length > 0
+                ? discoveredPretty.join('\n')
+                : 'Inga reaktioner har upptäckts'
 
         const embed = new EmbedBuilder()
             .setTitle('Upptäckta reaktioner')
