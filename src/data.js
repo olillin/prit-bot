@@ -99,14 +99,23 @@ async function canUseRole(guild, role) {
 }
 
 /**
+ *
+ * @param {import('discord.js').Guild} guild
+ * @returns {{[id: string]: string}}
+ */
+function getDiscoveredReactions(guild) {
+    const data = getGuildData(guild.id)
+    return data?.discoveredReactions ?? {}
+}
+
+/**
  * Get who discovered a reaction
  * @param {import('discord.js').Guild} guild
  * @param {string} id
  * @returns {Promise<import('discord.js').GuildMember|undefined>} Get the guild member who discovered the reaction
  */
 async function getReactionDiscoveredBy(guild, id) {
-    const data = getGuildData(guild.id)
-    const discovered = data?.discoveredReactions ?? {}
+    const discovered = getDiscoveredReactions(guild)
     const userId = discovered[id]
     if (!userId) {
         return undefined
@@ -135,6 +144,7 @@ module.exports = {
     getAnnouncementChannel,
     getResponsibleRole,
     canUseRole,
+    getDiscoveredReactions,
     getReactionDiscoveredBy,
     setReactionDiscoveredBy,
 }

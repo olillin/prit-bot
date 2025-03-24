@@ -22,10 +22,14 @@ function getReactions() {
 
         try {
             const parsed = JSON.parse(text)
-
+            for (const key in parsed) {
+                if (key.startsWith('$')) {
+                    delete parsed[key]
+                }
+            }
             return parsed
-        } catch {
-            console.warn('Failed to parse reactions.json')
+        } catch (e) {
+            console.warn(`Failed to parse reactions.json: ${e}`)
         }
     }
     return {}
@@ -42,9 +46,6 @@ function addReaction(message) {
     const guild = /** @type {import('discord.js').Guild} */ (message.guild)
 
     Object.entries(reactions).forEach(async ([id, { pattern, emoji }]) => {
-        // Skip special keys
-        if (id.startsWith('$')) return
-
         const regex = new RegExp(pattern, 'i')
         const match = regex.exec(message.content)
         if (match) {

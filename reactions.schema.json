@@ -20,7 +20,7 @@
       "emoji": {
         "description": "Emoji",
         "type": "string",
-        "pattern": "^(.{0,2}|<:\\w+:\\d+>)$"
+        "pattern": "^(.{0,3}|<:\\w+:\\d+>)$"
       }
     }
   }
