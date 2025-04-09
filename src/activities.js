@@ -18,16 +18,26 @@ function getActivities(filename = 'activities.json') {
         try {
             const parsed = JSON.parse(text)
 
+            if (parsed.length === 0) {
+                console.warn(
+                    `Empty activities in ${filename}, using default activities`
+                )
+                return DEFAULT_ACTIVITIES
+            }
+
             parsed.forEach(activity => {
                 if (activity.type) {
                     activity.type = ActivityType[activity.type]
-                    if (activity.type === undefined) throw new Error('Invalid activity type')
+                    if (activity.type === undefined)
+                        throw new Error('Invalid activity type')
                 }
             })
 
             return parsed
         } catch {
-            console.warn(`Invalid activities in ${filename}, using default activities`)
+            console.warn(
+                `Invalid activities in ${filename}, using default activities`
+            )
         }
     }
     return DEFAULT_ACTIVITIES
@@ -40,26 +50,29 @@ function getActivities(filename = 'activities.json') {
  * @returns {Promise<never>}
  */
 async function cycleActivities(clientUser, interval) {
-    const activities = getActivities()
-
-    let currentActivity = Math.floor(Math.random() * activities.length)
+    /** @type {import('discord.js').ActivityOptions | undefined} */
+    let previousActivity = undefined
     while (true) {
-        const activity = activities[currentActivity]
+        // Get new activity
+        const activities = getActivities()
+        let activity = previousActivity
+        while (
+            activity === undefined ||
+            (activities.length > 1 &&
+                JSON.stringify(activity) === JSON.stringify(previousActivity))
+        ) {
+            activity = activities[Math.floor(Math.random() * activities.length)]
+        }
+
         // @ts-ignore
-        console.log(`Set activity to (${ActivityType[activity.type]}) ${activity.name}`)
+        console.log(
+            `Set activity to (${ActivityType[activity.type]}) ${activity.name}`
+        )
         await clientUser.setActivity(activity)
 
         await sleep(interval)
 
-        // Skip if there's only one activity
-        if (activities.length === 1) continue
-
-        // Get new activity randomly
-        let newActivity = currentActivity
-        while (newActivity === currentActivity) {
-            newActivity = Math.floor(Math.random() * activities.length)
-        }
-        currentActivity = newActivity
+        previousActivity = activity
     }
 }
 
