@@ -1,5 +1,10 @@
 const fs = require('fs')
-const { getReactionDiscoveredBy, setReactionDiscoveredBy } = require('./data')
+const {
+    getReactionDiscoveredBy,
+    setReactionDiscoveredBy,
+    getGuildData,
+    getNoReactChannels,
+} = require('./data')
 const { EmbedBuilder } = require('discord.js')
 
 /**
@@ -39,12 +44,17 @@ function getReactions() {
  *
  * @param {import('discord.js').Message} message
  */
-function addReaction(message) {
+async function addReaction(message) {
     if (message.author.bot) return
 
     const reactions = getReactions()
     const guild = /** @type {import('discord.js').Guild} */ (message.guild)
 
+    // Don't react if channel is marked
+    const noReactChannels = await getNoReactChannels(guild.id)
+    if (noReactChannels.has(message.channel.id)) return
+
+    // Check patterns
     Object.entries(reactions).forEach(async ([id, { pattern, emoji }]) => {
         const regex = new RegExp(pattern, 'i')
         const match = regex.exec(message.content)

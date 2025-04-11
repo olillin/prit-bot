@@ -138,6 +138,28 @@ async function setReactionDiscoveredBy(guildId, id, userId) {
     writeGuildData(guildId, data)
 }
 
+/**
+ * Get the channels that should not be reacted in
+ * @param {string} guildId
+ * @returns {Promise<Set<string>>} the set of channel ids that should not be reacted in
+ */
+async function getNoReactChannels(guildId) {
+    const data = getGuildData(guildId)
+    const noReactChannels = data?.noReactChannels ?? []
+    return new Set(noReactChannels)
+}
+
+/**
+ * Set the channels that should not be reacted in
+ * @param {string} guildId
+ * @param {Iterable<string>} channelIds the set of channel ids that should not be reacted in
+ */
+async function setNoReactChannels(guildId, channelIds) {
+    const data = getGuildData(guildId)
+    data.noReactChannels = Array.from(channelIds)
+    writeGuildData(guildId, data)
+}
+
 module.exports = {
     getGuildData,
     writeGuildData,
@@ -147,4 +169,6 @@ module.exports = {
     getDiscoveredReactions,
     getReactionDiscoveredBy,
     setReactionDiscoveredBy,
+    getNoReactChannels,
+    setNoReactChannels,
 }
