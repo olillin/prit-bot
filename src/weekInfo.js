@@ -2,12 +2,12 @@ const { parseCalendar } = require('iamcal/parse')
 const { getGuildData } = require('./data')
 
 /**
- * @param {import('discord.js').Guild} guild
+ * @param {string} guildId
  * @returns {Promise<import('iamcal').Calendar|undefined>}
  */
-function getCalendar(guild) {
+function getCalendar(guildId) {
     return new Promise(resolve => {
-        const data = getGuildData(guild.id)
+        const data = getGuildData(guildId)
         const url = data.responsibleCalendarUrl
 
         if (!url) {
@@ -23,6 +23,7 @@ function getCalendar(guild) {
 }
 
 /**
+ * Parse a date string in the format YYYYMMDD, required because of a bug in 'iamcal'
  * @param {string} value
  * @returns {Date}
  */
@@ -35,19 +36,20 @@ function parseDate(value) {
 }
 
 /**
- * @param {import('discord.js').Guild} guild
- * @returns {Promise<string[]|undefined>} The people who are currently responsible
+ * Get the calendar event for the current responsible week
+ * @param {string} guildId
+ * @returns {Promise<import('iamcal').CalendarEvent|undefined>}
  */
-async function getCurrentlyResponsible(guild) {
-    const calendar = await getCalendar(guild)
+
+async function getCurrentResponsibleEvent(guildId) {
+    const calendar = await getCalendar(guildId)
     if (!calendar) return undefined
 
     const now = new Date().getTime()
-    const extractNicks = /\b[^,\n]+\b/g
 
     const dayInMs = 24 * 60 * 60 * 1000
 
-    const event = calendar.events().find(event => {
+    return calendar.events().find(event => {
         // @ts-ignore
         const start = event.getProperty('DTSTART').value
         // @ts-ignore
@@ -68,11 +70,49 @@ async function getCurrentlyResponsible(guild) {
 
         return isOngoing && isWeekLong
     })
+}
+
+/**
+ * @param {string} guildId
+ * @returns {Promise<string[]|undefined>} The people who are currently responsible
+ */
+async function getCurrentlyResponsible(guildId) {
+    const event = await getCurrentResponsibleEvent(guildId)
 
     if (!event) return undefined
 
+    const extractNicks = /\b[^,\n]+\b/g
     const match = event.summary().matchAll(extractNicks)
     return Array.of(...match).map(m => m[0])
+}
+
+/**
+ * @param {Date} date
+ * @returns {Date}
+ */
+function toStartOfDay(date) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate())
+}
+
+/**
+ *
+ * @param {string} guildId
+ * @returns {Promise<number>} The day of the responsibility week, starting at 1
+ */
+async function getDayOfResponsibilityWeek(guildId) {
+    const today = toStartOfDay(new Date())
+    const ONE_DAY_MS = 1000 * 60 * 60 * 24
+    const day = Math.floor(today.getTime() / ONE_DAY_MS)
+
+    const event = await getCurrentResponsibleEvent(guildId)
+    if (!event) {
+        throw new Error('No current responsible event found')
+    }
+    // @ts-ignore
+    const start = parseDate(event.getProperty('DTSTART').value)
+    const startDay = Math.floor(start.getTime() / ONE_DAY_MS)
+
+    return day - startDay + 1
 }
 
 /**
@@ -122,4 +162,11 @@ async function getStudyWeek() {
     })
 }
 
-module.exports = { getCurrentlyResponsible, getWeek, getStudyWeek }
+module.exports = {
+    getCurrentResponsibleEvent,
+    getDayOfResponsibilityWeek,
+    getCurrentlyResponsible,
+    getWeek,
+    getStudyWeek,
+    parseDate,
+}

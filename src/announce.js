@@ -1,34 +1,20 @@
 const { getAnnouncementChannel, getResponsibleRole } = require('./data')
 const { getWeek, getStudyWeek, getCurrentlyResponsible } = require('./weekInfo')
+const { announceReminders } = require('./reminders')
+const { getNextTime, sleep, getUsers } = require('./util')
 
-/**
- * Get a user in a guild from their nick
- * @param {import('discord.js').Guild} guild
- * @param {string} nick
- * @returns {Promise<import('discord.js').GuildMember|undefined>}
- */
-async function getUser(guild, nick) {
-    const members = await guild.members.fetch()
-    for (const [, member] of members) {
-        const discordNickname = (member.nickname ?? member.user.displayName).toLowerCase()
-        if (discordNickname.includes(nick.toLowerCase())) {
-            return member
-        }
-    }
+const announceTimeString = process.env.ANNOUNCE_TIME ?? '09'
+try {
+    getNextTime(announceTimeString)
+} catch (e) {
+    console.error('Invalid ANNOUNCE_TIME:', e.message)
+    process.exit()
 }
 
-/**
- * @param {string[]} nicks
- * @param {import('discord.js').Guild} guild
- * @returns Promise<Array<[string, GuildMember | undefined]>>
- */
-/**
- * @param {string[]} nicks
- * @param {import('discord.js').Guild} guild
- * @returns {Promise<Array<[string, import('discord.js').GuildMember | undefined]>>}
- */
-function getUsers(nicks, guild) {
-    return /** @type {Promise<Array<[string, import('discord.js').GuildMember | undefined]>>} */ (/** @type {unknown} */ (Promise.all(nicks.map(async name => [name, await getUser(guild, name)]))))
+async function waitUntilNextAnnouncement() {
+    const nextAnnouncement = getNextTime(announceTimeString)
+    const timeUntilAnnouncement = nextAnnouncement.getTime() - Date.now()
+    await sleep(timeUntilAnnouncement)
 }
 
 /**
@@ -43,7 +29,7 @@ async function announceWeekIn(guild) {
         return false
     }
 
-    const responsible = await getCurrentlyResponsible(guild)
+    const responsible = await getCurrentlyResponsible(guild.id)
 
     const announceChannel = await getAnnouncementChannel(guild)
     if (!announceChannel) {
@@ -54,7 +40,9 @@ async function announceWeekIn(guild) {
     let responsibleLine = ''
     if (responsible) {
         const users = await getUsers(responsible, guild)
-        const stringUsers = users.map(([name, user]) => user?.toString() ?? `@${name}`)
+        const stringUsers = users.map(
+            ([name, user]) => user?.toString() ?? `@${name}`
+        )
 
         /** @type {string} */
         let userList = ''
@@ -82,12 +70,14 @@ ${responsibleLine}`
 
 /**
  * Announce info this week in all guilds
-imClient} client
+ * @param {import('discord.js').Client} client
  * @returns {Promise<boolean>} If any announcement was successful
  */
-async function announceWeek(client) {
+async function announceWeekEverywhere(client) {
     const guilds = await client.guilds.fetch()
-    const promises = guilds.map(async guild => announceWeekIn(await guild.fetch()))
+    const promises = guilds.map(async guild =>
+        announceWeekIn(await guild.fetch())
+    )
     const success = (await Promise.all(promises)).some(x => x)
     return success
 }
@@ -120,8 +110,15 @@ async function assignRole(guild, users) {
             users.map(async ([nick, user]) => {
                 if (user) {
                     await user.roles.add(role)
-                    console.info(`Assigned role to ${nick} (${user.nickname ?? user.user.displayName})`)
-                } else console.warn(`Failed to assign role to ${nick}, unable to find user`)
+                    console.info(
+                        `Assigned role to ${nick} (${
+                            user.nickname ?? user.user.displayName
+                        })`
+                    )
+                } else
+                    console.warn(
+                        `Failed to assign role to ${nick}, unable to find user`
+                    )
             })
         )
     } catch (e) {
@@ -131,12 +128,13 @@ async function assignRole(guild, users) {
     }
 }
 
-/**
- * Returns after a set time
- * @param {number} ms
- */
-async function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms))
+async function announceRemindersEverywhere(client) {
+    const guilds = await client.guilds.fetch()
+    const promises = guilds.map(async guild =>
+        announceReminders(await guild.fetch()).catch()
+    )
+    const success = (await Promise.all(promises)).some(x => x)
+    return success
 }
 
 /** @type {string} */
@@ -146,20 +144,28 @@ let previousWeek
  * @param {import('discord.js').Client} client
  * @returns {Promise<never>}
  */
-async function waitForWeekStart(client) {
+async function announceLoop(client) {
     // @ts-ignore
     previousWeek = await getWeek()
     while (true) {
+        // Wait for next announcement
+        await waitUntilNextAnnouncement()
+
+        // Announce responsibility week every week
         const nowWeek = await getWeek()
         if (nowWeek && nowWeek !== previousWeek) {
-            await announceWeek(client)
+            await announceWeekEverywhere(client)
 
             previousWeek = nowWeek
         }
 
-        const ONE_DAY = 24 * 60 * 60 * 1000
-        await sleep(ONE_DAY) // Wait 1 day
+        // Announce reminders every day
+        await announceRemindersEverywhere(client)
     }
 }
 
-module.exports = { getUser, announceWeekIn, announceWeek, waitForWeekStart }
+module.exports = {
+    announceWeekIn,
+    announceWeekEverywhere,
+    announceLoop,
+}

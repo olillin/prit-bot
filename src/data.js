@@ -130,7 +130,7 @@ async function getReactionDiscoveredBy(guild, id) {
  * @param {string} id
  * @param {string|undefined} userId
  */
-async function setReactionDiscoveredBy(guildId, id, userId) {
+function setReactionDiscoveredBy(guildId, id, userId) {
     const data = getGuildData(guildId)
     const discovered = data?.discoveredReactions ?? {}
     discovered[id] = userId
@@ -141,9 +141,9 @@ async function setReactionDiscoveredBy(guildId, id, userId) {
 /**
  * Get the channels that should not be reacted in
  * @param {string} guildId
- * @returns {Promise<Set<string>>} the set of channel ids that should not be reacted in
+ * @returns {Set<string>} the set of channel ids that should not be reacted in
  */
-async function getNoReactChannels(guildId) {
+function getNoReactChannels(guildId) {
     const data = getGuildData(guildId)
     const noReactChannels = data?.noReactChannels ?? []
     return new Set(noReactChannels)
@@ -154,10 +154,144 @@ async function getNoReactChannels(guildId) {
  * @param {string} guildId
  * @param {Iterable<string>} channelIds the set of channel ids that should not be reacted in
  */
-async function setNoReactChannels(guildId, channelIds) {
+function setNoReactChannels(guildId, channelIds) {
     const data = getGuildData(guildId)
     data.noReactChannels = Array.from(channelIds)
     writeGuildData(guildId, data)
+}
+
+/**
+ * @typedef {{
+ *   days: {
+ *     [day: number]: string[]
+ *   },
+ *   muted: string[]
+ * }} ReminderData
+ */
+
+/**
+ * Get the reminder-related data for a guild
+ * @param {string} guildId
+ * @returns {ReminderData} The reminder-related data
+ */
+function getReminderData(guildId) {
+    const data = getGuildData(guildId)
+    const reminderData = data?.reminders ?? {}
+    // Create missing properties
+    if (!reminderData.days) {
+        reminderData.days = {}
+    }
+    if (!reminderData.muted) {
+        reminderData.muted = []
+    }
+
+    // Convert days to ints
+    reminderData.days = Object.fromEntries(
+        Object.entries(reminderData.days) //
+            .map(([day, message]) => [parseInt(day), message])
+    )
+
+    return reminderData
+}
+
+/**
+ *
+ * @param {string} guildId
+ * @param {ReminderData} reminderData
+ */
+function setReminderData(guildId, reminderData) {
+    // Convert days to strings
+    const newReminderData = {
+        ...reminderData,
+        days: Object.fromEntries(
+            Object.entries(reminderData.days) //
+                .map(([day, message]) => [day.toString(), message])
+        ),
+    }
+
+    const data = getGuildData(guildId)
+    data.reminders = newReminderData
+    writeGuildData(guildId, data)
+}
+
+/**
+ * Add a new reminder for the responsibility week
+ * @param {string} guildId The ID of the guild to add the reminder to
+ * @param {number} day Which day of the responsibility week the reminder should
+ * be sent on. Note that this is not the same as the weekday: 1 means the first
+ * day of the responsibility week regardless of whether the responsibility week
+ * starts on a Monday or Tuesday
+ * @param {string} message What the reminder is for
+ */
+function addReminder(guildId, day, message) {
+    const data = getReminderData(guildId)
+    if (!data.days[day]) {
+        data.days[day] = [message]
+    } else {
+        data.days[day].push(message)
+    }
+    setReminderData(guildId, data)
+}
+
+/**
+ * Remove a reminder for the responsibility week
+ * @param {string} guildId The ID of the guild to remove the reminder from
+ * @param {number} day Which day to remove a reminder from
+ * @param {number} index Which reminder to remove from the list of reminders for that day
+ */
+function removeReminder(guildId, day, index) {
+    const data = getReminderData(guildId)
+
+    if (data.days[day]) {
+        const removed = data.days[day].splice(index, 1)
+
+        if (removed.length === 0) {
+            throw `Det finns ingen påminnelse med index ${index} för dag ${day}`
+        }
+        // Delete list if empty
+        if (data.days[day].length === 0) {
+            delete data.days[day]
+        }
+    } else {
+        throw `Det finns inga påminnelser dag ${day}`
+    }
+    setReminderData(guildId, data)
+}
+
+/**
+ *
+ * @param {string} guildId
+ * @param {string} userId
+ */
+function addReminderMutedUser(guildId, userId) {
+    const data = getReminderData(guildId)
+    if (data.muted.includes(userId)) {
+        throw 'Du får redan inte påminnelser'
+    } else {
+        data.muted.push(userId)
+    }
+    setReminderData(guildId, data)
+}
+
+function removeReminderMutedUser(guildId, userId) {
+    const data = getReminderData(guildId)
+    const index = data.muted.indexOf(userId)
+    if (index === -1) {
+        throw 'Du får redan påminnelser'
+    } else {
+        data.muted.splice(index, 1)
+    }
+    setReminderData(guildId, data)
+}
+
+/**
+ *
+ * @param {string} guildId
+ * @returns {string[]} The IDs of users who are muted for reminders
+ */
+function getReminderMutedUsers(guildId) {
+    const data = getReminderData(guildId)
+    return data.muted
 }
 
 module.exports = {
@@ -171,4 +305,9 @@ module.exports = {
     setReactionDiscoveredBy,
     getNoReactChannels,
     setNoReactChannels,
+    getReminderData,
+    addReminder,
+    removeReminder,
+    addReminderMutedUser,
+    removeReminderMutedUser,
 }
