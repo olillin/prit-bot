@@ -1,6 +1,6 @@
-const fs = require('node:fs')
-const path = require('node:path')
-const {
+import fs from 'node:fs'
+import path from 'node:path'
+import {
     Client,
     GatewayIntentBits,
     Collection,
@@ -8,28 +8,25 @@ const {
     Routes,
     REST,
     MessageFlags,
-} = require('discord.js')
-const { announceLoop } = require('./announce')
-const { cycleActivities } = require('./activities')
-const { addReaction } = require('./reactions')
+} from 'discord.js'
+import { announceLoop } from './announce'
+import { cycleActivities } from './activities'
+import { addReaction } from './reactions'
 
-const { TOKEN } = process.env
-if (!TOKEN) {
+if (!process.env.TOKEN) {
     console.error('Missing required environment TOKEN')
-    process.exit()
+    process.exit(1)
 }
+const TOKEN = process.env.TOKEN
 
-/** @type {import('discord.js').Client} */
-const client = /** @type {any} */ (
-    new Client({
-        intents: [
-            GatewayIntentBits.Guilds, //
-            GatewayIntentBits.GuildMembers,
-            GatewayIntentBits.GuildMessages,
-            GatewayIntentBits.MessageContent,
-        ],
-    })
-)
+const client = new Client({
+    intents: [
+        GatewayIntentBits.Guilds, //
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent,
+    ],
+})
 
 // @ts-ignore
 client.commands = new Collection()
@@ -59,7 +56,6 @@ for (const file of commandFiles) {
 client.on(Events.InteractionCreate, async interaction => {
     if (!interaction.isChatInputCommand()) return
 
-    // @ts-ignore
     const command = interaction.client.commands.get(interaction.commandName)
 
     if (!command) {
@@ -87,12 +83,10 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 })
 
-function registerSlashCommands(guildId) {
+function registerSlashCommands(guildId: string) {
     // Construct and prepare an instance of the REST module
-    // @ts-ignore
     const rest = new REST().setToken(TOKEN)
-    // @ts-ignore
-    const clientId = client.user.id
+    const clientId = client.user!.id
 
     // and deploy your commands!
     ;(async () => {
@@ -107,7 +101,6 @@ function registerSlashCommands(guildId) {
                 { body: commands }
             )
 
-            // @ts-ignore
             console.log(
                 `Successfully reloaded ${data.length} application (/) commands.`
             )

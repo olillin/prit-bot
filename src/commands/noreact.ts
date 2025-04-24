@@ -1,15 +1,12 @@
-const {
+import {
     MessageFlags,
     SlashCommandBuilder,
     ChannelType,
     EmbedBuilder,
-} = require('discord.js')
-const {
-    getGuildData,
-    writeGuildData,
-    getNoReactChannels,
-    setNoReactChannels,
-} = require('../data')
+    type ChatInputCommandInteraction,
+} from 'discord.js'
+import { getNoReactChannels, setNoReactChannels } from '../data'
+import { CommandMap } from '../types'
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -39,11 +36,10 @@ module.exports = {
                 )
                 .setRequired(false)
         ),
-    /** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-    async execute(interaction) {
+    async execute(interaction: ChatInputCommandInteraction) {
         const command = interaction.options.getString('command', true)
 
-        const commandMap = {
+        const commandMap: CommandMap = {
             add,
             remove,
             list,
@@ -53,8 +49,7 @@ module.exports = {
     },
 }
 
-/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-async function add(interaction) {
+async function add(interaction: ChatInputCommandInteraction) {
     const channel = interaction.options.getChannel('channel')
     if (!channel) {
         await interaction.reply({
@@ -86,8 +81,7 @@ async function add(interaction) {
     })
 }
 
-/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-async function remove(interaction) {
+async function remove(interaction: ChatInputCommandInteraction) {
     const channel = interaction.options.getChannel('channel')
     if (!channel) {
         await interaction.reply({
@@ -119,8 +113,7 @@ async function remove(interaction) {
     })
 }
 
-/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-async function list(interaction) {
+async function list(interaction: ChatInputCommandInteraction) {
     const guildId = interaction.guildId
     if (!guildId) {
         throw new Error('Guild id is not defined')

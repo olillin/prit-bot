@@ -1,8 +1,14 @@
-const { MessageFlags, SlashCommandBuilder, ChannelType, PermissionFlagsBits } = require('discord.js')
-const { getGuildData, writeGuildData } = require('../data')
-const { getAnnouncementChannel } = require('../data')
+import {
+    MessageFlags,
+    SlashCommandBuilder,
+    ChannelType,
+    PermissionFlagsBits,
+    type ChatInputCommandInteraction,
+} from 'discord.js'
+import { getGuildData, writeGuildData, getAnnouncementChannel } from '../data'
+import type { CommandMap } from '../types'
 
-module.exports = {
+export default {
     data: new SlashCommandBuilder()
         .setName('channel') //
         .setDescription('Hantera uppdateringskanalen')
@@ -11,18 +17,20 @@ module.exports = {
                 .setName('command') //
                 .setDescription('Vad du vill göra')
                 .setChoices(
-                    { name: 'Skicka uppdateringar i den här kanalen', value: 'set' }, //
+                    {
+                        name: 'Skicka uppdateringar i den här kanalen',
+                        value: 'set',
+                    }, //
                     { name: 'Sluta skicka uppdateringar', value: 'unset' },
                     { name: 'Se var uppdateringar skickas nu', value: 'get' }
                 )
                 .setRequired(true)
         ),
 
-    /** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-    async execute(interaction) {
+    async execute(interaction: ChatInputCommandInteraction) {
         const command = interaction.options.getString('command', true)
 
-        const commandMap = {
+        const commandMap: CommandMap = {
             set,
             unset,
             get,
@@ -32,29 +40,34 @@ module.exports = {
     },
 }
 
-/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-async function set(interaction) {
-    const correctChannelType = interaction.channel?.type === ChannelType.GuildText || interaction.channel?.type === ChannelType.GuildAnnouncement
+async function set(interaction: ChatInputCommandInteraction) {
+    const correctChannelType =
+        interaction.channel?.type === ChannelType.GuildText ||
+        interaction.channel?.type === ChannelType.GuildAnnouncement
     if (!correctChannelType) {
         await interaction.reply({
-            content: 'Den här kanalen kan inte användas för uppdateringar, fel typ',
+            content:
+                'Den här kanalen kan inte användas för uppdateringar, fel typ',
             flags: MessageFlags.Ephemeral,
         })
         return
     }
 
-    const permissions = interaction.channel.permissionsFor(interaction.client.user)
-    const hasPermission = permissions?.has(PermissionFlagsBits.SendMessages) && permissions.has(PermissionFlagsBits.ViewChannel)
+    const permissions = interaction.channel.permissionsFor(
+        interaction.client.user
+    )
+    const hasPermission =
+        permissions?.has(PermissionFlagsBits.SendMessages) &&
+        permissions.has(PermissionFlagsBits.ViewChannel)
     if (!hasPermission) {
         await interaction.reply({
-            content: 'Den här kanalen kan inte användas för uppdateringar, saknar tillstånd',
+            content:
+                'Den här kanalen kan inte användas för uppdateringar, saknar tillstånd',
         })
         return
     }
 
-    /** @type {string} */
-    // @ts-ignore
-    const guildId = interaction.guildId
+    const guildId: string = interaction.guildId!
     const data = getGuildData(guildId)
     data.announceChannel = interaction.channelId
     writeGuildData(guildId, data)
@@ -65,8 +78,7 @@ async function set(interaction) {
     })
 }
 
-/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-async function unset(interaction) {
+async function unset(interaction: ChatInputCommandInteraction) {
     /** @type {string} */
     // @ts-ignore
     const guildId = interaction.guildId
@@ -80,8 +92,7 @@ async function unset(interaction) {
     })
 }
 
-/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-async function get(interaction) {
+async function get(interaction: ChatInputCommandInteraction) {
     /** @type {import('discord.js').Guild} */
     // @ts-ignore
     const guild = interaction.guild

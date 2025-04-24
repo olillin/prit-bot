@@ -1,11 +1,8 @@
-const { parseCalendar } = require('iamcal/parse')
-const { getGuildData } = require('./data')
+import type { Calendar, CalendarEvent } from 'iamcal'
+import { parseCalendar } from 'iamcal/parse'
+import { getGuildData } from './data'
 
-/**
- * @param {string} guildId
- * @returns {Promise<import('iamcal').Calendar|undefined>}
- */
-function getCalendar(guildId) {
+export function getCalendar(guildId: string): Promise<Calendar | undefined> {
     return new Promise(resolve => {
         const data = getGuildData(guildId)
         const url = data.responsibleCalendarUrl
@@ -22,12 +19,8 @@ function getCalendar(guildId) {
     })
 }
 
-/**
- * Parse a date string in the format YYYYMMDD, required because of a bug in 'iamcal'
- * @param {string} value
- * @returns {Date}
- */
-function parseDate(value) {
+/** Parse a date string in the format YYYYMMDD, required because of a bug in 'iamcal' */
+export function parseDate(value: string): Date {
     return new Date(
         parseInt(value.substring(0, 4)), //
         parseInt(value.substring(4, 6)) - 1,
@@ -35,13 +28,10 @@ function parseDate(value) {
     )
 }
 
-/**
- * Get the calendar event for the current responsible week
- * @param {string} guildId
- * @returns {Promise<import('iamcal').CalendarEvent|undefined>}
- */
-
-async function getCurrentResponsibleEvent(guildId) {
+/** Get the calendar event for the current responsible week */
+export async function getCurrentResponsibleEvent(
+    guildId: string
+): Promise<CalendarEvent | undefined> {
     const calendar = await getCalendar(guildId)
     if (!calendar) return undefined
 
@@ -73,10 +63,11 @@ async function getCurrentResponsibleEvent(guildId) {
 }
 
 /**
- * @param {string} guildId
- * @returns {Promise<string[]|undefined>} The people who are currently responsible
+ * @returns The people who are currently responsible
  */
-async function getCurrentlyResponsible(guildId) {
+export async function getCurrentlyResponsible(
+    guildId: string
+): Promise<string[] | undefined> {
     const event = await getCurrentResponsibleEvent(guildId)
 
     if (!event) return undefined
@@ -86,21 +77,17 @@ async function getCurrentlyResponsible(guildId) {
     return Array.of(...match).map(m => m[0])
 }
 
-/**
- * @param {Date} date
- * @returns {Date}
- */
-function toStartOfDay(date) {
+export function atStartOfDay(date: Date): Date {
     return new Date(date.getFullYear(), date.getMonth(), date.getDate())
 }
 
 /**
- *
- * @param {string} guildId
- * @returns {Promise<number>} The day of the responsibility week, starting at 1
+ * @returns The day of the responsibility week, starting at 1
  */
-async function getDayOfResponsibilityWeek(guildId) {
-    const today = toStartOfDay(new Date())
+export async function getDayOfResponsibilityWeek(
+    guildId: string
+): Promise<number> {
+    const today = atStartOfDay(new Date())
     const ONE_DAY_MS = 1000 * 60 * 60 * 24
     const day = Math.floor(today.getTime() / ONE_DAY_MS)
 
@@ -108,19 +95,13 @@ async function getDayOfResponsibilityWeek(guildId) {
     if (!event) {
         throw new Error('No current responsible event found')
     }
-    // @ts-ignore
-    const start = parseDate(event.getProperty('DTSTART').value)
+    const start = parseDate(event.getProperty('DTSTART')!.value)
     const startDay = Math.floor(start.getTime() / ONE_DAY_MS)
 
     return day - startDay + 1
 }
 
-/**
- *
- * @param {string} url
- * @returns {Promise<string>}
- */
-function scrapeWeek(url) {
+export function scrapeWeek(url: string): Promise<string> {
     return new Promise((resolve, reject) => {
         fetch(url).then(async response => {
             const text = await response.text()
@@ -137,10 +118,7 @@ function scrapeWeek(url) {
     })
 }
 
-/**
- * @returns {Promise<string | null>}
- */
-async function getWeek() {
+export async function getWeek(): Promise<string | null> {
     return new Promise(resolve => {
         scrapeWeek('https://vecka.nu')
             .then(resolve)
@@ -151,22 +129,10 @@ async function getWeek() {
     })
 }
 
-/**
- * @returns {Promise<string | null>}
- */
-async function getStudyWeek() {
+export async function getStudyWeek(): Promise<string | null> {
     return new Promise(resolve => {
         scrapeWeek('https://läsvecka.nu')
             .then(resolve)
             .catch(() => resolve(null))
     })
-}
-
-module.exports = {
-    getCurrentResponsibleEvent,
-    getDayOfResponsibilityWeek,
-    getCurrentlyResponsible,
-    getWeek,
-    getStudyWeek,
-    parseDate,
 }

@@ -1,5 +1,12 @@
-const { MessageFlags, SlashCommandBuilder } = require('discord.js')
-const { getGuildData, writeGuildData, canUseRole } = require('../data')
+import {
+    type ChatInputCommandInteraction,
+    type Guild,
+    type Role,
+    MessageFlags,
+    SlashCommandBuilder,
+} from 'discord.js'
+import { getGuildData, writeGuildData, canUseRole } from '../data'
+import type { CommandMap } from '../types'
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -22,11 +29,10 @@ module.exports = {
                 .setDescription('Rollen som ska användas')
         ),
 
-    /** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-    async execute(interaction) {
+    async execute(interaction: ChatInputCommandInteraction) {
         const command = interaction.options.getString('command', true)
 
-        const commandMap = {
+        const commandMap: CommandMap = {
             set,
             unset,
             get,
@@ -36,21 +42,19 @@ module.exports = {
     },
 }
 
-/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-async function set(interaction) {
+async function set(interaction: ChatInputCommandInteraction) {
     const role = interaction.options.getRole('role')
-    /** @type {import('discord.js').Guild} */
-    // @ts-ignore
-    const guild = interaction.guild
+    const guild: Guild = interaction.guild!
 
     if (role === null) {
         await interaction.reply({
             content: 'Du måste ange en roll',
             flags: MessageFlags.Ephemeral,
         })
+        return
     }
 
-    if (!(await canUseRole(guild, /** @type {import('discord.js').Role} */ (role)))) {
+    if (!(await canUseRole(guild, role as Role))) {
         await interaction.reply({
             content: 'Den rollen kan inte användas, saknar tillstånd',
             flags: MessageFlags.Ephemeral,
@@ -59,7 +63,6 @@ async function set(interaction) {
     }
 
     const data = getGuildData(guild.id)
-    // @ts-ignore
     data.responsibleRole = role.id
     writeGuildData(guild.id, data)
 
@@ -69,11 +72,8 @@ async function set(interaction) {
     })
 }
 
-/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-async function unset(interaction) {
-    /** @type {import('discord.js').Guild} */
-    // @ts-ignore
-    const guild = interaction.guild
+async function unset(interaction: ChatInputCommandInteraction) {
+    const guild: Guild = interaction.guild!
 
     const data = getGuildData(guild.id)
     data.responsibleRole = undefined
@@ -85,15 +85,11 @@ async function unset(interaction) {
     })
 }
 
-/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-async function get(interaction) {
-    /** @type {import('discord.js').Guild} */
-    // @ts-ignore
-    const guild = interaction.guild
+async function get(interaction: ChatInputCommandInteraction) {
+    const guild: Guild = interaction.guild!
 
     const data = getGuildData(guild.id)
-    /** @type {string | undefined} */
-    const roleId = data.responsibleRole
+    const roleId: string | undefined = data.responsibleRole
 
     if (!roleId) {
         await interaction.reply({

@@ -1,18 +1,17 @@
-const {
+import {
     SlashCommandBuilder,
-    PermissionFlagsBits,
     EmbedBuilder,
-} = require('discord.js')
-const { getDiscoveredReactions } = require('../data')
-const { getReactions } = require('../reactions')
+    type ChatInputCommandInteraction,
+} from 'discord.js'
+import { getDiscoveredReactions } from '../data'
+import { getReactions } from '../reactions'
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('reactions') //
         .setDescription('Se upptäckta reaktioner'),
 
-    /** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-    async execute(interaction) {
+    async execute(interaction: ChatInputCommandInteraction) {
         if (!interaction.guild) return
 
         const reactions = getReactions()

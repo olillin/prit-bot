@@ -1,16 +1,18 @@
-const {
+import {
     MessageFlags,
     SlashCommandBuilder,
     EmbedBuilder,
-} = require('discord.js')
-const {
+    ChatInputCommandInteraction,
+} from 'discord.js'
+import {
     addReminder,
     getReminderData,
     removeReminder,
     addReminderMutedUser,
     removeReminderMutedUser,
-} = require('../data')
-const { announceReminders } = require('../reminders')
+} from '../data'
+import { announceReminders } from '../reminders'
+import { CommandMap } from '../types'
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -48,11 +50,10 @@ module.exports = {
                 .setMinLength(1)
                 .setRequired(false)
         ),
-    /** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-    async execute(interaction) {
+    async execute(interaction: ChatInputCommandInteraction) {
         const command = interaction.options.getString('command', true)
 
-        const commandMap = {
+        const commandMap: CommandMap = {
             add,
             remove,
             list,
@@ -65,8 +66,7 @@ module.exports = {
     },
 }
 
-/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-async function add(interaction) {
+async function add(interaction: ChatInputCommandInteraction) {
     const day = interaction.options.getInteger('day')
     if (!day) {
         await interaction.reply({
@@ -96,8 +96,7 @@ async function add(interaction) {
     })
 }
 
-/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-async function remove(interaction) {
+async function remove(interaction: ChatInputCommandInteraction) {
     const day = interaction.options.getInteger('day')
     if (!day) {
         await interaction.reply({
@@ -152,8 +151,7 @@ async function remove(interaction) {
     })
 }
 
-/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-async function list(interaction) {
+async function list(interaction: ChatInputCommandInteraction) {
     const guildId = interaction.guildId
     if (!guildId) {
         throw new Error('Guild id is not defined')
@@ -185,8 +183,7 @@ async function list(interaction) {
     })
 }
 
-/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-async function remind(interaction) {
+async function remind(interaction: ChatInputCommandInteraction) {
     const guild = interaction.guild
     if (!guild) {
         throw new Error('Guild is not defined')
@@ -207,8 +204,7 @@ async function remind(interaction) {
     })
 }
 
-/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-async function mute(interaction) {
+async function mute(interaction: ChatInputCommandInteraction) {
     const guildId = interaction.guildId
     if (!guildId) {
         throw new Error('Guild id is not defined')
@@ -229,8 +225,7 @@ async function mute(interaction) {
     })
 }
 
-/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-async function unmute(interaction) {
+async function unmute(interaction: ChatInputCommandInteraction) {
     const guildId = interaction.guildId
     if (!guildId) {
         throw new Error('Guild id is not defined')
