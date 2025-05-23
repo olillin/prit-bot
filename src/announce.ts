@@ -82,7 +82,10 @@ export async function announceWeekEverywhere(client: Client): Promise<boolean> {
     return success
 }
 
-async function assignRole(guild: Guild, users: GuildMember | undefined) {
+async function assignRole(
+    guild: Guild,
+    users: Array<[string, GuildMember | undefined]>
+) {
     const role = await getResponsibleRole(guild)
     if (!role) {
         console.warn('Failed to assign roles, could not get role')
@@ -129,7 +132,11 @@ async function announceRemindersEverywhere(client: Client): Promise<boolean> {
     const promises = guilds.map(async guild =>
         announceReminders(await guild.fetch()).catch()
     )
-    const success = (await Promise.all(promises)).some(x => !!x)
+    let success = true
+    await Promise.all(promises).catch(reason => {
+        console.warn(`Failed to announce reminders: ${reason}`)
+        success = false
+    })
     return success
 }
 
