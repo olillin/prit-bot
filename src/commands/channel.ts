@@ -7,8 +7,9 @@ import {
 } from 'discord.js'
 import { getGuildData, writeGuildData, getAnnouncementChannel } from '../data'
 import type { CommandMap } from '../types'
+import { defineCommand } from '../util'
 
-export default {
+export default defineCommand({
     data: new SlashCommandBuilder()
         .setName('channel') //
         .setDescription('Hantera uppdateringskanalen')
@@ -38,7 +39,7 @@ export default {
 
         commandMap[command](interaction)
     },
-}
+})
 
 async function set(interaction: ChatInputCommandInteraction) {
     const correctChannelType =
@@ -79,9 +80,7 @@ async function set(interaction: ChatInputCommandInteraction) {
 }
 
 async function unset(interaction: ChatInputCommandInteraction) {
-    /** @type {string} */
-    // @ts-ignore
-    const guildId = interaction.guildId
+    const guildId = interaction.guildId!
     const data = getGuildData(guildId)
     data.announceChannel = undefined
     writeGuildData(guildId, data)
@@ -93,9 +92,7 @@ async function unset(interaction: ChatInputCommandInteraction) {
 }
 
 async function get(interaction: ChatInputCommandInteraction) {
-    /** @type {import('discord.js').Guild} */
-    // @ts-ignore
-    const guild = interaction.guild
+    const guild = interaction.guild!
     const channel = await getAnnouncementChannel(guild)
 
     if (channel) {

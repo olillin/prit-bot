@@ -12,6 +12,7 @@ import {
 import { announceLoop } from './announce'
 import { cycleActivities } from './activities'
 import { addReaction } from './reactions'
+import type { CommandData, CommandDefinition, ExtendedClient } from './types'
 
 if (!process.env.TOKEN) {
     console.error('Missing required environment TOKEN')
@@ -26,11 +27,10 @@ const client = new Client({
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
     ],
-})
+}) as ExtendedClient
 
-// @ts-ignore
-client.commands = new Collection()
-const commands = []
+client.commands = new Collection<string, CommandDefinition>()
+const commands: CommandData[] = []
 
 const commandFolder = path.join(__dirname, 'commands')
 const commandFiles = fs
@@ -39,16 +39,16 @@ const commandFiles = fs
 
 for (const file of commandFiles) {
     const filePath = path.join(commandFolder, file)
-    const command = require(filePath)
+    const command = require(filePath).default as CommandDefinition
     // Set a new item in the Collection with the key as the command name and the value as the exported module
     if ('data' in command && 'execute' in command) {
-        // @ts-ignore
         client.commands.set(command.data.name, command)
         commands.push(command.data.toJSON())
     } else {
         console.warn(
-            `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`
+            `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property:`
         )
+        console.warn(command)
     }
 }
 
@@ -56,7 +56,7 @@ for (const file of commandFiles) {
 client.on(Events.InteractionCreate, async interaction => {
     if (!interaction.isChatInputCommand()) return
 
-    const command = interaction.client.commands.get(interaction.commandName)
+    const command = (interaction.client as ExtendedClient).commands.get(interaction.commandName)
 
     if (!command) {
         console.error(
@@ -88,27 +88,27 @@ function registerSlashCommands(guildId: string) {
     const rest = new REST().setToken(TOKEN)
     const clientId = client.user!.id
 
-    // and deploy your commands!
-    ;(async () => {
-        try {
-            console.log(
-                `Started refreshing ${commands.length} application (/) commands.`
-            )
+        // and deploy your commands!
+        ; (async () => {
+            try {
+                console.log(
+                    `Started refreshing ${commands.length} application (/) commands.`
+                )
 
-            // The put method is used to fully refresh all commands in the guild with the current set
-            const data = await rest.put(
-                Routes.applicationGuildCommands(clientId, guildId),
-                { body: commands }
-            )
+                // The put method is used to fully refresh all commands in the guild with the current set
+                const data = await rest.put(
+                    Routes.applicationGuildCommands(clientId, guildId),
+                    { body: commands }
+                ) as object[]
 
-            console.log(
-                `Successfully reloaded ${data.length} application (/) commands.`
-            )
-        } catch (error) {
-            // And of course, make sure you catch and log any errors!
-            console.error(error)
-        }
-    })()
+                console.log(
+                    `Successfully reloaded ${data.length} application (/) commands.`
+                )
+            } catch (error) {
+                // And of course, make sure you catch and log any errors!
+                console.error(error)
+            }
+        })()
 }
 
 client.on(Events.GuildCreate, guild => {
@@ -126,8 +126,7 @@ client.on(Events.ClientReady, () => {
     })
 
     const ONE_HOUR = 1 * 60 * 60 * 1000
-    // @ts-ignore
-    cycleActivities(client.user, ONE_HOUR)
+    cycleActivities(client.user!, ONE_HOUR)
 
     announceLoop(client)
 

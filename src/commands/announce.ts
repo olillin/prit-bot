@@ -5,8 +5,9 @@ import {
     SlashCommandBuilder,
 } from 'discord.js'
 import { announceWeekIn } from '../announce'
+import { defineCommand } from '../util'
 
-export default {
+export default defineCommand({
     data: new SlashCommandBuilder()
         .setName('announce')
         .setDescription('Skicka uppdatering manuellt'),
@@ -20,4 +21,4 @@ export default {
             flags: MessageFlags.Ephemeral,
         })
     },
-}
+})

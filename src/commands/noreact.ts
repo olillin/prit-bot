@@ -7,8 +7,9 @@ import {
 } from 'discord.js'
 import { getNoReactChannels, setNoReactChannels } from '../data'
 import { CommandMap } from '../types'
+import { defineCommand } from '../util'
 
-module.exports = {
+export default defineCommand({
     data: new SlashCommandBuilder()
         .setName('noreact') //
         .setDescription('Markera kanaler att inte reagera i')
@@ -47,7 +48,7 @@ module.exports = {
 
         commandMap[command](interaction)
     },
-}
+})
 
 async function add(interaction: ChatInputCommandInteraction) {
     const channel = interaction.options.getChannel('channel')
@@ -129,8 +130,8 @@ async function list(interaction: ChatInputCommandInteraction) {
                     noReactChannels.size === 0
                         ? 'Inga kanaler markerade'
                         : Array.from(noReactChannels)
-                              .map(id => `- <#${id}>`)
-                              .join('\n')
+                            .map(id => `- <#${id}>`)
+                            .join('\n')
                 ),
         ],
         flags: MessageFlags.Ephemeral,

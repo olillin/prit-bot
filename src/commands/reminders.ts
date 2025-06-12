@@ -13,8 +13,9 @@ import {
 } from '../data'
 import { announceReminders } from '../reminders'
 import { CommandMap } from '../types'
+import { defineCommand } from '../util'
 
-module.exports = {
+export default defineCommand({
     data: new SlashCommandBuilder()
         .setName('reminders') //
         .setDescription(
@@ -64,7 +65,7 @@ module.exports = {
 
         commandMap[command](interaction)
     },
-}
+})
 
 async function add(interaction: ChatInputCommandInteraction) {
     const day = interaction.options.getInteger('day')
@@ -137,10 +138,17 @@ async function remove(interaction: ChatInputCommandInteraction) {
     try {
         removeReminder(guildId, day, index)
     } catch (message) {
-        await interaction.reply({
-            content: message,
-            flags: MessageFlags.Ephemeral,
-        })
+        if (typeof message === 'string') {
+            await interaction.reply({
+                content: message as string,
+                flags: MessageFlags.Ephemeral,
+            })
+        } else {
+            await interaction.reply({
+                content: 'Något gick fel, försök igen senare',
+                flags: MessageFlags.Ephemeral,
+            })
+        }
         return
     }
 

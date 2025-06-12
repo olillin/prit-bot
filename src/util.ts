@@ -1,4 +1,5 @@
 import type { Guild, GuildMember } from 'discord.js'
+import type { CommandDefinition } from './types'
 
 export async function sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms))
@@ -62,4 +63,8 @@ export function getUsers(
     return Promise.all(
         nicks.map(async name => [name, await getUser(guild, name)])
     )
+}
+
+export function defineCommand<T extends CommandDefinition>(commandData: T): T {
+    return commandData
 }

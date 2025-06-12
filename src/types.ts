@@ -3,7 +3,26 @@ import type {
     TextChannel,
     ChatInputCommandInteraction,
     EmojiIdentifierResolvable,
+    Client,
+    SlashCommandBuilder,
+    Collection,
+    Interaction,
+    CacheType,
+    SlashCommandOptionsOnlyBuilder,
+    SlashCommandSubcommandsOnlyBuilder,
 } from 'discord.js'
+
+export interface ExtendedClient extends Client {
+    commands: Collection<string, CommandDefinition>
+}
+
+export interface CommandDefinition {
+    data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder | SlashCommandSubcommandsOnlyBuilder
+    execute(interaction: ChatInputCommandInteraction): Promise<void>
+}
+
+
+export type CommandData = ReturnType<SlashCommandBuilder["toJSON"]>
 
 export type CommandMap = {
     [command: string]: (

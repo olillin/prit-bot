@@ -118,8 +118,7 @@ function discoverReactionEmbed(
     emoji: EmojiIdentifierResolvable
 ): APIEmbed {
     const isCustom = emoji.toString().match(/(\d+)>$/)
-    /** @type {string} */
-    let imageUrl
+    let imageUrl: string
     if (isCustom) {
         const id = isCustom[1]
         imageUrl = `https://cdn.discordapp.com/emojis/${id}.webp`

@@ -5,8 +5,9 @@ import {
 } from 'discord.js'
 import { getDiscoveredReactions } from '../data'
 import { getReactions } from '../reactions'
+import { defineCommand } from '../util'
 
-module.exports = {
+export default defineCommand({
     data: new SlashCommandBuilder()
         .setName('reactions') //
         .setDescription('Se upptäckta reaktioner'),
@@ -36,13 +37,12 @@ module.exports = {
             .setColor('#09cdda')
             .setDescription(body)
             .setFooter({
-                text: `Det finns ${undiscoveredCount} reaktion${
-                    undiscoveredCount == 1 ? '' : 'er'
-                } kvar att upptäcka`,
+                text: `Det finns ${undiscoveredCount} reaktion${undiscoveredCount == 1 ? '' : 'er'
+                    } kvar att upptäcka`,
                 iconURL:
                     'https://www.emoji.family/api/emojis/❔/twemoji/png/64',
             }).data
 
         interaction.reply({ embeds: [embed] })
     },
-}
+})

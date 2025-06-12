@@ -3,8 +3,9 @@ import {
     SlashCommandBuilder,
 } from 'discord.js'
 import { getWeek, getStudyWeek, getCurrentlyResponsible } from '../weekInfo'
+import { defineCommand } from '../util'
 
-module.exports = {
+export default defineCommand({
     data: new SlashCommandBuilder()
         .setName('vecka')
         .setDescription('Information om veckan'),
@@ -26,4 +27,4 @@ Läsvecka: ${studyWeek}
 Ansvarsvecka: ${responsible}`
         )
     },
-}
+})

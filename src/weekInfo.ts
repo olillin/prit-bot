@@ -40,10 +40,8 @@ export async function getCurrentResponsibleEvent(
     const dayInMs = 24 * 60 * 60 * 1000
 
     return calendar.events().find(event => {
-        // @ts-ignore
-        const start = event.getProperty('DTSTART').value
-        // @ts-ignore
-        const end = event.getProperty('DTEND').value
+        const start = event.getProperty('DTSTART')!.value
+        const end = event.getProperty('DTEND')!.value
 
         if (!isNaN(new Date(start).getTime())) return false
         if (!isNaN(new Date(end).getTime())) return false

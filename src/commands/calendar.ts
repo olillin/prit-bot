@@ -6,8 +6,9 @@ import {
 } from 'discord.js'
 import { getGuildData, writeGuildData } from '../data'
 import { CommandMap } from '../types'
+import { defineCommand } from '../util'
 
-export default {
+export default defineCommand({
     data: new SlashCommandBuilder()
         .setName('calendar')
         .setDescription('Hantera kalendern för ansvarsvecka')
@@ -39,13 +40,11 @@ export default {
 
         commandMap[command](interaction)
     },
-}
+})
 
 async function set(interaction: ChatInputCommandInteraction) {
-    const url = interaction.options.getString('url')
-    /** @type {import('discord.js').Guild} */
-    // @ts-ignore
-    const guild = interaction.guild
+    const url = interaction.options.getString('url') ?? undefined
+    const guild = interaction.guild!
 
     if (url === null) {
         await interaction.reply({
@@ -55,7 +54,6 @@ async function set(interaction: ChatInputCommandInteraction) {
     }
 
     const data = getGuildData(guild.id)
-    // @ts-ignore
     data.responsibleCalendarUrl = url
     writeGuildData(guild.id, data)
 
@@ -82,7 +80,6 @@ async function get(interaction: ChatInputCommandInteraction) {
     const guild: Guild = interaction.guild!
 
     const data = getGuildData(guild.id)
-    /** @type {string | undefined} */
     const url = data.responsibleCalendarUrl
 
     if (!url) {

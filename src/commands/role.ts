@@ -7,8 +7,9 @@ import {
 } from 'discord.js'
 import { getGuildData, writeGuildData, canUseRole } from '../data'
 import type { CommandMap } from '../types'
+import { defineCommand } from '../util'
 
-module.exports = {
+export default defineCommand({
     data: new SlashCommandBuilder()
         .setName('role')
         .setDescription('Bestäm roll för ansvarsvecka')
@@ -40,7 +41,7 @@ module.exports = {
 
         commandMap[command](interaction)
     },
-}
+})
 
 async function set(interaction: ChatInputCommandInteraction) {
     const role = interaction.options.getRole('role')
