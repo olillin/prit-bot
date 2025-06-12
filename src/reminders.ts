@@ -8,13 +8,7 @@ export async function getRemindersEmbedToday(
     guild: Guild
 ): Promise<EmbedBuilder | null> {
     const reminderData = getReminderData(guild.id)
-    let day
-    try {
-        day = await getDayOfResponsibilityWeek(guild.id)
-    } catch (e) {
-        console.warn('Failed to get day of responsibility week')
-        return null
-    }
+    const day = await getDayOfResponsibilityWeek(guild.id)
 
     const reminders = reminderData.days[day]
     if (!reminders || reminders.length === 0) {
@@ -61,7 +55,16 @@ export async function getRemindersEmbedToday(
 }
 
 export async function announceReminders(guild: Guild) {
-    const embed = await getRemindersEmbedToday(guild)
+    let embed: EmbedBuilder | null
+    try {
+        embed = await getRemindersEmbedToday(guild)
+    } catch (message) {
+        if (typeof message === 'string') {
+            throw `Kunde inte skicka påminnelser: ${message}`
+        } else {
+            throw 'Kunde inte skicka påminnelser, ett okänt fel inträffade'
+        }
+    }
     if (!embed) {
         throw 'Skickade inte påminnelser, inga påminnelser idag'
     }

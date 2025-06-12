@@ -91,7 +91,7 @@ export async function getDayOfResponsibilityWeek(
 
     const event = await getCurrentResponsibleEvent(guildId)
     if (!event) {
-        throw new Error('No current responsible event found')
+        throw 'Kunde inte hitta ansvarsvecka'
     }
     const start = parseDate(event.getProperty('DTSTART')!.value)
     const startDay = Math.floor(start.getTime() / ONE_DAY_MS)
