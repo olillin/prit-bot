@@ -1,17 +1,12 @@
-const { EmbedBuilder } = require('discord.js')
-const { getReminderData, getAnnouncementChannel } = require('./data')
-const {
-    getDayOfResponsibilityWeek,
-    getCurrentlyResponsible,
-} = require('./weekInfo')
-const { getUsers } = require('./util')
+import { EmbedBuilder, type Guild } from 'discord.js'
+import { getReminderData, getAnnouncementChannel } from './data'
+import { getDayOfResponsibilityWeek, getCurrentlyResponsible } from './weekInfo'
+import { getUsers } from './util'
 
-/**
- * Get an embed for the reminders today
- * @param {import('discord.js').Guild} guild
- * @returns {Promise<import('discord.js').EmbedBuilder|null>}
- */
-async function getRemindersEmbedToday(guild) {
+/** Get an embed for the reminders today */
+export async function getRemindersEmbedToday(
+    guild: Guild
+): Promise<EmbedBuilder | null> {
     const reminderData = getReminderData(guild.id)
     let day
     try {
@@ -35,7 +30,6 @@ async function getRemindersEmbedToday(guild) {
     const title = `Ansvarsvecka Påminnelser ${dateString}`
 
     // Description
-    /** @type {string} */
     let userLine = ''
     const responsibleNames = await getCurrentlyResponsible(guild.id)
     if (responsibleNames) {
@@ -66,12 +60,7 @@ async function getRemindersEmbedToday(guild) {
         ])
 }
 
-/**
- *
- * @param {import('discord.js').Guild} guild
- * @returns {Promise<void>}
- */
-async function announceReminders(guild) {
+export async function announceReminders(guild: Guild) {
     const embed = await getRemindersEmbedToday(guild)
     if (!embed) {
         throw 'Skickade inte påminnelser, inga påminnelser idag'
@@ -89,5 +78,3 @@ async function announceReminders(guild) {
         throw 'Misslyckades med att skicka meddelande'
     }
 }
-
-module.exports = { getRemindersEmbedToday, announceReminders }

@@ -1,13 +1,18 @@
-async function sleep(ms) {
+import type { Guild, GuildMember } from 'discord.js'
+import type { CommandDefinition } from './types'
+
+export async function sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms))
 }
 
 /**
- * @param {string} timeString The time as a string such as "09:00"
- * @param {number} [after=Date.now()] Time to start from
- * @returns {Date}
+ * @param timeString The time as a string such as "09:00"
+ * @param after Time to start from
  */
-function getNextTime(timeString, after = Date.now()) {
+export function getNextTime(
+    timeString: string,
+    after: number = Date.now()
+): Date {
     const parts = timeString.split(':').map(Number)
     if (parts.length > 4) {
         throw new Error('Invalid time string, too many parts')
@@ -35,13 +40,11 @@ function getNextTime(timeString, after = Date.now()) {
     return new Date(next)
 }
 
-/**
- * Get a user in a guild from their nick
- * @param {import('discord.js').Guild} guild
- * @param {string} nick
- * @returns {Promise<import('discord.js').GuildMember|undefined>}
- */
-async function getUser(guild, nick) {
+/** Get a user in a guild from their nick */
+export async function getUser(
+    guild: Guild,
+    nick: string
+): Promise<GuildMember | undefined> {
     const members = await guild.members.fetch()
     for (const [, member] of members) {
         const discordNickname = (
@@ -53,24 +56,15 @@ async function getUser(guild, nick) {
     }
 }
 
-/**
- * @param {string[]} nicks
- * @param {import('discord.js').Guild} guild
- * @returns Promise<Array<[string, GuildMember | undefined]>>
- */
-/**
- * @param {string[]} nicks
- * @param {import('discord.js').Guild} guild
- * @returns {Promise<Array<[string, import('discord.js').GuildMember | undefined]>>}
- */
-function getUsers(nicks, guild) {
-    return /** @type {Promise<Array<[string, import('discord.js').GuildMember | undefined]>>} */ (
-        /** @type {unknown} */ (
-            Promise.all(
-                nicks.map(async name => [name, await getUser(guild, name)])
-            )
-        )
+export function getUsers(
+    nicks: string[],
+    guild: Guild
+): Promise<Array<[string, GuildMember | undefined]>> {
+    return Promise.all(
+        nicks.map(async name => [name, await getUser(guild, name)])
     )
 }
 
-module.exports = { sleep, getNextTime, getUser, getUsers }
+export function defineCommand<T extends CommandDefinition>(commandData: T): T {
+    return commandData
+}

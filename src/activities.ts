@@ -1,22 +1,22 @@
-const { ActivityType } = require('discord.js')
-const fs = require('fs')
-const { sleep } = require('./util')
+import type { ActivityOptions, ClientUser } from 'discord.js'
 
-/** @type {import("discord.js").ActivityOptions[]} */
-const DEFAULT_ACTIVITIES = [
+import { ActivityType } from 'discord.js'
+import fs from 'fs'
+import { sleep } from './util'
+
+export const DEFAULT_ACTIVITIES: ActivityOptions[] = [
     {
         name: 'Dansbandstechno',
         type: ActivityType.Listening,
     },
 ]
 
-/** @returns {import("discord.js").ActivityOptions[]} */
-function getActivities(filename = 'activities.json') {
+export function getActivities(filename = 'activities.json'): ActivityOptions[] {
     if (fs.existsSync(filename)) {
         const text = fs.readFileSync(filename, 'utf8')
 
         try {
-            const parsed = JSON.parse(text)
+            const parsed: ActivityOptions[] = JSON.parse(text)
 
             if (parsed.length === 0) {
                 console.warn(
@@ -27,7 +27,9 @@ function getActivities(filename = 'activities.json') {
 
             parsed.forEach(activity => {
                 if (activity.type) {
-                    activity.type = ActivityType[activity.type]
+                    activity.type = ActivityType[
+                        activity.type
+                    ] as unknown as ActivityType
                     if (activity.type === undefined)
                         throw new Error('Invalid activity type')
                 }
@@ -45,17 +47,18 @@ function getActivities(filename = 'activities.json') {
 
 /**
  * Cycles through activities at a set interval
- * @param {import('discord.js').ClientUser} clientUser Discord client user to change activity for
- * @param {number} interval Delay between activity changes in milliseconds
- * @returns {Promise<never>}
+ * @param clientUser Discord client user to change activity for
+ * @param interval Delay between activity changes in milliseconds
  */
-async function cycleActivities(clientUser, interval) {
-    /** @type {import('discord.js').ActivityOptions | undefined} */
-    let previousActivity = undefined
+export async function cycleActivities(
+    clientUser: ClientUser,
+    interval: number
+): Promise<never> {
+    let previousActivity: ActivityOptions | undefined = undefined
     while (true) {
         // Get new activity
         const activities = getActivities()
-        let activity = previousActivity
+        let activity: ActivityOptions | undefined = previousActivity
         while (
             activity === undefined ||
             (activities.length > 1 &&
@@ -64,9 +67,8 @@ async function cycleActivities(clientUser, interval) {
             activity = activities[Math.floor(Math.random() * activities.length)]
         }
 
-        // @ts-ignore
         console.log(
-            `Set activity to (${ActivityType[activity.type]}) ${activity.name}`
+            `Set activity to (${ActivityType[activity.type!]}) ${activity.name}`
         )
         await clientUser.setActivity(activity)
 
@@ -75,5 +77,3 @@ async function cycleActivities(clientUser, interval) {
         previousActivity = activity
     }
 }
-
-module.exports = { DEFAULT_ACTIVITIES, getActivities, cycleActivities }

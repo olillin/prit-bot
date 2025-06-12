@@ -1,17 +1,15 @@
-const {
+import {
     MessageFlags,
     SlashCommandBuilder,
     ChannelType,
     EmbedBuilder,
-} = require('discord.js')
-const {
-    getGuildData,
-    writeGuildData,
-    getNoReactChannels,
-    setNoReactChannels,
-} = require('../data')
+    type ChatInputCommandInteraction,
+} from 'discord.js'
+import { getNoReactChannels, setNoReactChannels } from '../data'
+import { CommandMap } from '../types'
+import { defineCommand } from '../util'
 
-module.exports = {
+export default defineCommand({
     data: new SlashCommandBuilder()
         .setName('noreact') //
         .setDescription('Markera kanaler att inte reagera i')
@@ -39,11 +37,10 @@ module.exports = {
                 )
                 .setRequired(false)
         ),
-    /** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-    async execute(interaction) {
+    async execute(interaction: ChatInputCommandInteraction) {
         const command = interaction.options.getString('command', true)
 
-        const commandMap = {
+        const commandMap: CommandMap = {
             add,
             remove,
             list,
@@ -51,10 +48,9 @@ module.exports = {
 
         commandMap[command](interaction)
     },
-}
+})
 
-/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-async function add(interaction) {
+async function add(interaction: ChatInputCommandInteraction) {
     const channel = interaction.options.getChannel('channel')
     if (!channel) {
         await interaction.reply({
@@ -86,8 +82,7 @@ async function add(interaction) {
     })
 }
 
-/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-async function remove(interaction) {
+async function remove(interaction: ChatInputCommandInteraction) {
     const channel = interaction.options.getChannel('channel')
     if (!channel) {
         await interaction.reply({
@@ -119,8 +114,7 @@ async function remove(interaction) {
     })
 }
 
-/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-async function list(interaction) {
+async function list(interaction: ChatInputCommandInteraction) {
     const guildId = interaction.guildId
     if (!guildId) {
         throw new Error('Guild id is not defined')
@@ -136,8 +130,8 @@ async function list(interaction) {
                     noReactChannels.size === 0
                         ? 'Inga kanaler markerade'
                         : Array.from(noReactChannels)
-                              .map(id => `- <#${id}>`)
-                              .join('\n')
+                            .map(id => `- <#${id}>`)
+                            .join('\n')
                 ),
         ],
         flags: MessageFlags.Ephemeral,

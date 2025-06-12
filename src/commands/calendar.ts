@@ -1,7 +1,14 @@
-const { MessageFlags, SlashCommandBuilder } = require('discord.js')
-const { getGuildData, writeGuildData } = require('../data')
+import {
+    type ChatInputCommandInteraction,
+    type Guild,
+    MessageFlags,
+    SlashCommandBuilder,
+} from 'discord.js'
+import { getGuildData, writeGuildData } from '../data'
+import { CommandMap } from '../types'
+import { defineCommand } from '../util'
 
-module.exports = {
+export default defineCommand({
     data: new SlashCommandBuilder()
         .setName('calendar')
         .setDescription('Hantera kalendern för ansvarsvecka')
@@ -22,11 +29,10 @@ module.exports = {
                 .setDescription('URL till kalendern som ska användas')
         ),
 
-    /** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-    async execute(interaction) {
+    async execute(interaction: ChatInputCommandInteraction) {
         const command = interaction.options.getString('command', true)
 
-        const commandMap = {
+        const commandMap: CommandMap = {
             set,
             unset,
             get,
@@ -34,14 +40,11 @@ module.exports = {
 
         commandMap[command](interaction)
     },
-}
+})
 
-/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-async function set(interaction) {
-    const url = interaction.options.getString('url')
-    /** @type {import('discord.js').Guild} */
-    // @ts-ignore
-    const guild = interaction.guild
+async function set(interaction: ChatInputCommandInteraction) {
+    const url = interaction.options.getString('url') ?? undefined
+    const guild = interaction.guild!
 
     if (url === null) {
         await interaction.reply({
@@ -51,7 +54,6 @@ async function set(interaction) {
     }
 
     const data = getGuildData(guild.id)
-    // @ts-ignore
     data.responsibleCalendarUrl = url
     writeGuildData(guild.id, data)
 
@@ -61,11 +63,8 @@ async function set(interaction) {
     })
 }
 
-/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-async function unset(interaction) {
-    /** @type {import('discord.js').Guild} */
-    // @ts-ignore
-    const guild = interaction.guild
+async function unset(interaction: ChatInputCommandInteraction) {
+    const guild: Guild = interaction.guild!
 
     const data = getGuildData(guild.id)
     data.responsibleCalendarUrl = undefined
@@ -77,14 +76,10 @@ async function unset(interaction) {
     })
 }
 
-/** @param {import('discord.js').ChatInputCommandInteraction} interaction */
-async function get(interaction) {
-    /** @type {import('discord.js').Guild} */
-    // @ts-ignore
-    const guild = interaction.guild
+async function get(interaction: ChatInputCommandInteraction) {
+    const guild: Guild = interaction.guild!
 
     const data = getGuildData(guild.id)
-    /** @type {string | undefined} */
     const url = data.responsibleCalendarUrl
 
     if (!url) {

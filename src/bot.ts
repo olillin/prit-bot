@@ -1,6 +1,6 @@
-const fs = require('node:fs')
-const path = require('node:path')
-const {
+import fs from 'node:fs'
+import path from 'node:path'
+import {
     Client,
     GatewayIntentBits,
     Collection,
@@ -8,32 +8,29 @@ const {
     Routes,
     REST,
     MessageFlags,
-} = require('discord.js')
-const { announceLoop } = require('./announce')
-const { cycleActivities } = require('./activities')
-const { addReaction } = require('./reactions')
+} from 'discord.js'
+import { announceLoop } from './announce'
+import { cycleActivities } from './activities'
+import { addReaction } from './reactions'
+import type { CommandData, CommandDefinition, ExtendedClient } from './types'
 
-const { TOKEN } = process.env
-if (!TOKEN) {
+if (!process.env.TOKEN) {
     console.error('Missing required environment TOKEN')
-    process.exit()
+    process.exit(1)
 }
+const TOKEN = process.env.TOKEN
 
-/** @type {import('discord.js').Client} */
-const client = /** @type {any} */ (
-    new Client({
-        intents: [
-            GatewayIntentBits.Guilds, //
-            GatewayIntentBits.GuildMembers,
-            GatewayIntentBits.GuildMessages,
-            GatewayIntentBits.MessageContent,
-        ],
-    })
-)
+const client = new Client({
+    intents: [
+        GatewayIntentBits.Guilds, //
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent,
+    ],
+}) as ExtendedClient
 
-// @ts-ignore
-client.commands = new Collection()
-const commands = []
+client.commands = new Collection<string, CommandDefinition>()
+const commands: CommandData[] = []
 
 const commandFolder = path.join(__dirname, 'commands')
 const commandFiles = fs
@@ -42,16 +39,16 @@ const commandFiles = fs
 
 for (const file of commandFiles) {
     const filePath = path.join(commandFolder, file)
-    const command = require(filePath)
+    const command = require(filePath).default as CommandDefinition
     // Set a new item in the Collection with the key as the command name and the value as the exported module
     if ('data' in command && 'execute' in command) {
-        // @ts-ignore
         client.commands.set(command.data.name, command)
         commands.push(command.data.toJSON())
     } else {
         console.warn(
-            `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`
+            `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property:`
         )
+        console.warn(command)
     }
 }
 
@@ -59,8 +56,7 @@ for (const file of commandFiles) {
 client.on(Events.InteractionCreate, async interaction => {
     if (!interaction.isChatInputCommand()) return
 
-    // @ts-ignore
-    const command = interaction.client.commands.get(interaction.commandName)
+    const command = (interaction.client as ExtendedClient).commands.get(interaction.commandName)
 
     if (!command) {
         console.error(
@@ -87,35 +83,32 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 })
 
-function registerSlashCommands(guildId) {
+function registerSlashCommands(guildId: string) {
     // Construct and prepare an instance of the REST module
-    // @ts-ignore
     const rest = new REST().setToken(TOKEN)
-    // @ts-ignore
-    const clientId = client.user.id
+    const clientId = client.user!.id
 
-    // and deploy your commands!
-    ;(async () => {
-        try {
-            console.log(
-                `Started refreshing ${commands.length} application (/) commands.`
-            )
+        // and deploy your commands!
+        ; (async () => {
+            try {
+                console.log(
+                    `Started refreshing ${commands.length} application (/) commands.`
+                )
 
-            // The put method is used to fully refresh all commands in the guild with the current set
-            const data = await rest.put(
-                Routes.applicationGuildCommands(clientId, guildId),
-                { body: commands }
-            )
+                // The put method is used to fully refresh all commands in the guild with the current set
+                const data = await rest.put(
+                    Routes.applicationGuildCommands(clientId, guildId),
+                    { body: commands }
+                ) as object[]
 
-            // @ts-ignore
-            console.log(
-                `Successfully reloaded ${data.length} application (/) commands.`
-            )
-        } catch (error) {
-            // And of course, make sure you catch and log any errors!
-            console.error(error)
-        }
-    })()
+                console.log(
+                    `Successfully reloaded ${data.length} application (/) commands.`
+                )
+            } catch (error) {
+                // And of course, make sure you catch and log any errors!
+                console.error(error)
+            }
+        })()
 }
 
 client.on(Events.GuildCreate, guild => {
@@ -133,8 +126,7 @@ client.on(Events.ClientReady, () => {
     })
 
     const ONE_HOUR = 1 * 60 * 60 * 1000
-    // @ts-ignore
-    cycleActivities(client.user, ONE_HOUR)
+    cycleActivities(client.user!, ONE_HOUR)
 
     announceLoop(client)
 
