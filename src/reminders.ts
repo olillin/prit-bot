@@ -8,7 +8,7 @@ export async function getRemindersEmbedToday(
     guild: Guild
 ): Promise<EmbedBuilder | null> {
     const reminderData = getReminderData(guild.id)
-    const day = await getDayOfResponsibilityWeek(guild.id)
+    const day = getDayOfResponsibilityWeek(guild.id)
 
     const reminders = reminderData.days[day]
     if (!reminders || reminders.length === 0) {
