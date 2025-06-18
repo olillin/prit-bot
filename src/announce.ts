@@ -128,7 +128,7 @@ export async function announceLoop(client: Client): Promise<void> {
     }
 
     const next = getNextTime(announceTimeString)
-    console.log(`Next announcements at ${next.toISOString()}`)
+    console.log(`Next announcements at ${next}`)
     schedule(next, () => {
         announceLoop(client)
     })

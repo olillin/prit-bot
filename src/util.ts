@@ -2,6 +2,7 @@ import type { Guild, GuildMember } from 'discord.js'
 import type { CommandDefinition } from './types'
 
 export const ONE_HOUR = 60 * 60 * 1000
+export const ONE_DAY = 24 * ONE_HOUR
 
 export async function sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms))
@@ -72,17 +73,19 @@ export function timeStringToMilliseconds(timeString: string): number {
  */
 export function getNextTime(
     timeString: string,
-    after: number = Date.now()
+    after: Date = new Date()
 ): Date {
     const time = timeStringToMilliseconds(timeString)
 
-    const ONE_DAY = 24 * ONE_HOUR
-    const afterDay = after - (after % ONE_DAY) // Remove time part of after
-    const next = afterDay + time
-    if (next < after) {
-        return new Date(next + ONE_DAY)
-    }
-    return new Date(next)
+    const timezoneOffsetMs = after.getTimezoneOffset() * 60 * 1000
+    const afterTimeMs = after.getTime()
+    const afterTimeMsWithOffset = afterTimeMs + timezoneOffsetMs
+    // Time at midnight with timezone offset
+    const afterDay = afterTimeMs - (afterTimeMs % ONE_DAY) + timezoneOffsetMs
+    const nextTimeMs = afterDay + time
+
+    const dayOffset = Math.max(0, Math.ceil((afterTimeMs - nextTimeMs) / ONE_DAY))
+    return new Date(nextTimeMs + ONE_DAY * dayOffset)
 }
 
 export async function schedule(time: Date, callback: () => void): Promise<void> {
