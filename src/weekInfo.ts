@@ -75,28 +75,14 @@ export async function getCurrentlyResponsible(
     return Array.of(...match).map(m => m[0])
 }
 
-export function atStartOfDay(date: Date): Date {
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate())
-}
-
 /**
  * @returns The day of the responsibility week, starting at 1
  */
-export async function getDayOfResponsibilityWeek(
+export function getDayOfResponsibilityWeek(
     guildId: string
-): Promise<number> {
-    const today = atStartOfDay(new Date())
-    const ONE_DAY_MS = 1000 * 60 * 60 * 24
-    const day = Math.floor(today.getTime() / ONE_DAY_MS)
-
-    const event = await getCurrentResponsibleEvent(guildId)
-    if (!event) {
-        throw new Error('No current responsible event found')
-    }
-    const start = parseDate(event.getProperty('DTSTART')!.value)
-    const startDay = Math.floor(start.getTime() / ONE_DAY_MS)
-
-    return day - startDay + 1
+): number {
+    const today = new Date()
+    return today.getDay()
 }
 
 export function scrapeWeek(url: string): Promise<string> {
