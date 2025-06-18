@@ -13,12 +13,13 @@ import { announceLoop } from './announce'
 import { cycleActivities } from './activities'
 import { addReaction } from './reactions'
 import type { CommandData, CommandDefinition, ExtendedClient } from './types'
+import { remindersLoop } from './reminders'
+import { discordToken, validateEnvironment } from './environment'
 
-if (!process.env.TOKEN) {
-    console.error('Missing required environment TOKEN')
+if (!validateEnvironment()) {
+    console.error('Environment is invalid. Exiting...')
     process.exit(1)
 }
-const TOKEN = process.env.TOKEN
 
 const client = new Client({
     intents: [
@@ -85,7 +86,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
 function registerSlashCommands(guildId: string) {
     // Construct and prepare an instance of the REST module
-    const rest = new REST().setToken(TOKEN)
+    const rest = new REST().setToken(discordToken!)
     const clientId = client.user!.id
 
         // and deploy your commands!
@@ -129,8 +130,9 @@ client.on(Events.ClientReady, () => {
     cycleActivities(client.user!, ONE_HOUR)
 
     announceLoop(client)
+    remindersLoop(client)
 
     console.log('Bot is ready')
 })
 
-client.login(TOKEN)
+client.login(discordToken!)

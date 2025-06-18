@@ -1,7 +1,8 @@
-import { EmbedBuilder, type Guild } from 'discord.js'
-import { getReminderData, getAnnouncementChannel } from './data'
-import { getDayOfResponsibilityWeek, getCurrentlyResponsible } from './weekInfo'
-import { getUsers } from './util'
+import { Client, EmbedBuilder, type Guild } from 'discord.js'
+import { getAnnouncementChannel, getReminderData } from './data'
+import { remindersTimeString } from './environment'
+import { getNextTime, getUsers, schedule } from './util'
+import { getCurrentlyResponsible, getDayOfResponsibilityWeek } from './weekInfo'
 
 /** Get an embed for the reminders today */
 export async function getRemindersEmbedToday(
@@ -80,4 +81,29 @@ export async function announceReminders(guild: Guild) {
         console.error('Failed to send reminders', e)
         throw 'Misslyckades med att skicka meddelande'
     }
+}
+
+async function announceRemindersEverywhere(client: Client): Promise<boolean> {
+    const guilds = await client.guilds.fetch()
+    const promises = guilds.map(async guild =>
+        announceReminders(await guild.fetch()).catch()
+    )
+    let success = true
+    await Promise.all(promises).catch(reason => {
+        console.warn(`Failed to announce reminders: ${reason}`)
+        success = false
+    })
+    return success
+}
+
+export async function remindersLoop(client: Client): Promise<void> {
+    // Send reminders every day
+    console.log('Sending reminders...')
+    await announceRemindersEverywhere(client)
+
+    const next = getNextTime(remindersTimeString)
+    console.log(`Next reminders at ${next}`)
+    schedule(next, () => {
+        remindersLoop(client)
+    })
 }
