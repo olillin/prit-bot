@@ -12,26 +12,31 @@ import { defineCommand } from '../util/guild'
 export default defineCommand({
     data: new SlashCommandBuilder()
         .setName('role')
-        .setDescription('Bestäm roll för ansvarsvecka')
-        .addStringOption(option =>
-            option
-                .setName('command') //
-                .setDescription('Vad du vill göra')
-                .setChoices(
-                    { name: 'Sätt roll', value: 'set' }, //
-                    { name: 'Ta bort roll', value: 'unset' },
-                    { name: 'Se roll', value: 'get' }
+        .setDescription('Hantera roll att ge till de som har ansvarsvecka')
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('set')
+                .setDescription('Sätt roll för ansvarsvecka')
+                .addRoleOption(option =>
+                    option
+                        .setName('role')
+                        .setDescription('Rollen som ska användas')
+                        .setRequired(true)
                 )
-                .setRequired(true)
         )
-        .addRoleOption(option =>
-            option
-                .setName('role') //
-                .setDescription('Rollen som ska användas')
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('unset')
+                .setDescription('Ta bort roll för ansvarsvecka')
+        )
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('get')
+                .setDescription('Se roll för ansvarsvecka')
         ),
 
     async execute(interaction: ChatInputCommandInteraction) {
-        const command = interaction.options.getString('command', true)
+        const command = interaction.options.getSubcommand() as 'set' | 'unset' | 'get'
 
         const commandMap: CommandMap = {
             set,
@@ -44,16 +49,8 @@ export default defineCommand({
 })
 
 async function set(interaction: ChatInputCommandInteraction) {
-    const role = interaction.options.getRole('role')
+    const role = interaction.options.getRole('role', true)
     const guild: Guild = interaction.guild!
-
-    if (role === null) {
-        await interaction.reply({
-            content: 'Du måste ange en roll',
-            flags: MessageFlags.Ephemeral,
-        })
-        return
-    }
 
     if (!(await canUseRole(guild, role as Role))) {
         await interaction.reply({

@@ -13,32 +13,47 @@ export default defineCommand({
     data: new SlashCommandBuilder()
         .setName('noreact') //
         .setDescription('Markera kanaler att inte reagera i')
-        .addStringOption(option =>
-            option
-                .setName('command') //
-                .setDescription('Vad du vill göra')
-                .setChoices(
-                    { name: 'Markera en kanal', value: 'add' }, //
-                    { name: 'Ta bort en markering', value: 'remove' },
-                    { name: 'Se vilka kanaler som är markerade', value: 'list' }
-                )
-                .setRequired(true)
-        )
-        .addChannelOption(option =>
-            option
-                .setName('channel')
-                .setDescription('Kanal att (av)markera')
-                .addChannelTypes(
-                    ChannelType.GuildText,
-                    ChannelType.GuildAnnouncement,
-                    ChannelType.GuildForum,
-                    ChannelType.PublicThread,
-                    ChannelType.PrivateThread
-                )
-                .setRequired(false)
-        ),
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('add')
+                .setDescription('Markera en kanal')
+                .addChannelOption(option =>
+                    option
+                        .setName('channel')
+                        .setDescription('Kanal att (av)markera')
+                        .addChannelTypes(
+                            ChannelType.GuildText,
+                            ChannelType.GuildAnnouncement,
+                            ChannelType.GuildForum,
+                            ChannelType.PublicThread,
+                            ChannelType.PrivateThread
+                        )
+                        .setRequired(true)
+                ))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('remove')
+                .setDescription('Ta bort en markering')
+                .addChannelOption(option =>
+                    option
+                        .setName('channel')
+                        .setDescription('Kanal att (av)markera')
+                        .addChannelTypes(
+                            ChannelType.GuildText,
+                            ChannelType.GuildAnnouncement,
+                            ChannelType.GuildForum,
+                            ChannelType.PublicThread,
+                            ChannelType.PrivateThread
+                        )
+                        .setRequired(true)
+                ))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('list')
+                .setDescription('Se vilka kanaler som är markerade')),
+
     async execute(interaction: ChatInputCommandInteraction) {
-        const command = interaction.options.getString('command', true)
+        const command = interaction.options.getSubcommand() as 'add' | 'remove' | 'list'
 
         const commandMap: CommandMap = {
             add,
@@ -51,14 +66,7 @@ export default defineCommand({
 })
 
 async function add(interaction: ChatInputCommandInteraction) {
-    const channel = interaction.options.getChannel('channel')
-    if (!channel) {
-        await interaction.reply({
-            content: 'Du måste ange en kanal',
-            flags: MessageFlags.Ephemeral,
-        })
-        return
-    }
+    const channel = interaction.options.getChannel('channel', true)
     const channelId = channel.id
     const guildId = interaction.guildId
     if (!guildId) {
@@ -83,14 +91,7 @@ async function add(interaction: ChatInputCommandInteraction) {
 }
 
 async function remove(interaction: ChatInputCommandInteraction) {
-    const channel = interaction.options.getChannel('channel')
-    if (!channel) {
-        await interaction.reply({
-            content: 'Du måste ange en kanal',
-            flags: MessageFlags.Ephemeral,
-        })
-        return
-    }
+    const channel = interaction.options.getChannel('channel', true)
     const channelId = channel.id
 
     const guildId = interaction.guildId

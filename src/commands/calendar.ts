@@ -12,25 +12,28 @@ export default defineCommand({
     data: new SlashCommandBuilder()
         .setName('calendar')
         .setDescription('Hantera kalendern för ansvarsvecka')
-        .addStringOption(option =>
-            option
-                .setName('command') //
-                .setDescription('Vad du vill göra')
-                .setChoices(
-                    { name: 'Sätt kalender', value: 'set' }, //
-                    { name: 'Ta bort kalender', value: 'unset' },
-                    { name: 'Se kalender', value: 'get' }
-                )
-                .setRequired(true)
-        )
-        .addStringOption(option =>
-            option
-                .setName('url') //
-                .setDescription('URL till kalendern som ska användas')
+        .addSubcommand(subcommand =>
+            subcommand
+                .setDescription('Sätt länk till kalendern')
+                .setName('set')
+                .addStringOption(option =>
+                    option
+                        .setName('url')
+                        .setDescription('URL till kalendern som ska användas')
+                        .setRequired(true)
+                ))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setDescription('Ta bort kalendern')
+                .setName('unset'))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setDescription('Se länken till kalendern')
+                .setName('get')
         ),
 
     async execute(interaction: ChatInputCommandInteraction) {
-        const command = interaction.options.getString('command', true)
+        const command = interaction.options.getSubcommand() as 'set' | 'unset' | 'get'
 
         const commandMap: CommandMap = {
             set,
@@ -45,13 +48,6 @@ export default defineCommand({
 async function set(interaction: ChatInputCommandInteraction) {
     const url = interaction.options.getString('url') ?? undefined
     const guild = interaction.guild!
-
-    if (url === null) {
-        await interaction.reply({
-            content: 'Du måste ange en URL',
-            flags: MessageFlags.Ephemeral,
-        })
-    }
 
     const data = getGuildData(guild.id)
     data.responsibleCalendarUrl = url

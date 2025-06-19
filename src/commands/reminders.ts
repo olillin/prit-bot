@@ -15,50 +15,85 @@ import { announceReminders } from '../features/reminders'
 import { CommandMap } from '../types'
 import { defineCommand } from '../util/guild'
 
+export const DAYS = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag', 'Söndag']
+
 export default defineCommand({
     data: new SlashCommandBuilder()
         .setName('reminders') //
         .setDescription(
             'Hantera påminnelser och stäng av/på pings för dig själv'
         )
-        .addStringOption(option =>
-            option
-                .setName('command') //
-                .setDescription('Vad du vill göra')
-                .setChoices(
-                    { name: 'Skapa en ny påminnelse', value: 'add' }, //
-                    { name: 'Ta bort en påminnelse', value: 'remove' },
-                    { name: 'Se alla påminnelser', value: 'list' },
-                    { name: 'Skicka påminnelser igen', value: 'remind' },
-                    { name: 'Sluta bli pingad av påminnelser', value: 'mute' },
-                    { name: 'Bli pingad av påminnelser', value: 'unmute' }
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('add')
+                .setDescription('Skapa en ny påminnelse')
+                .addStringOption(option =>
+                    option
+                        .setName('day')
+                        .setDescription('Dag att hantera påminnelser för')
+                        .setChoices(DAYS.map(day => ({ name: day, value: day })))
+                        .setRequired(true)
                 )
-                .setRequired(true)
-        )
-        .addIntegerOption(option =>
-            option
-                .setName('day')
-                .setDescription('Dag att hantera påminnelser för')
-                .setMinValue(1)
-                .setRequired(false)
-        )
-        .addStringOption(option =>
-            option
-                .setName('reminder')
-                .setDescription(
-                    'Påminnelse att lägga till eller index att ta bort'
+                .addStringOption(option =>
+                    option
+                        .setName('message')
+                        .setDescription(
+                            'Vad påminnelsen ska säga'
+                        )
+                        .setMinLength(1)
+                        .setRequired(true)
+                ))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('remove')
+                .setDescription('Ta bort en påminnelse')
+                .addStringOption(option =>
+                    option
+                        .setName('day')
+                        .setDescription('Dag att hantera påminnelser för')
+                        .setChoices(DAYS.map(day => ({ name: day, value: day })))
+                        .setRequired(true)
                 )
-                .setMinLength(1)
-                .setRequired(false)
-        ),
+                .addIntegerOption(option =>
+                    option
+                        .setName('index')
+                        .setDescription(
+                            'Index av påminnelsen att ta bort, kolla med `/reminders list`'
+                        )
+                        .setMinValue(1)
+                        .setRequired(true)
+                ))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('list')
+                .setDescription('Se alla påminnelser'))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('remind')
+                .setDescription('Skicka påminnelser igen'))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('mute')
+                .setDescription('Sluta bli pingad av påminnelser'))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('unmute')
+                .setDescription('Bli pingad av påminnelser')),
+
     async execute(interaction: ChatInputCommandInteraction) {
-        const command = interaction.options.getString('command', true)
+        const command = interaction.options.getSubcommand() as
+            | 'add'
+            | 'remove'
+            | 'list'
+            | 'send'
+            | 'mute'
+            | 'unmute'
 
         const commandMap: CommandMap = {
             add,
             remove,
             list,
-            remind,
+            send,
             mute,
             unmute,
         }
@@ -68,15 +103,10 @@ export default defineCommand({
 })
 
 async function add(interaction: ChatInputCommandInteraction) {
-    const day = interaction.options.getInteger('day')
-    if (!day) {
-        await interaction.reply({
-            content: 'Du måste ange vilken dag påminnelsen är för',
-            flags: MessageFlags.Ephemeral,
-        })
-        return
-    }
-    const message = interaction.options.getString('reminder')
+    const dayString = interaction.options.getString('day', true)
+    const day = DAYS.indexOf(dayString) + 1
+
+    const message = interaction.options.getString('message')
     if (!message) {
         await interaction.reply({
             content: 'Du måste ange ett meddelande för påminnelsen',
@@ -92,42 +122,17 @@ async function add(interaction: ChatInputCommandInteraction) {
     addReminder(guildId, day, message)
 
     await interaction.reply({
-        content: `Skapade ny påminnelse för dag ${day} med meddelande "${message}"`,
+        content: `Skapade ny påminnelse på ${dayString} som säger: "${message}"`,
         flags: MessageFlags.Ephemeral,
     })
 }
 
 async function remove(interaction: ChatInputCommandInteraction) {
-    const day = interaction.options.getInteger('day')
-    if (!day) {
-        await interaction.reply({
-            content: 'Du måste ange vilken dag påminnelsen är för',
-            flags: MessageFlags.Ephemeral,
-        })
-        return
-    }
+    const dayString = interaction.options.getString('day', true)
+    const day = DAYS.indexOf(dayString) + 1
+
     // Get index
-    const indexString = interaction.options.getString('reminder')
-    if (!indexString) {
-        await interaction.reply({
-            content: 'Du måste ange indexet för påminnelsen du vill ta bort',
-            flags: MessageFlags.Ephemeral,
-        })
-        return
-    }
-    let index
-    try {
-        index = parseInt(indexString) - 1
-        if (index < 0) {
-            throw new Error()
-        }
-    } catch {
-        await interaction.reply({
-            content: `Ogiltigt index '${indexString}'. Ange ett heltal större än 0`,
-            flags: MessageFlags.Ephemeral,
-        })
-        return
-    }
+    const index = interaction.options.getInteger('index', true)
 
     // Remove correct reminder
     const guildId = interaction.guildId
@@ -154,7 +159,7 @@ async function remove(interaction: ChatInputCommandInteraction) {
 
     // Success message
     await interaction.reply({
-        content: `Tog bort påminnelse med index ${index + 1} för dag ${day}`,
+        content: `Tog bort påminnelse på ${dayString} med index ${index + 1}`,
         flags: MessageFlags.Ephemeral,
     })
 }
@@ -191,7 +196,7 @@ async function list(interaction: ChatInputCommandInteraction) {
     })
 }
 
-async function remind(interaction: ChatInputCommandInteraction) {
+async function send(interaction: ChatInputCommandInteraction) {
     const guild = interaction.guild
     if (!guild) {
         throw new Error('Guild is not defined')

@@ -4,32 +4,43 @@ import {
     ChannelType,
     PermissionFlagsBits,
     type ChatInputCommandInteraction,
+    GuildTextBasedChannel,
 } from 'discord.js'
 import { getGuildData, writeGuildData, getAnnouncementChannel } from '../data'
-import type { CommandMap } from '../types'
+import type { AnnounceChannel, CommandMap } from '../types'
 import { defineCommand } from '../util/guild'
 
 export default defineCommand({
     data: new SlashCommandBuilder()
         .setName('channel') //
         .setDescription('Hantera uppdateringskanalen')
-        .addStringOption(option =>
-            option
-                .setName('command') //
-                .setDescription('Vad du vill göra')
-                .setChoices(
-                    {
-                        name: 'Skicka uppdateringar i den här kanalen',
-                        value: 'set',
-                    }, //
-                    { name: 'Sluta skicka uppdateringar', value: 'unset' },
-                    { name: 'Se var uppdateringar skickas nu', value: 'get' }
+        .addSubcommand(subcommand =>
+            subcommand
+                .setDescription('Sätt uppdateringskanalen')
+                .setName('set')
+                .addChannelOption(option =>
+                    option
+                        .setName('channel')
+                        .setDescription('Kanal att skicka uppdateringar i')
+                        .addChannelTypes(
+                            ChannelType.GuildText,
+                            ChannelType.GuildAnnouncement,
+                        )
+                        .setRequired(true)
+
                 )
-                .setRequired(true)
-        ),
+        )
+        .addSubcommand(subcommand =>
+            subcommand
+                .setDescription('Skicka inte uppdateringar i någon kanal')
+                .setName('unset'))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setDescription('Se vart uppdateringar skickas nu')
+                .setName('get')),
 
     async execute(interaction: ChatInputCommandInteraction) {
-        const command = interaction.options.getString('command', true)
+        const command = interaction.options.getSubcommand() as 'set' | 'unset' | 'get'
 
         const commandMap: CommandMap = {
             set,
@@ -42,19 +53,9 @@ export default defineCommand({
 })
 
 async function set(interaction: ChatInputCommandInteraction) {
-    const correctChannelType =
-        interaction.channel?.type === ChannelType.GuildText ||
-        interaction.channel?.type === ChannelType.GuildAnnouncement
-    if (!correctChannelType) {
-        await interaction.reply({
-            content:
-                'Den här kanalen kan inte användas för uppdateringar, fel typ',
-            flags: MessageFlags.Ephemeral,
-        })
-        return
-    }
+    const channel = interaction.options.getChannel('channel', true) as AnnounceChannel
 
-    const permissions = interaction.channel.permissionsFor(
+    const permissions = channel.permissionsFor(
         interaction.client.user
     )
     const hasPermission =
@@ -70,7 +71,7 @@ async function set(interaction: ChatInputCommandInteraction) {
 
     const guildId: string = interaction.guildId!
     const data = getGuildData(guildId)
-    data.announceChannel = interaction.channelId
+    data.announceChannel = channel.id
     writeGuildData(guildId, data)
 
     await interaction.reply({
