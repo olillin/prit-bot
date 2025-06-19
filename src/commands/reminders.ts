@@ -11,9 +11,9 @@ import {
     addReminderMutedUser,
     removeReminderMutedUser,
 } from '../data'
-import { announceReminders } from '../reminders'
+import { announceReminders } from '../features/reminders'
 import { CommandMap } from '../types'
-import { defineCommand } from '../util'
+import { defineCommand } from '../util/guild'
 
 export default defineCommand({
     data: new SlashCommandBuilder()

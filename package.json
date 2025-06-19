@@ -4,8 +4,8 @@
   "description": "Discord bot for P.R.I.T.",
   "scripts": {
     "build": "rimraf out && tsc",
-    "start": "cd out && node bot.js",
-    "startenv": "cd out && node --env-file=../.env bot.js",
+    "start": "cd out && node main.js",
+    "startenv": "cd out && node --env-file=../.env main.js",
     "lint": "eslint",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

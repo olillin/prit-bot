@@ -4,8 +4,8 @@ import {
     type ChatInputCommandInteraction,
 } from 'discord.js'
 import { getDiscoveredReactions } from '../data'
-import { getReactions } from '../reactions'
-import { defineCommand } from '../util'
+import { getReactions } from '../features/reactions'
+import { defineCommand } from '../util/guild'
 
 export default defineCommand({
     data: new SlashCommandBuilder()

@@ -3,7 +3,7 @@ import {
     getReactionDiscoveredBy,
     setReactionDiscoveredBy,
     getNoReactChannels,
-} from './data'
+} from '../data'
 import {
     EmbedBuilder,
     type APIEmbed,
@@ -11,8 +11,8 @@ import {
     type GuildMember,
     type Message,
 } from 'discord.js'
-import type { ReactionsConfig } from './types'
-import { REACTIONS_FILE } from './environment'
+import type { ReactionsConfig } from '../types'
+import { REACTIONS_FILE } from '../environment'
 
 export function getReactions(): ReactionsConfig {
     if (fs.existsSync(REACTIONS_FILE)) {

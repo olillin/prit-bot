@@ -1,8 +1,9 @@
 import type { Client, Guild, GuildMember } from 'discord.js'
-import { getAnnouncementChannel, getResponsibleRole } from './data'
-import { announceTimeString } from './environment'
-import { getNextTime, getUsers, schedule } from './util'
-import { getCurrentlyResponsible, getStudyWeek, getWeek } from './weekInfo'
+import { getAnnouncementChannel, getResponsibleRole } from '../data'
+import { announceTimeString } from '../environment'
+import { getNextTime, schedule } from '../util/dates'
+import { getUsers } from '../util/guild'
+import { getCurrentlyResponsible, getStudyWeek, getWeek } from '../util/weekInfo'
 
 /**
  * Announce info this week in a guild

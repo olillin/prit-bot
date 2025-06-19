@@ -4,8 +4,8 @@ import {
     MessageFlags,
     SlashCommandBuilder,
 } from 'discord.js'
-import { announceWeekIn } from '../announce'
-import { defineCommand } from '../util'
+import { announceWeekIn } from '../features/announcements'
+import { defineCommand } from '../util/guild'
 
 export default defineCommand({
     data: new SlashCommandBuilder()

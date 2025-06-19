@@ -2,8 +2,8 @@ import {
     type ChatInputCommandInteraction,
     SlashCommandBuilder,
 } from 'discord.js'
-import { getWeek, getStudyWeek, getCurrentlyResponsible } from '../weekInfo'
-import { defineCommand } from '../util'
+import { getWeek, getStudyWeek, getCurrentlyResponsible } from '../util/weekInfo'
+import { defineCommand } from '../util/guild'
 
 export default defineCommand({
     data: new SlashCommandBuilder()

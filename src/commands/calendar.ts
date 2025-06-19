@@ -6,7 +6,7 @@ import {
 } from 'discord.js'
 import { getGuildData, writeGuildData } from '../data'
 import { CommandMap } from '../types'
-import { defineCommand } from '../util'
+import { defineCommand } from '../util/guild'
 
 export default defineCommand({
     data: new SlashCommandBuilder()

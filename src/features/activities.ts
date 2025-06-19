@@ -2,8 +2,8 @@ import type { ActivityOptions, ClientUser } from 'discord.js'
 
 import { ActivityType } from 'discord.js'
 import fs from 'fs'
-import { ACTIVITIES_FILE } from './environment'
-import { sleep } from './util'
+import { ACTIVITIES_FILE } from '../environment'
+import { sleep } from '../util/dates'
 
 export const DEFAULT_ACTIVITIES: ActivityOptions[] = [
     {

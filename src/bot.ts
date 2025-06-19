@@ -9,11 +9,8 @@ import {
 } from 'discord.js'
 import fs from 'node:fs'
 import path from 'node:path'
-import { cycleActivities } from './activities'
-import { scheduleAnnounceLoop } from './announce'
 import { discordToken, validateEnvironment } from './environment'
-import { addReaction } from './reactions'
-import { scheduleRemindersLoop } from './reminders'
+import { addReaction } from './features/reactions'
 import type { CommandData, CommandDefinition, ExtendedClient } from './types'
 
 if (!validateEnvironment()) {
@@ -29,6 +26,7 @@ const client = new Client({
         GatewayIntentBits.MessageContent,
     ],
 }) as ExtendedClient
+export default client
 
 client.commands = new Collection<string, CommandDefinition>()
 const commands: CommandData[] = []
@@ -126,13 +124,5 @@ client.on(Events.ClientReady, () => {
         registerSlashCommands(guild.id)
     })
 
-    const ONE_HOUR = 1 * 60 * 60 * 1000
-    cycleActivities(client.user!, ONE_HOUR)
-
-    scheduleAnnounceLoop(client)
-    scheduleRemindersLoop(client)
-
     console.log('Bot is ready')
 })
-
-client.login(discordToken!)
