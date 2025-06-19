@@ -1,15 +1,13 @@
 import type {
-    NewsChannel,
-    TextChannel,
     ChatInputCommandInteraction,
-    EmojiIdentifierResolvable,
     Client,
-    SlashCommandBuilder,
     Collection,
-    Interaction,
-    CacheType,
+    EmojiIdentifierResolvable,
+    NewsChannel,
+    SlashCommandBuilder,
     SlashCommandOptionsOnlyBuilder,
     SlashCommandSubcommandsOnlyBuilder,
+    TextChannel
 } from 'discord.js'
 
 export interface ExtendedClient extends Client {

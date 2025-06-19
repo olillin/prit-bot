@@ -1,5 +1,5 @@
 import type { Guild, GuildMember } from 'discord.js'
-import type { CommandDefinition } from '../types'
+import type { CommandDefinition } from '../types.js'
 
 /** Get a user in a guild from their nick */
 

@@ -1,9 +1,9 @@
 import { Client, EmbedBuilder, type Guild } from 'discord.js'
-import { getAnnouncementChannel, getReminderData } from '../data'
-import { remindersTimeString } from '../environment'
-import { getNextTime, schedule } from '../util/dates'
-import { getUsers } from '../util/guild'
-import { getCurrentlyResponsible, getDayOfResponsibilityWeek } from '../util/weekInfo'
+import { getAnnouncementChannel, getReminderData } from '../data.js'
+import { remindersTimeString } from '../environment.js'
+import { getNextTime, schedule } from '../util/dates.js'
+import { getUsers } from '../util/guild.js'
+import { getCurrentlyResponsible, getDayOfResponsibilityWeek } from '../util/weekInfo.js'
 
 /** Get an embed for the reminders today */
 export async function getRemindersEmbedToday(

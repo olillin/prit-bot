@@ -1,11 +1,11 @@
 import {
-    SlashCommandBuilder,
     EmbedBuilder,
+    SlashCommandBuilder,
     type ChatInputCommandInteraction,
 } from 'discord.js'
-import { getDiscoveredReactions } from '../data'
-import { getReactions } from '../features/reactions'
-import { defineCommand } from '../util/guild'
+import { getDiscoveredReactions } from '../data.js'
+import { getReactions } from '../features/reactions.js'
+import { defineCommand } from '../util/guild.js'
 
 export default defineCommand({
     data: new SlashCommandBuilder()

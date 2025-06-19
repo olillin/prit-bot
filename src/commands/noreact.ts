@@ -1,13 +1,13 @@
 import {
-    MessageFlags,
-    SlashCommandBuilder,
     ChannelType,
     EmbedBuilder,
+    MessageFlags,
+    SlashCommandBuilder,
     type ChatInputCommandInteraction,
 } from 'discord.js'
-import { getNoReactChannels, setNoReactChannels } from '../data'
-import { CommandMap } from '../types'
-import { defineCommand } from '../util/guild'
+import { getNoReactChannels, setNoReactChannels } from '../data.js'
+import type { CommandMap } from '../types.js'
+import { defineCommand } from '../util/guild.js'
 
 export default defineCommand({
     data: new SlashCommandBuilder()

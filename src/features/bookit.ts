@@ -1,6 +1,6 @@
-const { createCookie, createGraphQLClient } = await import('bookit-scraper')
-import { gammaPassword, gammaUsername } from '../environment'
-import { atMidnight, ONE_DAY_MS } from '../util/dates'
+import * as bookit from 'bookit-scraper'
+import { gammaPassword, gammaUsername } from '../environment.js'
+import { atMidnight, ONE_DAY_MS } from '../util/dates.js'
 
 async function createCookie(): Promise<string> {
     return new Promise((resolve, reject) => {

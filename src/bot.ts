@@ -9,9 +9,10 @@ import {
 } from 'discord.js'
 import fs from 'node:fs'
 import path from 'node:path'
-import { discordToken } from './environment'
-import { addReaction } from './features/reactions'
-import type { CommandData, CommandDefinition, ExtendedClient } from './types'
+import { discordToken } from './environment.js'
+import { addReaction } from './features/reactions.js'
+import type { CommandData, CommandDefinition, ExtendedClient } from './types.js'
+import { fileURLToPath } from 'node:url'
 
 const client = new Client({
     intents: [
@@ -26,14 +27,16 @@ export default client
 client.commands = new Collection<string, CommandDefinition>()
 const commands: CommandData[] = []
 
-const commandFolder = path.join(__dirname, 'commands')
+const filename = fileURLToPath(import.meta.url)
+const dirname = path.dirname(filename)
+const commandFolder = path.join(dirname, 'commands')
 const commandFiles = fs
     .readdirSync(commandFolder)
     .filter(file => file.endsWith('.js'))
 
 for (const file of commandFiles) {
     const filePath = path.join(commandFolder, file)
-    const command = require(filePath).default as CommandDefinition
+    const command = (await import(`file:///${filePath}`)).default as CommandDefinition
     // Set a new item in the Collection with the key as the command name and the value as the exported module
     if ('data' in command && 'execute' in command) {
         client.commands.set(command.data.name, command)

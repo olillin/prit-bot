@@ -5,7 +5,7 @@ import {
     type Role,
 } from 'discord.js'
 import fs from 'fs'
-import { DATA_FILE } from './environment'
+import { DATA_FILE } from './environment.js'
 import type {
     AnnounceChannel,
     DiscoveredReactionsData,
@@ -13,7 +13,7 @@ import type {
     GuildData,
     ParsedRemindersData,
     RemindersData,
-} from './types'
+} from './types.js'
 
 function getData(): FullData {
     if (!fs.existsSync(DATA_FILE)) {

@@ -1,19 +1,19 @@
 import {
+    ChatInputCommandInteraction,
+    EmbedBuilder,
     MessageFlags,
     SlashCommandBuilder,
-    EmbedBuilder,
-    ChatInputCommandInteraction,
 } from 'discord.js'
 import {
     addReminder,
+    addReminderMutedUser,
     getReminderData,
     removeReminder,
-    addReminderMutedUser,
     removeReminderMutedUser,
-} from '../data'
-import { announceReminders } from '../features/reminders'
-import { CommandMap } from '../types'
-import { defineCommand } from '../util/guild'
+} from '../data.js'
+import { announceReminders } from '../features/reminders.js'
+import type { CommandMap } from '../types.js'
+import { defineCommand } from '../util/guild.js'
 
 export const DAYS = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag', 'Söndag']
 

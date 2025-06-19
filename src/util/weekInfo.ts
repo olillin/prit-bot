@@ -1,6 +1,6 @@
 import type { Calendar, CalendarEvent } from 'iamcal'
 import { parseCalendar } from 'iamcal/parse'
-import { getGuildData } from '../data'
+import { getGuildData } from '../data.js'
 
 export function getCalendar(guildId: string): Promise<Calendar | undefined> {
     return new Promise(resolve => {

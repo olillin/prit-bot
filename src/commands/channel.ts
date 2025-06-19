@@ -1,14 +1,13 @@
 import {
-    MessageFlags,
-    SlashCommandBuilder,
     ChannelType,
+    MessageFlags,
     PermissionFlagsBits,
-    type ChatInputCommandInteraction,
-    GuildTextBasedChannel,
+    SlashCommandBuilder,
+    type ChatInputCommandInteraction
 } from 'discord.js'
-import { getGuildData, writeGuildData, getAnnouncementChannel } from '../data'
-import type { AnnounceChannel, CommandMap } from '../types'
-import { defineCommand } from '../util/guild'
+import { getAnnouncementChannel, getGuildData, writeGuildData } from '../data.js'
+import type { AnnounceChannel, CommandMap } from '../types.js'
+import { defineCommand } from '../util/guild.js'
 
 export default defineCommand({
     data: new SlashCommandBuilder()

@@ -1,10 +1,10 @@
-import { Events } from "discord.js"
-import client from "./bot"
-import { discordToken, validateEnvironment } from "./environment"
-import { cycleActivities } from "./features/activities"
-import { scheduleAnnounceLoop } from "./features/announcements"
-import { scheduleRemindersLoop } from "./features/reminders"
-import { getEventsToday } from "./features/bookit"
+import { Events } from 'discord.js'
+import client from './bot.js'
+import { discordToken, validateEnvironment } from './environment.js'
+import { cycleActivities } from './features/activities.js'
+import { scheduleAnnounceLoop } from './features/announcements.js'
+import { getEventsToday } from './features/bookit.js'
+import { scheduleRemindersLoop } from './features/reminders.js'
 
 function main() {
     if (!validateEnvironment()) {

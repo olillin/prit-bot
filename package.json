@@ -2,6 +2,7 @@
   "name": "prit-bot",
   "version": "1.8.0",
   "description": "Discord bot for P.R.I.T.",
+  "type": "module",
   "scripts": {
     "build": "rimraf out && tsc",
     "start": "cd out && node main.js",
@@ -22,7 +23,8 @@
   "dependencies": {
     "bookit-scraper": "file:../bookit-scraper",
     "discord.js": "^14.18.0",
-    "iamcal": "^1.0.2",
+    "iamcal": "^1.0.3",
+    "selenium-webdriver": "^4.33.0",
     "typescript": "^5.8.3"
   },
   "devDependencies": {

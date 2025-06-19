@@ -5,9 +5,9 @@ import {
     MessageFlags,
     SlashCommandBuilder,
 } from 'discord.js'
-import { getGuildData, writeGuildData, canUseRole } from '../data'
-import type { CommandMap } from '../types'
-import { defineCommand } from '../util/guild'
+import { canUseRole, getGuildData, writeGuildData } from '../data.js'
+import type { CommandMap } from '../types.js'
+import { defineCommand } from '../util/guild.js'
 
 export default defineCommand({
     data: new SlashCommandBuilder()
