@@ -14,11 +14,11 @@ export default defineCommand({
 
     async execute(interaction: ChatInputCommandInteraction) {
         const guild: Guild = interaction.guild!
-        const success = await announceWeekIn(guild)
-
-        await interaction.reply({
-            content: success ? 'Skickat' : 'Misslyckades',
+        interaction.deferReply({
             flags: MessageFlags.Ephemeral,
         })
+        const success = await announceWeekIn(guild)
+
+        await interaction.editReply(success ? 'Skickat' : 'Misslyckades')
     },
 })

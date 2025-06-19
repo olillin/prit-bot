@@ -196,27 +196,21 @@ async function remind(interaction: ChatInputCommandInteraction) {
     if (!guild) {
         throw new Error('Guild is not defined')
     }
+    await interaction.deferReply({
+        flags: MessageFlags.Ephemeral,
+    })
     try {
         await announceReminders(interaction.guild)
     } catch (message) {
         console.error('Failed to announce reminders: ' + message)
         if (typeof message !== 'string') {
-            await interaction.reply({
-                content: 'Något gick fel, försök igen senare',
-                flags: MessageFlags.Ephemeral,
-            })
-            return
+            await interaction.editReply('Något gick fel, försök igen senare')
+        } else {
+            await interaction.editReply(message)
         }
-        await interaction.reply({
-            content: message,
-            flags: MessageFlags.Ephemeral,
-        })
         return
     }
-    await interaction.reply({
-        content: 'Påminnelser skickade!',
-        flags: MessageFlags.Ephemeral,
-    })
+    await interaction.editReply('Påminnelser skickade!')
 }
 
 async function mute(interaction: ChatInputCommandInteraction) {
