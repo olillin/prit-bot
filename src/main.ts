@@ -1,4 +1,4 @@
-import { Events } from 'discord.js'
+import { escapeEscape, Events } from 'discord.js'
 import client from './bot.js'
 import { discordToken, validateEnvironment } from './environment.js'
 import { cycleActivities } from './features/activities.js'
@@ -23,8 +23,11 @@ function main() {
     console.log('Starting bot...')
     client.login(discordToken!)
 
-    const events = getEventsToday()
-    console.log(events)
+    getEventsToday().then(events => {
+        console.log(events)
+    }).catch(error => {
+        console.warn('Failed to fetch BookIT events:', error)
+    })
 }
 
 main()

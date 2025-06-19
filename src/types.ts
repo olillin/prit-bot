@@ -71,3 +71,19 @@ export interface ParsedRemindersData {
     }
     muted: string[]
 }
+
+export interface BookITEventsFTResponse {
+    data: {
+        eventsFT: {
+            [key: string]: string
+        }[]
+    }
+}
+
+export interface BookITEvent {
+    id: string
+    title: string
+    room: string
+    start: Date
+    end: Date
+}
