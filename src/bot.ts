@@ -9,14 +9,9 @@ import {
 } from 'discord.js'
 import fs from 'node:fs'
 import path from 'node:path'
-import { discordToken, validateEnvironment } from './environment'
+import { discordToken } from './environment'
 import { addReaction } from './features/reactions'
 import type { CommandData, CommandDefinition, ExtendedClient } from './types'
-
-if (!validateEnvironment()) {
-    console.error('Environment is invalid. Exiting...')
-    process.exit(1)
-}
 
 const client = new Client({
     intents: [
