@@ -1,6 +1,6 @@
 
-export const ONE_HOUR = 60 * 60 * 1000
-export const ONE_DAY = 24 * ONE_HOUR
+export const ONE_HOUR_MS = 60 * 60 * 1000
+export const ONE_DAY_MS = 24 * ONE_HOUR_MS
 
 export async function sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms))
@@ -56,13 +56,25 @@ export function timeStringToMilliseconds(timeString: string): number {
     parts.forEach((part, index) => {
         const msIndex = 3
         if (index < msIndex) {
-            time += (ONE_HOUR * part) / 60 ** index
+            time += (ONE_HOUR_MS * part) / 60 ** index
         } else {
             time += part
         }
     })
 
     return time
+}
+
+export function atMidnight(time: Date): Date {
+    const midnight = new Date(time)
+    midnight.setHours(0, 0, 0, 0)
+    return midnight
+}
+
+export function millisecondsAtMidnightWithTimezone(time: Date): number {
+    const timezoneOffsetMs = time.getTimezoneOffset() * 60 * 1000
+    // Time at midnight with timezone offset
+    return atMidnight(time).getTime() + timezoneOffsetMs
 }
 
 /**
@@ -75,15 +87,13 @@ export function getNextTime(
 ): Date {
     const time = timeStringToMilliseconds(timeString)
 
-    const timezoneOffsetMs = after.getTimezoneOffset() * 60 * 1000
     const afterTimeMs = after.getTime()
-    const afterTimeMsWithOffset = afterTimeMs + timezoneOffsetMs
     // Time at midnight with timezone offset
-    const afterDay = afterTimeMs - (afterTimeMs % ONE_DAY) + timezoneOffsetMs
+    const afterDay = millisecondsAtMidnightWithTimezone(after)
     const nextTimeMs = afterDay + time
 
-    const dayOffset = Math.max(0, Math.ceil((afterTimeMs - nextTimeMs) / ONE_DAY))
-    return new Date(nextTimeMs + ONE_DAY * dayOffset)
+    const dayOffset = Math.max(0, Math.ceil((afterTimeMs - nextTimeMs) / ONE_DAY_MS))
+    return new Date(nextTimeMs + ONE_DAY_MS * dayOffset)
 }
 
 export async function schedule(time: Date, callback: () => void): Promise<void> {

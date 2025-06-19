@@ -4,6 +4,7 @@ import { discordToken, validateEnvironment } from "./environment"
 import { cycleActivities } from "./features/activities"
 import { scheduleAnnounceLoop } from "./features/announcements"
 import { scheduleRemindersLoop } from "./features/reminders"
+import { getEventsToday } from "./features/bookit"
 
 function main() {
     if (!validateEnvironment()) {
@@ -21,6 +22,9 @@ function main() {
 
     console.log('Starting bot...')
     client.login(discordToken!)
+
+    const events = getEventsToday()
+    console.log(events)
 }
 
 main()

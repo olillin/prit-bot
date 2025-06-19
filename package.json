@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/olillin/prit-bot#readme",
   "dependencies": {
+    "bookit-scraper": "file:../bookit-scraper",
     "discord.js": "^14.18.0",
     "iamcal": "^1.0.2",
     "typescript": "^5.8.3"
