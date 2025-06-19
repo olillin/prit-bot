@@ -1,10 +1,11 @@
 import {
     PermissionFlagsBits,
     type Guild,
-    type Role,
     type GuildMember,
+    type Role,
 } from 'discord.js'
 import fs from 'fs'
+import { DATA_FILE } from './environment'
 import type {
     AnnounceChannel,
     DiscoveredReactionsData,
@@ -13,8 +14,6 @@ import type {
     ParsedRemindersData,
     RemindersData,
 } from './types'
-
-const DATA_FILE = 'data.json'
 
 function getData(): FullData {
     if (!fs.existsSync(DATA_FILE)) {

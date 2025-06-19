@@ -12,10 +12,11 @@ import {
     type Message,
 } from 'discord.js'
 import type { ReactionsConfig } from './types'
+import { REACTIONS_FILE } from './environment'
 
 export function getReactions(): ReactionsConfig {
-    if (fs.existsSync('reactions.json')) {
-        const text = fs.readFileSync('reactions.json', 'utf8')
+    if (fs.existsSync(REACTIONS_FILE)) {
+        const text = fs.readFileSync(REACTIONS_FILE, 'utf8')
 
         try {
             const parsed = JSON.parse(text)
@@ -26,7 +27,7 @@ export function getReactions(): ReactionsConfig {
             }
             return parsed
         } catch (e) {
-            console.warn(`Failed to parse reactions.json: ${e}`)
+            console.warn(`Failed to parse reactions from ${REACTIONS_FILE}: ${e}`)
         }
     }
     return {}
