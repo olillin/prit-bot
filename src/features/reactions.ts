@@ -1,29 +1,22 @@
-const fs = require('fs')
-const {
+import fs from 'fs'
+import {
     getReactionDiscoveredBy,
     setReactionDiscoveredBy,
-    getGuildData,
     getNoReactChannels,
-} = require('./data')
-const { EmbedBuilder } = require('discord.js')
+} from '../data'
+import {
+    EmbedBuilder,
+    type APIEmbed,
+    type EmojiIdentifierResolvable,
+    type GuildMember,
+    type Message,
+} from 'discord.js'
+import type { ReactionsConfig } from '../types'
+import { REACTIONS_FILE } from '../environment'
 
-/**
- * @typedef {{
- *   pattern: string
- *   emoji: import('discord.js').EmojiIdentifierResolvable
- * }} ReactionDefinition
- *
- * @typedef {{
- *   [id: string]: ReactionDefinition
- * }} ReactionConfig
- */
-
-/**
- * @returns {ReactionConfig}
- */
-function getReactions() {
-    if (fs.existsSync('reactions.json')) {
-        const text = fs.readFileSync('reactions.json', 'utf8')
+export function getReactions(): ReactionsConfig {
+    if (fs.existsSync(REACTIONS_FILE)) {
+        const text = fs.readFileSync(REACTIONS_FILE, 'utf8')
 
         try {
             const parsed = JSON.parse(text)
@@ -34,21 +27,17 @@ function getReactions() {
             }
             return parsed
         } catch (e) {
-            console.warn(`Failed to parse reactions.json: ${e}`)
+            console.warn(`Failed to parse reactions from ${REACTIONS_FILE}: ${e}`)
         }
     }
     return {}
 }
 
-/**
- *
- * @param {import('discord.js').Message} message
- */
-async function addReaction(message) {
+export async function addReaction(message: Message) {
     if (message.author.bot) return
 
     const reactions = getReactions()
-    const guild = /** @type {import('discord.js').Guild} */ (message.guild)
+    const guild = message.guild!
 
     // Don't react if channel is marked
     const noReactChannels = await getNoReactChannels(guild.id)
@@ -85,12 +74,13 @@ async function addReaction(message) {
 }
 
 /**
- *
- * @param {import('discord.js').Message} message
- * @param {string} text The text that matched the reaction
- * @param {string} reactionId
+ * @param text The text that matched the reaction
  */
-async function discoverReaction(message, text, reactionId) {
+async function discoverReaction(
+    message: Message,
+    text: string,
+    reactionId: string
+) {
     if (!message.channel.isSendable() || !message.inGuild()) {
         console.error(
             'Failed to send discovery message, channel is not sendable'
@@ -120,16 +110,16 @@ async function discoverReaction(message, text, reactionId) {
 }
 
 /**
- *
- * @param {import('discord.js').GuildMember} member Who discovered the reaction
- * @param {string} text The text that triggered the reaction
- * @param {import('discord.js').EmojiIdentifierResolvable} emoji
- * @returns {import('discord.js').APIEmbed}
+ * @param member Who discovered the reaction
+ * @param text The text that triggered the reaction
  */
-function discoverReactionEmbed(member, text, emoji) {
+function discoverReactionEmbed(
+    member: GuildMember,
+    text: string,
+    emoji: EmojiIdentifierResolvable
+): APIEmbed {
     const isCustom = emoji.toString().match(/(\d+)>$/)
-    /** @type {string} */
-    let imageUrl
+    let imageUrl: string
     if (isCustom) {
         const id = isCustom[1]
         imageUrl = `https://cdn.discordapp.com/emojis/${id}.webp`
@@ -145,5 +135,3 @@ function discoverReactionEmbed(member, text, emoji) {
         .setColor('#09cdda')
         .setImage(imageUrl).data
 }
-
-module.exports = { getReactions, addReaction }

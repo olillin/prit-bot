@@ -1,28 +1,16 @@
-const { getAnnouncementChannel, getResponsibleRole } = require('./data')
-const { getWeek, getStudyWeek, getCurrentlyResponsible } = require('./weekInfo')
-const { announceReminders } = require('./reminders')
-const { getNextTime, sleep, getUsers } = require('./util')
-
-const announceTimeString = process.env.ANNOUNCE_TIME ?? '09'
-try {
-    getNextTime(announceTimeString)
-} catch (e) {
-    console.error('Invalid ANNOUNCE_TIME:', e.message)
-    process.exit()
-}
-
-async function waitUntilNextAnnouncement() {
-    const nextAnnouncement = getNextTime(announceTimeString)
-    const timeUntilAnnouncement = nextAnnouncement.getTime() - Date.now()
-    await sleep(timeUntilAnnouncement)
-}
+import type { Client, Guild, GuildMember } from 'discord.js'
+import { getAnnouncementChannel, getResponsibleRole } from '../data'
+import { announceTimeString } from '../environment'
+import { getNextTime, schedule } from '../util/dates'
+import { getUsers } from '../util/guild'
+import { getCurrentlyResponsible, getStudyWeek, getWeek } from '../util/weekInfo'
 
 /**
  * Announce info this week in a guild
- * @param {import('discord.js').Guild} guild Guild to announce week for
- * @returns {Promise<boolean>} If the announcement was successful
+ * @param guild Guild to announce week for
+ * @returns If the announcement was successful
  */
-async function announceWeekIn(guild) {
+export async function announceWeekIn(guild: Guild): Promise<boolean> {
     const week = await getStudyWeek()
     if (!week) {
         console.error(`Could not make announcement, week returned ${week}`)
@@ -44,7 +32,6 @@ async function announceWeekIn(guild) {
             ([name, user]) => user?.toString() ?? `@${name}`
         )
 
-        /** @type {string} */
         let userList = ''
         if (stringUsers.length <= 1) {
             userList = stringUsers.join()
@@ -70,10 +57,10 @@ ${responsibleLine}`
 
 /**
  * Announce info this week in all guilds
- * @param {import('discord.js').Client} client
- * @returns {Promise<boolean>} If any announcement was successful
+ * @param client
+ * @returns If any announcement was successful
  */
-async function announceWeekEverywhere(client) {
+export async function announceWeekEverywhere(client: Client): Promise<boolean> {
     const guilds = await client.guilds.fetch()
     const promises = guilds.map(async guild =>
         announceWeekIn(await guild.fetch())
@@ -82,11 +69,10 @@ async function announceWeekEverywhere(client) {
     return success
 }
 
-/**
- * @param {import('discord.js').Guild} guild
- * @param {Array<[string, import('discord.js').GuildMember | undefined]>} users
- */
-async function assignRole(guild, users) {
+async function assignRole(
+    guild: Guild,
+    users: Array<[string, GuildMember | undefined]>
+) {
     const role = await getResponsibleRole(guild)
     if (!role) {
         console.warn('Failed to assign roles, could not get role')
@@ -111,8 +97,7 @@ async function assignRole(guild, users) {
                 if (user) {
                     await user.roles.add(role)
                     console.info(
-                        `Assigned role to ${nick} (${
-                            user.nickname ?? user.user.displayName
+                        `Assigned role to ${nick} (${user.nickname ?? user.user.displayName
                         })`
                     )
                 } else
@@ -128,44 +113,30 @@ async function assignRole(guild, users) {
     }
 }
 
-async function announceRemindersEverywhere(client) {
-    const guilds = await client.guilds.fetch()
-    const promises = guilds.map(async guild =>
-        announceReminders(await guild.fetch()).catch()
-    )
-    const success = (await Promise.all(promises)).some(x => x)
-    return success
-}
 
-/** @type {string} */
-let previousWeek
+let previousWeek: string | null = null
 
-/**
- * @param {import('discord.js').Client} client
- * @returns {Promise<never>}
- */
-async function announceLoop(client) {
-    // @ts-ignore
-    previousWeek = await getWeek()
-    while (true) {
-        // Wait for next announcement
-        await waitUntilNextAnnouncement()
-
-        // Announce responsibility week every week
-        const nowWeek = await getWeek()
-        if (nowWeek && nowWeek !== previousWeek) {
-            await announceWeekEverywhere(client)
-
-            previousWeek = nowWeek
-        }
-
-        // Announce reminders every day
-        await announceRemindersEverywhere(client)
+export async function announceLoop(client: Client): Promise<void> {
+    const currentWeek = await getWeek()
+    if (previousWeek === null) {
+        previousWeek = currentWeek
     }
+
+    // Announce responsibility week every new week
+    if (currentWeek && currentWeek !== previousWeek) {
+        console.log('Sending announcements...')
+        await announceWeekEverywhere(client)
+
+        previousWeek = currentWeek
+    }
+
+    scheduleAnnounceLoop(client)
 }
 
-module.exports = {
-    announceWeekIn,
-    announceWeekEverywhere,
-    announceLoop,
+export function scheduleAnnounceLoop(client: Client): Promise<void> {
+    const next = getNextTime(announceTimeString)
+    console.log(`Scheduling announcements for ${next}`)
+    return schedule(next, () => {
+        announceLoop(client)
+    })
 }
