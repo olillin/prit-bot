@@ -1,20 +1,20 @@
-import fs from 'node:fs'
-import path from 'node:path'
 import {
     Client,
-    GatewayIntentBits,
     Collection,
     Events,
-    Routes,
-    REST,
+    GatewayIntentBits,
     MessageFlags,
+    REST,
+    Routes,
 } from 'discord.js'
-import { announceLoop } from './announce'
+import fs from 'node:fs'
+import path from 'node:path'
 import { cycleActivities } from './activities'
-import { addReaction } from './reactions'
-import type { CommandData, CommandDefinition, ExtendedClient } from './types'
-import { remindersLoop } from './reminders'
+import { scheduleAnnounceLoop } from './announce'
 import { discordToken, validateEnvironment } from './environment'
+import { addReaction } from './reactions'
+import { scheduleRemindersLoop } from './reminders'
+import type { CommandData, CommandDefinition, ExtendedClient } from './types'
 
 if (!validateEnvironment()) {
     console.error('Environment is invalid. Exiting...')
@@ -129,8 +129,8 @@ client.on(Events.ClientReady, () => {
     const ONE_HOUR = 1 * 60 * 60 * 1000
     cycleActivities(client.user!, ONE_HOUR)
 
-    announceLoop(client)
-    remindersLoop(client)
+    scheduleAnnounceLoop(client)
+    scheduleRemindersLoop(client)
 
     console.log('Bot is ready')
 })
