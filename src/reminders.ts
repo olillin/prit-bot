@@ -25,23 +25,7 @@ export async function getRemindersEmbedToday(
     const title = `Ansvarsvecka Påminnelser ${dateString}`
 
     // Description
-    let userLine = ''
-    const responsibleNames = await getCurrentlyResponsible(guild.id)
-    if (responsibleNames) {
-        const responsibleUsers = await getUsers(responsibleNames, guild).then(
-            users => users.filter(user => user[1] !== undefined)
-        )
-
-        const mutedIds = reminderData.muted
-        const userStrings = responsibleUsers.map(([nick, user]) =>
-            user === undefined || mutedIds.includes(user.id)
-                ? nick
-                : `<@${user.id}>`
-        )
-        userLine = userStrings.join(' ') + '\n'
-    }
-    const description =
-        userLine + '-# Använd `/reminders` kommandot om du inte vill bli pingad'
+    const description = '-# Använd `/reminders` kommandot om du inte vill bli pingad'
 
     return new EmbedBuilder()
         .setColor('#ffbb00')
@@ -55,13 +39,36 @@ export async function getRemindersEmbedToday(
         ])
 }
 
+export async function getRemindersUserLineToday(guild: Guild): Promise<string> {
+    const reminderData = getReminderData(guild.id)
+
+    let userLine = ''
+    const responsibleNames = await getCurrentlyResponsible(guild.id)
+    if (!responsibleNames) {
+        throw 'Det finns ingen ansvarig idag'
+    }
+    if (responsibleNames) {
+        const responsibleUsers = await getUsers(responsibleNames, guild)
+
+        const mutedIds = reminderData.muted
+        const userStrings = responsibleUsers.map(([nick, user]) =>
+            user === undefined || mutedIds.includes(user.id)
+                ? nick
+                : `<@${user.id}>`
+        )
+        userLine = `-# Påminnelser för: ${userStrings.join(' ')}`
+    }
+
+    return userLine
+}
+
 export async function announceReminders(guild: Guild) {
     let embed: EmbedBuilder | null
     try {
         embed = await getRemindersEmbedToday(guild)
     } catch (message) {
         if (typeof message === 'string') {
-            throw `Kunde inte skicka påminnelser: ${message}`
+            throw `Kunde inte skicka påminnelser: ${message} `
         } else {
             throw 'Kunde inte skicka påminnelser, ett okänt fel inträffade'
         }
@@ -70,13 +77,24 @@ export async function announceReminders(guild: Guild) {
         throw 'Skickade inte påminnelser, inga påminnelser idag'
     }
 
+    let userLine: string
+    try {
+        userLine = await getRemindersUserLineToday(guild)
+    } catch (message) {
+        if (typeof message === 'string') {
+            throw `Skickade inte skicka påminnelser: ${message} `
+        } else {
+            throw 'Kunde inte skicka påminnelser, ett okänt fel inträffade'
+        }
+    }
+
     const channel = await getAnnouncementChannel(guild)
     if (!channel) {
         throw 'Skickade inte påminnelser, ingen kanal angiven'
     }
 
     try {
-        await channel.send({ embeds: [embed] })
+        await channel.send({ content: userLine, embeds: [embed] })
     } catch (e) {
         console.error('Failed to send reminders', e)
         throw 'Misslyckades med att skicka meddelande'
@@ -90,7 +108,7 @@ async function announceRemindersEverywhere(client: Client): Promise<boolean> {
     )
     let success = true
     await Promise.all(promises).catch(reason => {
-        console.warn(`Failed to announce reminders: ${reason}`)
+        console.warn(`Failed to announce reminders: ${reason} `)
         success = false
     })
     return success
@@ -101,9 +119,13 @@ export async function remindersLoop(client: Client): Promise<void> {
     console.log('Sending reminders...')
     await announceRemindersEverywhere(client)
 
+    scheduleRemindersLoop(client)
+}
+
+export function scheduleRemindersLoop(client: Client): Promise<void> {
     const next = getNextTime(remindersTimeString)
-    console.log(`Next reminders at ${next}`)
-    schedule(next, () => {
+    console.log(`Scheduling reminders for ${next}`)
+    return schedule(next, () => {
         remindersLoop(client)
     })
 }

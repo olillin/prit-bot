@@ -113,23 +113,29 @@ async function assignRole(
 }
 
 
-let previousWeek: string
+let previousWeek: string | null = null
 
 export async function announceLoop(client: Client): Promise<void> {
-    previousWeek = (await getWeek())!
+    const currentWeek = await getWeek()
+    if (previousWeek === null) {
+        previousWeek = currentWeek
+    }
 
     // Announce responsibility week every new week
-    const nowWeek = await getWeek()
-    if (nowWeek && nowWeek !== previousWeek) {
+    if (currentWeek && currentWeek !== previousWeek) {
         console.log('Sending announcements...')
         await announceWeekEverywhere(client)
 
-        previousWeek = nowWeek
+        previousWeek = currentWeek
     }
 
+    scheduleAnnounceLoop(client)
+}
+
+export function scheduleAnnounceLoop(client: Client): Promise<void> {
     const next = getNextTime(announceTimeString)
-    console.log(`Next announcements at ${next}`)
-    schedule(next, () => {
+    console.log(`Scheduling announcements for ${next}`)
+    return schedule(next, () => {
         announceLoop(client)
     })
 }

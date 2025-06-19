@@ -1,5 +1,9 @@
 import { splitTimeString } from "./util"
 
+export const DATA_FILE = '../data.json'
+export const REACTIONS_FILE = '../reactions.json'
+export const ACTIVITIES_FILE = '../activities.json'
+
 export const announceTimeString = process.env.ANNOUNCE_TIME ?? '09:00'
 export const remindersTimeString = process.env.REMINDERS_TIME ?? '12:00'
 export const discordToken = process.env.TOKEN

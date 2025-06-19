@@ -2,6 +2,7 @@ import type { ActivityOptions, ClientUser } from 'discord.js'
 
 import { ActivityType } from 'discord.js'
 import fs from 'fs'
+import { ACTIVITIES_FILE } from './environment'
 import { sleep } from './util'
 
 export const DEFAULT_ACTIVITIES: ActivityOptions[] = [
@@ -11,16 +12,16 @@ export const DEFAULT_ACTIVITIES: ActivityOptions[] = [
     },
 ]
 
-export function getActivities(filename = 'activities.json'): ActivityOptions[] {
-    if (fs.existsSync(filename)) {
-        const text = fs.readFileSync(filename, 'utf8')
+export function getActivities(): ActivityOptions[] {
+    if (fs.existsSync(ACTIVITIES_FILE)) {
+        const text = fs.readFileSync(ACTIVITIES_FILE, 'utf8')
 
         try {
             const parsed: ActivityOptions[] = JSON.parse(text)
 
             if (parsed.length === 0) {
                 console.warn(
-                    `Empty activities in ${filename}, using default activities`
+                    `Empty activities in ${ACTIVITIES_FILE}, using default activities`
                 )
                 return DEFAULT_ACTIVITIES
             }
@@ -38,7 +39,7 @@ export function getActivities(filename = 'activities.json'): ActivityOptions[] {
             return parsed
         } catch {
             console.warn(
-                `Invalid activities in ${filename}, using default activities`
+                `Invalid activities in ${ACTIVITIES_FILE}, using default activities`
             )
         }
     }
