@@ -73,17 +73,27 @@ export interface ParsedRemindersData {
 }
 
 export interface BookITEventsFTResponse {
-    data: {
-        eventsFT: {
-            [key: string]: string
-        }[]
-    }
+    eventsFT: {
+        id?: string
+        phone?: string
+        title?: string
+        description?: string
+        start?: string
+        end?: string
+        created_at?: string
+        updated_at?: string
+        room?: string[]
+        booked_by?: string
+        booked_as?: string
+    }[]
 }
 
 export interface BookITEvent {
     id: string
     title: string
-    room: string
+    room: string[]
     start: Date
     end: Date
+    bookedBy: string
+    bookedAs: string
 }
