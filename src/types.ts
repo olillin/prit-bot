@@ -31,6 +31,7 @@ export type CommandMap = {
 export type AnnounceChannel = NewsChannel | TextChannel
 
 export interface FullData {
+    bookitCookie?: string
     guilds?: {
         [guildId: string]: GuildData
     }

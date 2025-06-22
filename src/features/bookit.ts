@@ -1,16 +1,26 @@
 import * as bookit from 'bookit-scraper'
+import * as data from '../data.js'
 import { gammaPassword, gammaUsername } from '../environment.js'
+import type { BookITEvent, BookITEventsFTResponse } from '../types.js'
 import { atMidnight, ONE_DAY_MS } from '../util/dates.js'
-import { BookITEvent, BookITEventsFTResponse } from 'types.js'
 
 async function createCookie(): Promise<string> {
-    return new Promise((resolve, reject) => {
-        if (gammaUsername && gammaPassword) {
-            resolve(bookit.createCookie(gammaUsername, gammaPassword))
-        } else {
-            reject('Unable to create BookIT cookie, missing Gamma credentials')
-        }
-    })
+    // Return saved cookie if possible
+    const savedCookie = data.getBookITCookie()
+    if (savedCookie && !isCookieExpired(savedCookie)) {
+        return savedCookie
+    }
+
+    // Generate new cookie
+    console.log('Generating new BookIT cookie...')
+    if (gammaUsername && gammaPassword) {
+        const cookie = await bookit.createCookie(gammaUsername, gammaPassword)
+        data.setBookITCookie(cookie)
+        return cookie
+    } else {
+        data.setBookITCookie(undefined)
+        throw new Error('Unable to create BookIT cookie, missing Gamma credentials')
+    }
 }
 
 export function getEventsToday(): Promise<BookITEvent[]> {
@@ -19,6 +29,7 @@ export function getEventsToday(): Promise<BookITEvent[]> {
 
     return createCookie()
         .then(cookie => {
+            console.log('Using cookie:', cookie)
             const client = bookit.createGraphQLClient(cookie)
             return client.request(`{
                 eventsFT(
@@ -66,4 +77,19 @@ export function translateRoom(room: string): string {
         'The Cloud': 'The Cloud',
     }
     return translations[room] || room
+}
+
+export function isCookieExpired(cookie: string): boolean {
+    const now = new Date()
+    const attributes = cookie.split(';').map(attr => attr.trim())
+
+    for (const attribute of attributes) {
+        if (attribute.startsWith('Expires=')) {
+            const expiry = new Date(attribute.split('=')[1])
+            const expired = expiry <= now
+            return expired
+        }
+    }
+    // No expiration means it is a session cookie, which expires when the browser is closed
+    return true
 }

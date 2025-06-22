@@ -261,3 +261,18 @@ export function getReminderMutedUsers(guildId: string): string[] {
     const data = getReminderData(guildId)
     return data.muted
 }
+
+export function setBookITCookie(cookie: string | undefined) {
+    const data = getData()
+    if (cookie === undefined) {
+        delete data.bookitCookie
+    } else {
+        data.bookitCookie = cookie
+    }
+    writeData(data)
+}
+
+export function getBookITCookie(): string | undefined {
+    const data = getData()
+    return data.bookitCookie
+}
