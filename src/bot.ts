@@ -3,16 +3,17 @@ import {
     Collection,
     Events,
     GatewayIntentBits,
-    MessageFlags,
     REST,
-    Routes,
+    Routes
 } from 'discord.js'
 import fs from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { discordToken } from './environment.js'
 import { addReaction } from './features/reactions.js'
+import { executeButtonInteraction } from './listeners/buttons.js'
+import { executeChatInputCommandInteraction } from './listeners/commands.js'
 import type { CommandData, CommandDefinition, ExtendedClient } from './types.js'
-import { fileURLToPath } from 'node:url'
 
 const client = new Client({
     intents: [
@@ -51,32 +52,10 @@ for (const file of commandFiles) {
 
 // Command executor
 client.on(Events.InteractionCreate, async interaction => {
-    if (!interaction.isChatInputCommand()) return
-
-    const command = (interaction.client as ExtendedClient).commands.get(interaction.commandName)
-
-    if (!command) {
-        console.error(
-            `No command matching ${interaction.commandName} was found.`
-        )
-        return
-    }
-
-    try {
-        await command.execute(interaction)
-    } catch (error) {
-        console.error(error)
-        if (interaction.replied || interaction.deferred) {
-            await interaction.followUp({
-                content: 'There was an error while executing this command!',
-                flags: MessageFlags.Ephemeral,
-            })
-        } else {
-            await interaction.reply({
-                content: 'There was an error while executing this command!',
-                flags: MessageFlags.Ephemeral,
-            })
-        }
+    if (interaction.isChatInputCommand()) {
+        executeChatInputCommandInteraction(interaction)
+    } else if (interaction.isButton()) {
+        executeButtonInteraction(interaction)
     }
 })
 

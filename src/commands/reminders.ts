@@ -14,6 +14,7 @@ import {
 import { announceReminders } from '../features/reminders.js'
 import type { CommandMap } from '../types.js'
 import { defineCommand } from '../util/guild.js'
+import { EMBED_COLOR_REMINDERS } from '../theme.js'
 
 export const DAYS = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag', 'Söndag']
 
@@ -173,7 +174,7 @@ async function list(interaction: ChatInputCommandInteraction) {
 
     const embed = new EmbedBuilder()
         .setTitle('Påminnelser för Ansvarsveckor')
-        .setColor('#ffbb00')
+        .setColor(EMBED_COLOR_REMINDERS)
 
     if (Object.keys(reminders).length === 0) {
         embed.setDescription('Det finns inga påminnelser')

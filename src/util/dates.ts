@@ -118,3 +118,8 @@ export async function schedule(time: Date, callback: () => void): Promise<void> 
         }, timeUntil)
     })
 }
+
+export type DiscordTimeStampMode = 't' | 'T' | 'd' | 'D' | 'f' | 'F' | 'R'
+export function toDiscordTimestamp(time: Date, mode?: DiscordTimeStampMode): string {
+    return `<t:${time.getTime() / 1000}${mode ? `:${mode}` : ''}>`
+}

@@ -20,7 +20,7 @@ export interface CommandDefinition {
 }
 
 
-export type CommandData = ReturnType<SlashCommandBuilder["toJSON"]>
+export type CommandData = ReturnType<SlashCommandBuilder['toJSON']>
 
 export type CommandMap = {
     [command: string]: (
@@ -73,20 +73,27 @@ export interface ParsedRemindersData {
     muted: string[]
 }
 
+export interface BookITResponseEvent {
+    id?: string
+    phone?: string
+    title?: string
+    description?: string
+    start?: string
+    end?: string
+    created_at?: string
+    updated_at?: string
+    room?: string[]
+    booked_by?: string
+    booked_as?: string
+
+}
+
 export interface BookITEventsFTResponse {
-    eventsFT: {
-        id?: string
-        phone?: string
-        title?: string
-        description?: string
-        start?: string
-        end?: string
-        created_at?: string
-        updated_at?: string
-        room?: string[]
-        booked_by?: string
-        booked_as?: string
-    }[]
+    eventsFT: BookITResponseEvent[]
+}
+
+export interface BookITEventResponse {
+    event: BookITResponseEvent
 }
 
 export interface BookITEvent {
@@ -97,4 +104,7 @@ export interface BookITEvent {
     end: Date
     bookedBy: string
     bookedAs: string
+    description?: string
 }
+
+export type Concrete<T> = { [P in keyof T]-?: NonNullable<T[P]> }

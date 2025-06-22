@@ -8,6 +8,7 @@ import {
 import { getNoReactChannels, setNoReactChannels } from '../data.js'
 import type { CommandMap } from '../types.js'
 import { defineCommand } from '../util/guild.js'
+import { EMBED_COLOR_GENERIC } from '../theme.js'
 
 export default defineCommand({
     data: new SlashCommandBuilder()
@@ -126,7 +127,7 @@ async function list(interaction: ChatInputCommandInteraction) {
         embeds: [
             new EmbedBuilder()
                 .setTitle('Markerade kanaler')
-                .setColor('#09cdda')
+                .setColor(EMBED_COLOR_GENERIC)
                 .setDescription(
                     noReactChannels.size === 0
                         ? 'Inga kanaler markerade'

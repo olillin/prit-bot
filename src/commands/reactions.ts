@@ -6,6 +6,7 @@ import {
 import { getDiscoveredReactions } from '../data.js'
 import { getReactions } from '../features/reactions.js'
 import { defineCommand } from '../util/guild.js'
+import { EMBED_COLOR_GENERIC } from '../theme.js'
 
 export default defineCommand({
     data: new SlashCommandBuilder()
@@ -34,7 +35,7 @@ export default defineCommand({
 
         const embed = new EmbedBuilder()
             .setTitle('Upptäckta reaktioner')
-            .setColor('#09cdda')
+            .setColor(EMBED_COLOR_GENERIC)
             .setDescription(body)
             .setFooter({
                 text: `Det finns ${undiscoveredCount} reaktion${undiscoveredCount == 1 ? '' : 'er'

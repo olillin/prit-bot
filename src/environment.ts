@@ -1,4 +1,4 @@
-import { splitTimeString } from "./util/dates.js"
+import { splitTimeString } from './util/dates.js'
 
 export const DATA_FILE = '../data.json'
 export const REACTIONS_FILE = '../reactions.json'

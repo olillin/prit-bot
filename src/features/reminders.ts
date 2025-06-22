@@ -4,6 +4,7 @@ import { remindersTimeString } from '../environment.js'
 import { getNextTime, schedule } from '../util/dates.js'
 import { getUsers } from '../util/guild.js'
 import { getCurrentlyResponsible, getDayOfResponsibilityWeek } from '../util/weekInfo.js'
+import { EMBED_COLOR_REMINDERS } from '../theme.js'
 
 /** Get an embed for the reminders today */
 export async function getRemindersEmbedToday(
@@ -29,7 +30,7 @@ export async function getRemindersEmbedToday(
     const description = '-# Använd `/reminders` kommandot om du inte vill bli pingad'
 
     return new EmbedBuilder()
-        .setColor('#ffbb00')
+        .setColor(EMBED_COLOR_REMINDERS)
         .setTitle(title)
         .setDescription(description)
         .addFields([

@@ -14,7 +14,7 @@ export default defineCommand({
 
     async execute(interaction: ChatInputCommandInteraction) {
         const guild: Guild = interaction.guild!
-        interaction.deferReply({
+        await interaction.deferReply({
             flags: MessageFlags.Ephemeral,
         })
         const success = await announceWeekIn(guild)

@@ -1,9 +1,8 @@
-import { escapeEscape, Events } from 'discord.js'
+import { Events } from 'discord.js'
 import client from './bot.js'
 import { discordToken, validateEnvironment } from './environment.js'
 import { cycleActivities } from './features/activities.js'
 import { scheduleAnnounceLoop } from './features/announcements.js'
-import { getEventsToday } from './features/bookit.js'
 import { scheduleRemindersLoop } from './features/reminders.js'
 
 function main() {
@@ -22,12 +21,6 @@ function main() {
 
     console.log('Starting bot...')
     client.login(discordToken!)
-
-    getEventsToday().then(events => {
-        console.log(events)
-    }).catch(error => {
-        console.warn('Failed to fetch BookIT events:', error)
-    })
 }
 
 main()

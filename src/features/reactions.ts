@@ -13,6 +13,7 @@ import {
 } from '../data.js'
 import { REACTIONS_FILE } from '../environment.js'
 import type { ReactionsConfig } from '../types.js'
+import { EMBED_COLOR_GENERIC } from '../theme.js'
 
 export function getReactions(): ReactionsConfig {
     if (fs.existsSync(REACTIONS_FILE)) {
@@ -132,6 +133,6 @@ function discoverReactionEmbed(
         .setDescription(
             `${member} upptäckte en ny reaktion genom att skicka "${text}"!`
         )
-        .setColor('#09cdda')
+        .setColor(EMBED_COLOR_GENERIC)
         .setImage(imageUrl).data
 }

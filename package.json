@@ -21,8 +21,8 @@
   },
   "homepage": "https://github.com/olillin/prit-bot#readme",
   "dependencies": {
-    "bookit-scraper": "^1.1.0",
-    "discord.js": "^14.18.0",
+    "bookit-scraper": "^1.2.1",
+    "discord.js": "^14.20.0",
     "iamcal": "^1.0.3",
     "selenium-webdriver": "^4.33.0",
     "typescript": "^5.8.3"
