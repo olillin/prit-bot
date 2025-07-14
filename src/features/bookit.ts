@@ -4,7 +4,7 @@ import * as data from '../data.js'
 import { gammaPassword, gammaUsername } from '../environment.js'
 import { EMBED_COLOR_BOOKIT } from '../theme.js'
 import type { BookITEvent, BookITEventResponse, BookITEventsFTResponse, Concrete } from '../types.js'
-import { atMidnight, ONE_DAY_MS, toDiscordTimestamp } from '../util/dates.js'
+import { atMidnight, ONE_DAY_MS, ONE_HOUR_MS, toDiscordTimestamp } from '../util/dates.js'
 
 async function createCookie(): Promise<string> {
     // Return saved cookie if possible
@@ -131,12 +131,22 @@ export async function getEventDetails(id: string): Promise<Concrete<BookITEvent>
         })
 }
 
+function getDurationString(durationMs: number): string {
+    let timeHours = durationMs / ONE_HOUR_MS
+    const minutes = Math.ceil(timeHours % 1 * 60)
+    const minuteString = minutes > 0 ? `${minutes} minut${minutes === 1 ? '' : 'er'}` : ''
+    const hours = Math.floor(timeHours)
+    const hourString = hours > 0 ? `${hours} timm${hours === 1 ? 'e' : 'ar'}` : ''
+    return `${hourString} ${minuteString}`.trim()
+}
+
 function createEventSummary(event: BookITEvent) {
     return `
     **Vem:** ${event.bookedBy} som ${event.bookedAs}
     **Rum:** ${event.room.join(', ')}
     **Början:** ${toDiscordTimestamp(event.start, 'F')}
     **Avslut:** ${toDiscordTimestamp(event.end, 'F')}
+    **Tid:** ${getDurationString(event.end.getTime() - event.start.getTime())}
 
     ${event.description ?? ''}
 
