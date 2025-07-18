@@ -1,12 +1,12 @@
 import type { Calendar, CalendarEvent } from 'iamcal'
 import { parseCalendar } from 'iamcal/parse'
-import { getGuildData } from '../data'
+import { getGuildConfiguration } from '../data'
 import { ONE_WEEK } from './dates'
 
 export function getCalendar(guildId: string): Promise<Calendar | undefined> {
     return new Promise(resolve => {
-        const data = getGuildData(guildId)
-        const url = data.responsibleCalendarUrl
+        const configuration = getGuildConfiguration(guildId)
+        const url = configuration.responsibleCalendarUrl
 
         if (!url) {
             resolve(undefined)
