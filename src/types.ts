@@ -1,37 +1,14 @@
 import type {
-    NewsChannel,
-    TextChannel,
-    ChatInputCommandInteraction,
-    EmojiIdentifierResolvable,
     Client,
-    SlashCommandBuilder,
     Collection,
-    Interaction,
-    CacheType,
-    SlashCommandOptionsOnlyBuilder,
-    SlashCommandSubcommandsOnlyBuilder,
+    EmojiIdentifierResolvable,
+    NewsChannel,
+    TextChannel
 } from 'discord.js'
+import type { CommandDefinition } from './util/command'
 
 export interface ExtendedClient extends Client {
     commands: Collection<string, CommandDefinition>
-}
-
-export interface CommandDefinition {
-    data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder | SlashCommandSubcommandsOnlyBuilder
-    execute(interaction: ChatInputCommandInteraction): Promise<void>
-}
-
-
-export type CommandData = ReturnType<SlashCommandBuilder["toJSON"]>
-
-export type CommandMap = {
-    [command: string]: (
-        interaction: ChatInputCommandInteraction
-    ) => Promise<void>
-}
-
-export type CommandTree = {
-    [group: string]: CommandMap
 }
 
 export type AnnounceChannel = NewsChannel | TextChannel
@@ -43,12 +20,16 @@ export interface FullData {
 }
 
 export interface GuildData {
-    announceChannel?: string
-    responsibleRole?: string
-    responsibleCalendarUrl?: string
+    configuration?: GuildConfiguration
     discoveredReactions?: DiscoveredReactionsData
     noReactChannels?: string[]
     reminders?: RemindersData
+}
+
+export interface GuildConfiguration {
+    announceChannel?: string
+    responsibleRole?: string
+    responsibleCalendarUrl?: string
 }
 
 export interface ReactionsDefinition {
