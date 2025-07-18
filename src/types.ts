@@ -30,6 +30,10 @@ export type CommandMap = {
     ) => Promise<void>
 }
 
+export type CommandTree = {
+    [group: string]: CommandMap
+}
+
 export type AnnounceChannel = NewsChannel | TextChannel
 
 export interface FullData {
