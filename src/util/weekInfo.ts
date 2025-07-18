@@ -1,6 +1,7 @@
 import type { Calendar, CalendarEvent } from 'iamcal'
 import { parseCalendar } from 'iamcal/parse'
 import { getGuildData } from '../data'
+import { ONE_WEEK } from './dates'
 
 export function getCalendar(guildId: string): Promise<Calendar | undefined> {
     return new Promise(resolve => {
@@ -19,15 +20,6 @@ export function getCalendar(guildId: string): Promise<Calendar | undefined> {
     })
 }
 
-/** Parse a date string in the format YYYYMMDD, required because of a bug in 'iamcal' */
-export function parseDate(value: string): Date {
-    return new Date(
-        parseInt(value.substring(0, 4)), //
-        parseInt(value.substring(4, 6)) - 1,
-        parseInt(value.substring(6, 8))
-    )
-}
-
 /**
  * Get the calendar event for the current responsible week
  * @param guildId The ID of the guild which has the calendar
@@ -42,28 +34,21 @@ export async function getCurrentResponsibleEvent(
 
     const now = new Date().getTime()
 
-    const dayInMs = 24 * 60 * 60 * 1000
-
     return calendar.events().find(event => {
-        const start = event.getProperty('DTSTART')!.value
-        const end = event.getProperty('DTEND')!.value
-
         // Check if the event is a whole-day event
-        if (!isNaN(new Date(start).getTime())) return false
-        if (!isNaN(new Date(end).getTime())) return false
+        if (!event.getPropertyParams('DTSTART')?.includes('VALUE=DATE')) return false
+        if (!event.getPropertyParams('DTEND')?.includes('VALUE=DATE')) return false
 
         // Check if the event is ongoing
-        const startDate = parseDate(start)
-        const startTime = startDate.getTime()
-        const endDate = parseDate(end)
-        const endTime = endDate.getTime()
+        const startTime = event.start().getTime()
+        const endTime = event.end().getTime()
 
         const isOngoing = startTime <= now && now <= endTime
         if (!isOngoing) return false
 
         // Check duration
         const duration = endTime - startTime
-        const isWeekLong = duration > 6 * dayInMs && duration < 8 * dayInMs
+        const isWeekLong = duration === ONE_WEEK
         if (!isWeekLong) return false
 
         // Check summary
