@@ -11,7 +11,7 @@ import {
     type GuildMember,
     type Message,
 } from 'discord.js'
-import type { ReactionsConfig } from '../types'
+import type { ReactionsConfig } from '../data'
 import { REACTIONS_FILE } from '../environment'
 
 export function getReactions(): ReactionsConfig {

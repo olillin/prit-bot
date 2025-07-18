@@ -3,7 +3,7 @@ import {
     SlashCommandBuilder,
 } from 'discord.js'
 import { defineCommand } from '../util/guild'
-import { CommandMap } from '../types'
+import { CommandMap } from '../util/command'
 import { distributeMembers } from '../features/weekGeneration'
 
 export default defineCommand({

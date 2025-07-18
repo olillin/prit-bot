@@ -1,7 +1,7 @@
-import { ApplicationCommandOptionType, ChannelType, Guild, PermissionFlagsBits, SlashCommandBuilder } from "discord.js"
-import { AnnounceChannel } from "../types"
+import { ApplicationCommandOptionType, ChannelType, type Guild, PermissionFlagsBits, SlashCommandBuilder } from "discord.js"
 import { addConfigurationCommands, configurationCommandExecutor, ConfigurationCommandOptions, defineConfigurationCommand } from "../util/command"
 import { canUseRole, defineCommand, getAnnouncementChannel, getRole } from "../util/guild"
+import type { AnnounceChannel } from "../data"
 
 const commands: ConfigurationCommandOptions<any>[] = [
     defineConfigurationCommand({

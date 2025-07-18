@@ -1,21 +1,62 @@
-import {
-    PermissionFlagsBits,
+import type {
+    EmojiIdentifierResolvable,
+    NewsChannel,
     Role,
-    type Guild,
-    type GuildMember
+    TextChannel,
+    Guild,
+    GuildMember
 } from 'discord.js'
 import fs from 'fs'
 import { DATA_FILE } from './environment'
-import type {
-    AnnounceChannel,
-    DiscoveredReactionsData,
-    FullData,
-    GuildConfiguration,
-    GuildData,
-    ParsedRemindersData,
-    RemindersData
-} from './types'
-import { canUseRole, getAnnouncementChannel as getGuildAnnouncementChannel, getRole } from './util/guild'
+import { getAnnouncementChannel as getGuildAnnouncementChannel, getRole } from './util/guild'
+
+export type AnnounceChannel = NewsChannel | TextChannel
+
+export interface FullData {
+    guilds?: {
+        [guildId: string]: GuildData
+    }
+}
+
+export interface GuildData {
+    configuration?: GuildConfiguration
+    discoveredReactions?: DiscoveredReactionsData
+    noReactChannels?: string[]
+    reminders?: RemindersData
+}
+
+export interface GuildConfiguration {
+    announceChannel?: string
+    responsibleRole?: string
+    responsibleCalendarUrl?: string
+}
+
+export interface ReactionsDefinition {
+    pattern: string
+    emoji: EmojiIdentifierResolvable
+}
+
+export interface ReactionsConfig {
+    [id: string]: ReactionsDefinition
+}
+
+export interface DiscoveredReactionsData {
+    [id: string]: string
+}
+
+export interface RemindersData {
+    days?: {
+        [day: string]: string[]
+    }
+    muted?: string[]
+}
+
+export interface ParsedRemindersData {
+    days: {
+        [day: number]: string[]
+    }
+    muted: string[]
+}
 
 function getData(): FullData {
     if (!fs.existsSync(DATA_FILE)) {

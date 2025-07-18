@@ -1,6 +1,6 @@
 import { ApplicationCommandOptionBase, ApplicationCommandOptionType, ChatInputCommandInteraction, MessageFlags, SlashCommandAttachmentOption, SlashCommandBooleanOption, SlashCommandBuilder, SlashCommandChannelOption, SlashCommandIntegerOption, SlashCommandMentionableOption, SlashCommandNumberOption, SlashCommandOptionsOnlyBuilder, SlashCommandRoleOption, SlashCommandStringOption, SlashCommandSubcommandsOnlyBuilder, SlashCommandUserOption } from "discord.js"
 import { getGuildConfiguration, setGuildConfiguration } from "../data"
-import type { GuildConfiguration } from "../types"
+import type { GuildConfiguration } from "../data"
 
 export interface CommandDefinition {
     data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder | SlashCommandSubcommandsOnlyBuilder

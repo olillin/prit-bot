@@ -11,8 +11,11 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { discordToken } from './environment'
 import { addReaction } from './features/reactions'
-import type { ExtendedClient } from './types'
 import type { CommandDefinition, CommandData } from './util/command'
+
+export interface ExtendedClient extends Client {
+    commands: Collection<string, CommandDefinition>
+}
 
 const client = new Client({
     intents: [

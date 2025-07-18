@@ -1,5 +1,5 @@
 import { type APIRole, PermissionFlagsBits, type Role, type Guild, type GuildMember } from 'discord.js'
-import type { AnnounceChannel } from '../types'
+import type { AnnounceChannel } from '../data'
 import type { CommandDefinition } from './command'
 
 /** Get a user in a guild from their nick */
