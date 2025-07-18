@@ -2,8 +2,9 @@ import {
     type ChatInputCommandInteraction,
     SlashCommandBuilder,
 } from 'discord.js'
-import { getWeek, getStudyWeek, getCurrentlyResponsible } from '../util/weekInfo'
+import { getStudyWeek, getCurrentlyResponsible } from '../util/weekInfo'
 import { defineCommand } from '../util/guild'
+import { weekNumber } from '../util/dates'
 
 export default defineCommand({
     data: new SlashCommandBuilder()
@@ -13,7 +14,7 @@ export default defineCommand({
     async execute(interaction: ChatInputCommandInteraction) {
         const guildId: string = interaction.guildId!
         const [week, studyWeek, responsible] = await Promise.all([
-            getWeek(),
+            weekNumber(),
             getStudyWeek(),
             getCurrentlyResponsible(guildId).then(names => {
                 if (!names) return 'Saknas'

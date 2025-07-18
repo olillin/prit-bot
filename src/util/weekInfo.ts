@@ -101,37 +101,13 @@ export function getDayOfResponsibilityWeek(
     return today.getDay()
 }
 
-export function scrapeWeek(url: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-        fetch(url).then(async response => {
-            const text = await response.text()
-
-            const pattern = /<time.{0,30}>(.+?)<\/time>/
-            const match = text.match(pattern)
-
-            if (match) {
-                resolve(match[1])
-            } else {
-                reject(`Invalid response from ${url}`)
-            }
-        })
-    })
-}
-
-export async function getWeek(): Promise<string | null> {
-    return new Promise(resolve => {
-        scrapeWeek('https://vecka.nu')
-            .then(resolve)
-            .catch(e => {
-                console.error(e)
-                resolve(null)
-            })
-    })
+export function fetchText(url: string): Promise<string> {
+    return fetch(url).then(async response => response.text())
 }
 
 export async function getStudyWeek(): Promise<string | null> {
     return new Promise(resolve => {
-        scrapeWeek('https://läsvecka.nu')
+        fetchText('https://läsvecka.nu/data')
             .then(resolve)
             .catch(() => resolve(null))
     })

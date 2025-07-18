@@ -1,9 +1,9 @@
 import type { Client, Guild, GuildMember } from 'discord.js'
 import { getAnnouncementChannel, getResponsibleRole } from '../data'
 import { announceTimeString } from '../environment'
-import { getNextTime, schedule } from '../util/dates'
+import { getNextTime, schedule, weekNumber } from '../util/dates'
 import { getUsers } from '../util/guild'
-import { getCurrentlyResponsible, getStudyWeek, getWeek } from '../util/weekInfo'
+import { getCurrentlyResponsible, getStudyWeek } from '../util/weekInfo'
 
 /**
  * Announce info this week in a guild
@@ -114,10 +114,10 @@ async function assignRole(
 }
 
 
-let previousWeek: string | null = null
+let previousWeek: number | null = null
 
 export async function announceLoop(client: Client): Promise<void> {
-    const currentWeek = await getWeek()
+    const currentWeek = weekNumber()
     if (previousWeek === null) {
         previousWeek = currentWeek
     }
