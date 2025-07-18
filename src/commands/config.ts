@@ -2,6 +2,7 @@ import { ApplicationCommandOptionType, ChannelType, type Guild, PermissionFlagsB
 import { addConfigurationCommands, configurationCommandExecutor, ConfigurationCommandOptions, defineConfigurationCommand } from "../util/command"
 import { canUseRole, defineCommand, getAnnouncementChannel, getRole } from "../util/guild"
 import type { AnnounceChannel } from "../data"
+import { getCurrentMembers } from "../util/scrape"
 
 const commands: ConfigurationCommandOptions<any>[] = [
     defineConfigurationCommand({
@@ -82,6 +83,31 @@ const commands: ConfigurationCommandOptions<any>[] = [
             }
             return role.toString()
         }
+    }),
+
+    defineConfigurationCommand({
+        type: ApplicationCommandOptionType.String as const,
+        name: 'members',
+        key: 'members',
+        description: 'Sittande medlemmar',
+
+        optionExtras: (option) =>
+            option.setDescription('Lista av sittande separerat av komma-tecken. Ange `auto` för nuvarande sittande från chalmers.it'),
+
+        set: async (value, context) => {
+            let members: string[]
+            if (value.trim().toLowerCase() === 'auto') {
+                // Fetch from chalmers.it
+                members = await getCurrentMembers()
+            } else {
+                members = value.split(',').map(name => name.trim())
+            }
+            return members.join(',')
+        },
+        get: async (value, context) => {
+            return value.replace(/(?<=,)/g, ' ')
+        }
+
     })
 ]
 

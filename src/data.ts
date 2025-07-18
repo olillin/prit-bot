@@ -29,6 +29,7 @@ export interface GuildConfiguration {
     announceChannel?: string
     responsibleRole?: string
     responsibleCalendarUrl?: string
+    members?: string
 }
 
 export interface ReactionsDefinition {
