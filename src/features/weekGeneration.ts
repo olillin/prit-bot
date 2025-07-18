@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto"
-import { Calendar, CalendarEvent } from "iamcal"
-import { weekToDate, ONE_WEEK } from "../util/dates"
+import { CalendarEvent } from "iamcal"
+import { ONE_WEEK, weekToDate, weeksPerYear } from "../util/dates"
 
 /**
  * Distribute members over a period of weeks
@@ -53,7 +53,17 @@ export function distributeMembers(members: Set<string>, previous: Set<string>[] 
     console.dir(memberStats.entries())
 
     // TODO: Distribute based on statistics
-    return []
+    const buckets: Set<string>[] = [new Set()]
+    const remaining = Array.from(members)
+    while (remaining.length > 0) {
+        if (buckets[buckets.length - 1].size >= membersPerWeek) {
+            buckets.push(new Set([remaining.pop()!]))
+        } else {
+            buckets[buckets.length - 1].add(remaining.pop()!)
+        }
+    }
+
+    return buckets
 }
 
 interface MemberWeekStatistics {
@@ -92,6 +102,9 @@ export function createEvents(weeks: Set<string>[], startWeek: number, prefix: st
         const endTime = new Date(startTime.getTime() + ONE_WEEK)
 
         weekNumber++
+        if (weekNumber > weeksPerYear(startTime.getFullYear())) {
+            weekNumber = 1
+        }
 
         const uid = randomUUID()
         const now = new Date()
