@@ -84,7 +84,7 @@ export async function getPreviouslyResponsible(guildId: string): Promise<Respons
     if (!events) return undefined
     return events.map(event => ({
         start: event.start(),
-        responsible: new Set(getNamesFromEventSummary(event.summary()))
+        responsible: new Set(getNamesFromEventSummary(event.summary().replace('\\,', ',')))
     }))
 }
 

@@ -206,3 +206,13 @@ export function weekToDate(week: number, backtrack: number = 10): Date {
     }
     return fromWeekDate(week, year)
 }
+
+/** Add an amount of weeks, restarting the count at the end of the year */
+export function addWeeks(week: number, n: number, year: number): number {
+    let newWeek = week + n
+    while (newWeek > weeksPerYear(year)) {
+        newWeek -= weeksPerYear(year)
+        year++
+    }
+    return newWeek
+}

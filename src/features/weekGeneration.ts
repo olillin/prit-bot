@@ -1,6 +1,47 @@
 import { randomUUID } from "crypto"
 import { CalendarEvent } from "iamcal"
-import { ONE_WEEK, weekToDate, weeksPerYear } from "../util/dates"
+import { ONE_WEEK, addWeeks, weekToDate, weeksPerYear } from "../util/dates"
+
+/** Generate statistics about previous responsibility weeks for each member */
+export function analyzePrevious(members: Set<string>, previous: Set<string>[]): Map<string, MemberWeekStatistics> {
+    const createStartingStatistics = (member: string): MemberWeekStatistics => ({
+        weekCount: 0,
+        repeatCount: 0,
+        pairCount: new Map(Array.from(members).filter(v => v !== member).map(v => [v, 0])),
+        mostRecentlyWith: new Set(),
+    })
+    const memberStats = new Map<string, MemberWeekStatistics>(
+        Array.from(members).map(v => [v, createStartingStatistics(v)])
+    )
+
+    let previousWeekMembers: Set<string> = new Set()
+    previous.forEach(weekMembers => {
+        weekMembers.forEach(member => {
+            const stats = memberStats.get(member)!
+            stats.weekCount++
+            // Update repeat count
+            if (previousWeekMembers.has(member)) {
+                stats.repeatCount++
+            }
+
+            // Update most recently with
+            const otherMembers = Array.from(weekMembers)
+                .filter(other => other !== member)
+            stats.mostRecentlyWith = new Set(otherMembers)
+
+            otherMembers
+                .forEach(otherMember => {
+                    // Update pair count
+                    const pairCount = stats.pairCount.get(otherMember)!
+                    stats.pairCount.set(otherMember, pairCount + 1)
+                })
+        })
+
+        previousWeekMembers = weekMembers
+    })
+
+    return memberStats
+}
 
 /**
  * Distribute members over a period of weeks
@@ -15,39 +56,7 @@ export function distributeMembers(members: Set<string>, previous: Set<string>[] 
     const neededRepititions = membersPerWeek - members.size % membersPerWeek
 
     // Analyze previous weeks
-    const createStartingStatistics = (member: string): MemberWeekStatistics => ({
-        repeatCount: 0,
-        pairCount: new Map(Array.from(members).filter(v => v !== member).map(v => [v, 0])),
-        mostRecentlyWith: new Set(),
-    })
-    const memberStats = new Map<string, MemberWeekStatistics>(
-        Array.from(members).map(v => [v, createStartingStatistics(v)])
-    )
-
-    let previousWeekMembers: Set<string> = new Set()
-    previous.forEach(weekMembers => {
-        weekMembers.forEach(member => {
-            const stats = memberStats.get(member)!
-            // Update repeat count
-            if (previousWeekMembers.has(member)) {
-                stats.repeatCount++
-            }
-
-            const otherMembers = Array.from(weekMembers)
-                .filter(other => other !== member)
-            // Update most recently with
-            stats.mostRecentlyWith = new Set(otherMembers)
-
-            otherMembers
-                .forEach(otherMember => {
-                    // Update pair count
-                    const pairCount = stats.pairCount.get(otherMember)!
-                    stats.pairCount.set(otherMember, pairCount + 1)
-                })
-        })
-
-        previousWeekMembers = weekMembers
-    })
+    const memberStats = analyzePrevious(members, previous)
 
     console.log('Stats:')
     console.dir(memberStats.entries())
@@ -67,6 +76,8 @@ export function distributeMembers(members: Set<string>, previous: Set<string>[] 
 }
 
 interface MemberWeekStatistics {
+    /** How many responsibility weeks this member has had */
+    weekCount: number
     /** How many times this member has had responsibility week two weeks in a row */
     repeatCount: number
     /** How many times this member has been paired with every other member */
@@ -101,10 +112,7 @@ export function createEvents(weeks: Set<string>[], startWeek: number, prefix: st
         const startTime = weekToDate(weekNumber)
         const endTime = new Date(startTime.getTime() + ONE_WEEK)
 
-        weekNumber++
-        if (weekNumber > weeksPerYear(startTime.getFullYear())) {
-            weekNumber = 1
-        }
+        weekNumber = addWeeks(weekNumber, 1, startTime.getFullYear())
 
         const uid = randomUUID()
         const now = new Date()

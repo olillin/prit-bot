@@ -4,10 +4,11 @@ import {
     SlashCommandBuilder,
 } from 'discord.js'
 import { defineCommand } from '../util/guild'
-import { CommandMap } from '../util/command'
-import { distributeMembers } from '../features/weekGeneration'
+import type { CommandMap } from '../util/command'
+import { createEvents, distributeMembers } from '../features/weekGeneration'
 import { getGuildConfiguration } from '../data'
 import { getPreviouslyResponsible } from '../util/weekInfo'
+import { addWeeks, ONE_WEEK, weekNumber } from '../util/dates'
 
 export default defineCommand({
     data: new SlashCommandBuilder()
@@ -66,6 +67,7 @@ async function generate(interaction: ChatInputCommandInteraction) {
 
     // Parse previous weeks
     const previous = await getPreviouslyResponsible(guildId)
+    console.log(previous)
     if (!previous) {
         interaction.editReply(
             ':warning: Kunde inte hämta tidigare ansvarsveckor, kontrollera att `/config calendar` är inställt.'
@@ -74,13 +76,31 @@ async function generate(interaction: ChatInputCommandInteraction) {
     const previouslyResponsible = previous?.map(week => week.responsible) ?? []
 
     // Parse slash command options
-    const membersPerWeek = interaction.options.getInteger('membersPerWeek') ?? 2
+    let startWeek: number
+    if (interaction.options.getInteger('start') !== null) {
+        startWeek = interaction.options.getInteger('start')!
+    } else {
+        const now = new Date()
+        const thisWeek = weekNumber(now)
+        const latestResponsibleWeek = previous && previous.length > 0
+            ? previous[previous.length - 1].start
+            : undefined
+
+        if (latestResponsibleWeek && latestResponsibleWeek.getTime() + ONE_WEEK > now.getTime()) {
+            startWeek = addWeeks(weekNumber(latestResponsibleWeek), 1, latestResponsibleWeek.getFullYear())
+        } else {
+            startWeek = thisWeek
+        }
+    }
+    const membersPerWeek = interaction.options.getInteger('perweek') ?? 2
 
     const membersSet = new Set(members)
     const distributedMembers = distributeMembers(membersSet, previouslyResponsible, membersPerWeek)
     console.log(distributedMembers)
 
-    await interaction.editReply(distributedMembers.map(set => `- ${Array.from(set).join(', ')}`).join('\n'))
+    const events = createEvents(distributedMembers, startWeek)
+
+    await interaction.editReply(events.map(event => `- ${event.start()}: ${event.summary()}`).join('\n'))
 }
 
 async function view(interaction: ChatInputCommandInteraction) {
