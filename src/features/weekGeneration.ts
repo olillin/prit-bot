@@ -1,6 +1,10 @@
 import { randomUUID } from "crypto"
-import { CalendarEvent } from "iamcal"
-import { ONE_WEEK, addWeeks, weekToDate, weeksPerYear } from "../util/dates"
+import { Calendar, CalendarEvent } from "iamcal"
+import { ONE_WEEK, addWeeks, weekToDate } from "../util/dates"
+import { formalPublicIdentifier } from "../environment"
+import { AttachmentBuilder } from "discord.js"
+import tmp from "tmp"
+import fs from "fs"
 
 /** Generate statistics about previous responsibility weeks for each member */
 export function analyzePrevious(members: Set<string>, previous: Set<string>[]): Map<string, MemberWeekStatistics> {
@@ -100,7 +104,7 @@ interface MemberWeekStatistics {
  * 
  */
 
-export function createSummary(members: Set<string>, prefix: string = 'Ansvar:'): string {
+export function createEventSummary(members: Set<string>, prefix: string = 'Ansvar:'): string {
     const sortedMembers = Array.from(members).sort()
     return prefix.trim() + ' ' + sortedMembers.join(', ')
 }
@@ -108,7 +112,7 @@ export function createSummary(members: Set<string>, prefix: string = 'Ansvar:'):
 export function createEvents(weeks: Set<string>[], startWeek: number, prefix: string = 'Ansvar:'): CalendarEvent[] {
     let weekNumber = startWeek
     return weeks.map(weekMembers => {
-        const summary = createSummary(weekMembers, prefix)
+        const summary = createEventSummary(weekMembers, prefix)
         const startTime = weekToDate(weekNumber)
         const endTime = new Date(startTime.getTime() + ONE_WEEK)
 
@@ -121,4 +125,29 @@ export function createEvents(weeks: Set<string>[], startWeek: number, prefix: st
             .setStart(startTime, true)
             .setEnd(endTime, true)
     })
+}
+
+
+/**
+ * Create a temporary calendar file from the responsibility week events.
+ * 
+ * Remember to delete the file after usage!
+ *
+ * @returns the path to the newly created file
+ */
+export function createCalendarFile(events: CalendarEvent[]): string {
+    const calendar = new Calendar(formalPublicIdentifier)
+    calendar.setCalendarName('Genererade ansvarsveckor')
+    calendar.setCalendarDescription('Automatiskt genererade ansvarsveckor från P.R.I.T. Bot')
+
+    events.forEach(event => calendar.addComponent(event))
+
+    const calendarText = calendar.serialize()
+
+    const tmpFile = tmp.fileSync({ name: 'ansvarsvecka.ical' })
+    const path = tmpFile.name
+
+    fs.writeFileSync(path, calendarText)
+
+    return path
 }

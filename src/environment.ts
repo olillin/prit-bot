@@ -7,6 +7,12 @@ export const ACTIVITIES_FILE = '../activities.json'
 export const announceTimeString = process.env.ANNOUNCE_TIME ?? '09:00'
 export const remindersTimeString = process.env.REMINDERS_TIME ?? '12:00'
 export const discordToken = process.env.TOKEN
+/**
+ * FPI used by P.R.I.T. bot
+ * @see https://en.wikipedia.org/wiki/Formal_Public_Identifier
+ */
+export const formalPublicIdentifier = process.env.FPI ?? '-//olillin//P.R.I.T. Bot//SV'
+
 
 /**
  * Checks whether the environment is valid and prints warnings

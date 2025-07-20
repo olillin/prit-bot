@@ -5,10 +5,11 @@ import {
 } from 'discord.js'
 import { defineCommand } from '../util/guild'
 import type { CommandMap } from '../util/command'
-import { createEvents, distributeMembers } from '../features/weekGeneration'
+import { createCalendarFile, createEvents, distributeMembers } from '../features/weekGeneration'
 import { getGuildConfiguration } from '../data'
-import { getPreviouslyResponsible } from '../util/weekInfo'
+import { getNamesFromEventSummary, getPreviouslyResponsible } from '../util/weekInfo'
 import { addWeeks, ONE_WEEK, weekNumber } from '../util/dates'
+import fs from 'fs'
 
 export default defineCommand({
     data: new SlashCommandBuilder()
@@ -96,11 +97,28 @@ async function generate(interaction: ChatInputCommandInteraction) {
 
     const membersSet = new Set(members)
     const distributedMembers = distributeMembers(membersSet, previouslyResponsible, membersPerWeek)
-    console.log(distributedMembers)
 
     const events = createEvents(distributedMembers, startWeek)
+    console.log(events)
 
-    await interaction.editReply(events.map(event => `- ${event.start()}: ${event.summary()}`).join('\n'))
+    // Send preview and ask how to continue
+    const summary = `Genererade ${events.length} veckor som du kan sätta i din kalender:\n`
+        + events.map(event => {
+            const week = weekNumber(event.start())
+            const members = getNamesFromEventSummary(event.summary())
+            return `- v${week}: ${members.join(', ')}`
+        }).join('\n')
+
+
+    const calendarFile = createCalendarFile(events)
+    try {
+        await interaction.editReply({
+            content: summary,
+            files: [calendarFile],
+        })
+    } finally {
+        fs.rmSync(calendarFile)
+    }
 }
 
 async function view(interaction: ChatInputCommandInteraction) {

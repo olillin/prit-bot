@@ -1,5 +1,4 @@
-import type { Calendar, CalendarEvent } from 'iamcal'
-import { parseCalendar } from 'iamcal/parse'
+import { Calendar, CalendarEvent, parseCalendar } from 'iamcal'
 import { getGuildConfiguration } from '../data'
 import { ONE_WEEK } from './dates'
 
@@ -84,13 +83,13 @@ export async function getPreviouslyResponsible(guildId: string): Promise<Respons
     if (!events) return undefined
     return events.map(event => ({
         start: event.start(),
-        responsible: new Set(getNamesFromEventSummary(event.summary().replace('\\,', ',')))
+        responsible: new Set(getNamesFromEventSummary(event.summary()))
     }))
 }
 
 export function getNamesFromEventSummary(summary: string) {
     const extractNicks = /(?<=[\s,]|^)(?:(?!ansvar)[^,\n])+(?=[\s,]|$)/gi
-    const match = summary.matchAll(extractNicks)
+    const match = summary.replace('\\,', ',').matchAll(extractNicks)
     return Array.of(...match).map(m => m[0].trim())
 }
 
