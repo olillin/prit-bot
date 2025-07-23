@@ -113,6 +113,15 @@ client.on(Events.GuildCreate, guild => {
 
 client.on(Events.MessageCreate, message => {
     addReaction(message)
+
+    // Make fun of people trying to use @channel
+    if (message.content.includes('@channel')) {
+        message.channel.send({
+            content: '@everyone titta här, de tror de är på Slack eller nåt'
+        }).catch(error => {
+            console.warn('Failed to react to @channel:', error)
+        })
+    }
 })
 
 client.on(Events.ClientReady, () => {
