@@ -1,8 +1,8 @@
 import {
     PermissionFlagsBits,
+    Role,
     type Guild,
-    type GuildMember,
-    type Role,
+    type GuildMember
 } from 'discord.js'
 import fs from 'fs'
 import { DATA_FILE } from './environment'
@@ -10,10 +10,12 @@ import type {
     AnnounceChannel,
     DiscoveredReactionsData,
     FullData,
+    GuildConfiguration,
     GuildData,
     ParsedRemindersData,
-    RemindersData,
+    RemindersData
 } from './types'
+import { canUseRole, getAnnouncementChannel as getGuildAnnouncementChannel, getRole } from './util/guild'
 
 function getData(): FullData {
     if (!fs.existsSync(DATA_FILE)) {
@@ -41,45 +43,31 @@ export function writeGuildData(guildId: string, data: GuildData) {
     writeData({ ...getData(), guilds })
 }
 
+export function getGuildConfiguration(guildId: string): GuildConfiguration {
+    const data = getGuildData(guildId)
+    return data.configuration ?? {}
+}
+
+export function setGuildConfiguration(guildId: string, configuration: GuildConfiguration) {
+    const data = getGuildData(guildId)
+    data.configuration = configuration
+    writeGuildData(guildId, data)
+}
+
 export async function getAnnouncementChannel(
     guild: Guild
 ): Promise<AnnounceChannel | undefined> {
-    const data = getGuildData(guild.id)
-    if (!data.announceChannel) return undefined
-
-    const botMember = await guild.members.fetchMe()
-    const botPermissions = botMember.permissions
-    if (!botPermissions.has(PermissionFlagsBits.SendMessages)) return undefined
-
-    const channel = await guild.channels.fetch(data.announceChannel)
-    if (channel?.isSendable()) {
-        return channel as unknown as AnnounceChannel
-    } else return undefined
+    const configuration = getGuildConfiguration(guild.id)
+    if (!configuration.announceChannel) return undefined
+    return getGuildAnnouncementChannel(configuration.announceChannel, guild)
 }
 
 export async function getResponsibleRole(
     guild: Guild
 ): Promise<Role | undefined> {
-    const data = getGuildData(guild.id)
-    if (!data.responsibleRole) return undefined
-    const role = await guild.roles.fetch(data.responsibleRole)
-
-    if (!role) return undefined
-    if (!canUseRole(guild, role)) return undefined
-
-    return role
-}
-
-export async function canUseRole(guild: Guild, role: Role): Promise<boolean> {
-    const botMember = await guild.members.fetchMe()
-    const botRole = botMember.roles.highest
-    const botPermissions = botMember.permissions
-
-    if (!botPermissions.has(PermissionFlagsBits.ManageRoles)) return false
-    if (botRole.position - role.position <= 0) return false
-    if (role.managed) return false
-
-    return true
+    const configuration = getGuildConfiguration(guild.id)
+    if (!configuration.responsibleRole) return undefined
+    return getRole(configuration.responsibleRole, guild)
 }
 
 export function getDiscoveredReactions(guild: Guild): DiscoveredReactionsData {

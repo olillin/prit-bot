@@ -1,11 +1,11 @@
 import type { Calendar, CalendarEvent } from 'iamcal'
 import { parseCalendar } from 'iamcal/parse'
-import { getGuildData } from '../data'
+import { getGuildConfiguration } from '../data'
 
 export function getCalendar(guildId: string): Promise<Calendar | undefined> {
     return new Promise(resolve => {
-        const data = getGuildData(guildId)
-        const url = data.responsibleCalendarUrl
+        const configuration = getGuildConfiguration(guildId)
+        const url = configuration.responsibleCalendarUrl
 
         if (!url) {
             resolve(undefined)
@@ -28,9 +28,14 @@ export function parseDate(value: string): Date {
     )
 }
 
-/** Get the calendar event for the current responsible week */
+/**
+ * Get the calendar event for the current responsible week
+ * @param guildId The ID of the guild which has the calendar
+ * @param summaryPattern A regex pattern to match the event summary
+ */
 export async function getCurrentResponsibleEvent(
-    guildId: string
+    guildId: string,
+    summaryPattern: RegExp | undefined = /ansvar/i
 ): Promise<CalendarEvent | undefined> {
     const calendar = await getCalendar(guildId)
     if (!calendar) return undefined
@@ -43,20 +48,31 @@ export async function getCurrentResponsibleEvent(
         const start = event.getProperty('DTSTART')!.value
         const end = event.getProperty('DTEND')!.value
 
+        // Check if the event is a whole-day event
         if (!isNaN(new Date(start).getTime())) return false
         if (!isNaN(new Date(end).getTime())) return false
 
+        // Check if the event is ongoing
         const startDate = parseDate(start)
         const startTime = startDate.getTime()
         const endDate = parseDate(end)
         const endTime = endDate.getTime()
 
         const isOngoing = startTime <= now && now <= endTime
+        if (!isOngoing) return false
 
+        // Check duration
         const duration = endTime - startTime
         const isWeekLong = duration > 6 * dayInMs && duration < 8 * dayInMs
+        if (!isWeekLong) return false
 
-        return isOngoing && isWeekLong
+        // Check summary
+        if (summaryPattern) {
+            const matchesSummary = summaryPattern.test(event.summary())
+            if (!matchesSummary) return false
+        }
+
+        return true
     })
 }
 
@@ -70,9 +86,9 @@ export async function getCurrentlyResponsible(
 
     if (!event) return undefined
 
-    const extractNicks = /\b[^,\n]+\b/g
+    const extractNicks = /(?<=[\s,]|^)(?:(?!ansvar)[^,\n])+(?=[\s,]|$)/gi
     const match = event.summary().matchAll(extractNicks)
-    return Array.of(...match).map(m => m[0])
+    return Array.of(...match).map(m => m[0].trim())
 }
 
 /**
