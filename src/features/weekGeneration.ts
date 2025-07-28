@@ -127,26 +127,29 @@ export function createEvents(weeks: Set<string>[], startWeek: number, prefix: st
     })
 }
 
+/**
+ * Create a calendar of responsibility week events.
+ */
+export function createCalendar(events: CalendarEvent[]): Calendar {
+    const calendar = new Calendar(formalPublicIdentifier)
+    calendar.setCalendarName('Genererade ansvarsveckor')
+    calendar.setCalendarDescription('Automatiskt genererade ansvarsveckor från P.R.I.T. Bot')
+    calendar.components = events
+    return calendar
+}
 
 /**
- * Create a temporary calendar file from the responsibility week events.
+ * Create a temporary calendar file from a calendar.
  * 
  * Remember to delete the file after usage!
  *
  * @returns the path to the newly created file
  */
-export function createCalendarFile(events: CalendarEvent[]): string {
-    const calendar = new Calendar(formalPublicIdentifier)
-    calendar.setCalendarName('Genererade ansvarsveckor')
-    calendar.setCalendarDescription('Automatiskt genererade ansvarsveckor från P.R.I.T. Bot')
-
-    events.forEach(event => calendar.addComponent(event))
-
+export function createCalendarFile(calendar: Calendar): string {
     const calendarText = calendar.serialize()
 
     const tmpFile = tmp.fileSync({ name: 'ansvarsvecka.ical' })
     const path = tmpFile.name
-
     fs.writeFileSync(path, calendarText)
 
     return path

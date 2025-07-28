@@ -3,13 +3,14 @@ import {
     MessageFlags,
     SlashCommandBuilder,
 } from 'discord.js'
-import { defineCommand } from '../util/guild'
-import type { CommandMap } from '../util/command'
-import { createCalendarFile, createEvents, distributeMembers } from '../features/weekGeneration'
-import { getGuildConfiguration } from '../data'
-import { getNamesFromEventSummary, getPreviouslyResponsible } from '../util/weekInfo'
-import { addWeeks, ONE_WEEK, weekNumber } from '../util/dates'
 import fs from 'fs'
+import { getGuildConfiguration } from '../data'
+import { createUrl } from '../features/timesend'
+import { createCalendar, createCalendarFile, createEvents, distributeMembers } from '../features/weekGeneration'
+import type { CommandMap } from '../util/command'
+import { addWeeks, ONE_WEEK, weekNumber } from '../util/dates'
+import { defineCommand } from '../util/guild'
+import { getNamesFromEventSummary, getPreviouslyResponsible } from '../util/weekInfo'
 
 export default defineCommand({
     data: new SlashCommandBuilder()
@@ -99,21 +100,23 @@ async function generate(interaction: ChatInputCommandInteraction) {
     const distributedMembers = distributeMembers(membersSet, previouslyResponsible, membersPerWeek)
 
     const events = createEvents(distributedMembers, startWeek)
-    console.log(events)
 
-    // Send preview and ask how to continue
-    const summary = `Genererade ${events.length} veckor som du kan sätta i din kalender:\n`
+    // Send response
+    const calendar = createCalendar(events)
+    const calendarFile = createCalendarFile(calendar)
+    const timeSendUrl = await createUrl(calendar)
+
+    const messageContent = `Genererade ${events.length} veckor som du kan sätta i din kalender:\n`
         + events.map(event => {
             const week = weekNumber(event.start())
             const members = getNamesFromEventSummary(event.summary())
             return `- v${week}: ${members.join(', ')}`
         }).join('\n')
+        + `\n\n[Lägg till i Google Kalender](${timeSendUrl})`
 
-
-    const calendarFile = createCalendarFile(events)
     try {
         await interaction.editReply({
-            content: summary,
+            content: messageContent,
             files: [calendarFile],
         })
     } finally {
