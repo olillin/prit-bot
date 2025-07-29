@@ -148,7 +148,7 @@ export function createCalendar(events: CalendarEvent[]): Calendar {
 export function createCalendarFile(calendar: Calendar): string {
     const calendarText = calendar.serialize()
 
-    const tmpFile = tmp.fileSync({ name: 'ansvarsvecka.ical' })
+    const tmpFile = tmp.fileSync()
     const path = tmpFile.name
     fs.writeFileSync(path, calendarText)
 

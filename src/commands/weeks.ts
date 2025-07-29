@@ -1,7 +1,11 @@
 import {
+    ButtonBuilder,
+    ButtonStyle,
     type ChatInputCommandInteraction,
+    ContainerBuilder,
     MessageFlags,
     SlashCommandBuilder,
+    TextDisplayBuilder
 } from 'discord.js'
 import fs from 'fs'
 import { getGuildConfiguration } from '../data'
@@ -10,6 +14,7 @@ import { createCalendar, createCalendarFile, createEvents, distributeMembers } f
 import type { CommandMap } from '../util/command'
 import { addWeeks, ONE_WEEK, weekNumber } from '../util/dates'
 import { defineCommand } from '../util/guild'
+import { AccentColors, createWarningContainer } from '../util/theme'
 import { getNamesFromEventSummary, getPreviouslyResponsible } from '../util/weekInfo'
 
 export default defineCommand({
@@ -63,17 +68,21 @@ async function generate(interaction: ChatInputCommandInteraction) {
             content: 'Du måste ställa in sittande innan du kan göra detta. Använd `/config members set`',
             flags: MessageFlags.Ephemeral,
         })
+        return
     }
 
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral })
+    await interaction.deferReply({
+        flags: [MessageFlags.Ephemeral]
+    })
 
     // Parse previous weeks
     const previous = await getPreviouslyResponsible(guildId)
     console.log(previous)
     if (!previous) {
-        interaction.editReply(
-            ':warning: Kunde inte hämta tidigare ansvarsveckor, kontrollera att `/config calendar` är inställt.'
-        )
+        interaction.editReply({
+            components: [createWarningContainer('Kunde inte hämta tidigare ansvarsveckor, kontrollera att `/config calendar` är inställt.')],
+            flags: MessageFlags.IsComponentsV2,
+        })
     }
     const previouslyResponsible = previous?.map(week => week.responsible) ?? []
 
@@ -104,20 +113,69 @@ async function generate(interaction: ChatInputCommandInteraction) {
     // Send response
     const calendar = createCalendar(events)
     const calendarFile = createCalendarFile(calendar)
-    const timeSendUrl = await createUrl(calendar)
+    const calendarFileName = 'ansvarsveckor.ical'
+    try {
+        let timeSendUrl: string | null
+        try {
+            timeSendUrl = await createUrl(calendar)
+        } catch (e) {
+            console.warn(`Failed to generate TimeSend URL: ${e}`)
+            timeSendUrl = null
+        }
 
-    const messageContent = `Genererade ${events.length} veckor som du kan sätta i din kalender:\n`
-        + events.map(event => {
+        const weeksSummary = events.map(event => {
             const week = weekNumber(event.start())
             const members = getNamesFromEventSummary(event.summary())
-            return `- v${week}: ${members.join(', ')}`
+                .map(member => `**${member}**`)
+            return `v${week}: ${members.join(', ')}`
         }).join('\n')
-        + `\n\n[Lägg till i Google Kalender](${timeSendUrl})`
 
-    try {
+        const containerBuilder = new ContainerBuilder()
+            .setAccentColor(AccentColors.responsibilityWeeks)
+            .addTextDisplayComponents(
+                text => text
+                    .setContent(
+                        `## Genererade ${events.length} ansvarsveckor från v${startWeek}\n${weeksSummary}`
+                    )
+            )
+            .addSeparatorComponents(
+                separator => separator.setDivider(true)
+            )
+
+        if (timeSendUrl) {
+            containerBuilder
+                .addTextDisplayComponents(
+                    text => text.setContent('Klicka på knappen nedan för att lägga till i Google Kalender')
+                )
+                .addActionRowComponents(
+                    actionRow => actionRow
+                        .setComponents(
+                            new ButtonBuilder()
+                                .setStyle(ButtonStyle.Link)
+                                .setLabel('Lägg till i Google Kalender')
+                                .setURL(timeSendUrl)
+                        )
+                )
+                .addSeparatorComponents(
+                    separator => separator.setDivider(false)
+                )
+        }
+
+        containerBuilder
+            .addTextDisplayComponents(
+                text => text.setContent(`${timeSendUrl ? 'eller ladda' : 'Ladda'} ner denna fil för att importera i valfri kalenderapp`)
+            )
+            .addFileComponents(
+                file => file.setURL(`attachment://${calendarFileName}`)
+            )
+
         await interaction.editReply({
-            content: messageContent,
-            files: [calendarFile],
+            components: [containerBuilder],
+            files: [{
+                attachment: calendarFile,
+                name: calendarFileName,
+            }],
+            flags: MessageFlags.IsComponentsV2,
         })
     } finally {
         fs.rmSync(calendarFile)
