@@ -2,7 +2,11 @@ import {
     type ChatInputCommandInteraction,
     SlashCommandBuilder,
 } from 'discord.js'
-import { getWeek, getStudyWeek, getCurrentlyResponsible } from '../util/weekInfo'
+import {
+    getWeek,
+    getStudyWeek,
+    getCurrentlyResponsible,
+} from '../util/weekInfo'
 import { defineCommand } from '../util/guild'
 
 export default defineCommand({
@@ -15,10 +19,12 @@ export default defineCommand({
         const [week, studyWeek, responsible] = await Promise.all([
             getWeek(),
             getStudyWeek(),
-            getCurrentlyResponsible(guildId).then(names => {
-                if (!names) return 'Saknas'
-                return names.join(', ')
-            }),
+            getCurrentlyResponsible(guildId)
+                .then(names => {
+                    if (!names) return 'Ingen'
+                    return names.join(', ')
+                })
+                .catch(() => 'Kalender saknas'),
         ])
 
         await interaction.reply(
