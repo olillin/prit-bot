@@ -1,5 +1,4 @@
-import type { Calendar, CalendarEvent } from 'iamcal'
-import { parseCalendar } from 'iamcal/parse'
+import { ONE_DAY_MS, ONE_HOUR_MS, parseCalendar, type Calendar, type CalendarEvent } from 'iamcal'
 import { getGuildConfiguration } from '../data'
 
 export function getCalendar(guildId: string): Promise<Calendar | undefined> {
@@ -19,56 +18,48 @@ export function getCalendar(guildId: string): Promise<Calendar | undefined> {
     })
 }
 
-/** Parse a date string in the format YYYYMMDD, required because of a bug in 'iamcal' */
-export function parseDate(value: string): Date {
-    return new Date(
-        parseInt(value.substring(0, 4)), //
-        parseInt(value.substring(4, 6)) - 1,
-        parseInt(value.substring(6, 8))
-    )
-}
-
 /**
- * Get the calendar event for the current responsible week
+ * Get the calendar event for the current responsible week. To be detected the
+ * event must be a full day event, a week long and contain the word 'ansvar'
+ * (case-insensitive).
  * @param guildId The ID of the guild which has the calendar
  * @param summaryPattern A regex pattern to match the event summary
+ * @returns The calendar event representing the responsibility week, or undefined if no matching events were found
+ * @throws If the calendar was unable to be fetched
  */
 export async function getCurrentResponsibleEvent(
     guildId: string,
     summaryPattern: RegExp | undefined = /ansvar/i
 ): Promise<CalendarEvent | undefined> {
     const calendar = await getCalendar(guildId)
-    if (!calendar) return undefined
+    if (!calendar) throw new Error('Failed to fetch the calendar')
 
     const now = new Date().getTime()
 
-    const dayInMs = 24 * 60 * 60 * 1000
-
-    return calendar.events().find(event => {
-        const start = event.getProperty('DTSTART')!.value
-        const end = event.getProperty('DTEND')!.value
+    return calendar.getEvents().find(event => {
+        const start = event.getStart()
+        const end = event.getEnd()
 
         // Check if the event is a whole-day event
-        if (!isNaN(new Date(start).getTime())) return false
-        if (!isNaN(new Date(end).getTime())) return false
+        if (!start.isFullDay() || !end?.isFullDay()) return false
 
         // Check if the event is ongoing
-        const startDate = parseDate(start)
-        const startTime = startDate.getTime()
-        const endDate = parseDate(end)
-        const endTime = endDate.getTime()
+        const startTimeMs = start.getDate().getTime()
+        const endTimeMs = end.getDate().getTime()
 
-        const isOngoing = startTime <= now && now <= endTime
+        const isOngoing = startTimeMs <= now && now <= endTimeMs
         if (!isOngoing) return false
 
         // Check duration
-        const duration = endTime - startTime
-        const isWeekLong = duration > 6 * dayInMs && duration < 8 * dayInMs
+        const durationMs = endTimeMs - startTimeMs
+        const isWeekLong = Math.abs(durationMs - 7 * ONE_DAY_MS) <= ONE_HOUR_MS
         if (!isWeekLong) return false
 
         // Check summary
         if (summaryPattern) {
-            const matchesSummary = summaryPattern.test(event.summary())
+            const summary = event.getSummary()
+            if (summary === undefined) return false
+            const matchesSummary = summaryPattern.test(summary)
             if (!matchesSummary) return false
         }
 
@@ -87,16 +78,16 @@ export async function getCurrentlyResponsible(
     if (!event) return undefined
 
     const extractNicks = /(?<=[\s,]|^)(?:(?!ansvar)[^,\n])+(?=[\s,]|$)/gi
-    const match = event.summary().matchAll(extractNicks)
+    const match = event.getSummary()?.matchAll(extractNicks)
+    if (match === undefined) return undefined
+
     return Array.of(...match).map(m => m[0].trim())
 }
 
 /**
  * @returns The day of the responsibility week, starting at 1
  */
-export function getDayOfResponsibilityWeek(
-    guildId: string
-): number {
+export function getDayOfResponsibilityWeek(guildId: string): number {
     const today = new Date()
     return today.getDay()
 }
