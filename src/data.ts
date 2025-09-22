@@ -2,7 +2,7 @@ import {
     PermissionFlagsBits,
     Role,
     type Guild,
-    type GuildMember
+    type GuildMember,
 } from 'discord.js'
 import fs from 'fs'
 import { DATA_FILE } from './environment'
@@ -13,9 +13,15 @@ import type {
     GuildConfiguration,
     GuildData,
     ParsedRemindersData,
-    RemindersData
+    RemindersData,
 } from './types'
-import { canUseRole, getAnnouncementChannel as getGuildAnnouncementChannel, getRole } from './util/guild'
+import {
+    canUseRole,
+    getAnnouncementChannel as getGuildAnnouncementChannel,
+    getRole,
+} from './util/guild'
+import { splitTimeString } from './util/dates'
+import { ONE_HOUR_MS } from 'iamcal'
 
 function getData(): FullData {
     if (!fs.existsSync(DATA_FILE)) {
@@ -48,7 +54,10 @@ export function getGuildConfiguration(guildId: string): GuildConfiguration {
     return data.configuration ?? {}
 }
 
-export function setGuildConfiguration(guildId: string, configuration: GuildConfiguration) {
+export function setGuildConfiguration(
+    guildId: string,
+    configuration: GuildConfiguration
+) {
     const data = getGuildData(guildId)
     data.configuration = configuration
     writeGuildData(guildId, data)
@@ -248,4 +257,27 @@ export function removeReminderMutedUser(guildId: string, userId: string) {
 export function getReminderMutedUsers(guildId: string): string[] {
     const data = getReminderData(guildId)
     return data.muted
+}
+
+/**
+ * Get how many milliseconds after midnight reminders should be sent in a guild.
+ * @param guildId The ID of the guild to get the time for.
+ * @returns The saved value, or the default time representing 13:00.
+ */
+export function getRemindersTime(guildId: string): number {
+    const configuration = getGuildConfiguration(guildId)
+    const savedValue = configuration.remindersTime
+    return savedValue ?? 13 * ONE_HOUR_MS // 13:00
+}
+
+/**
+ * Get how many milliseconds after midnight announcements should be sent in a
+ * guild.
+ * @param guildId The ID of the guild to get the time for.
+ * @returns The saved value, or the default time representing 09:00.
+ */
+export function getAnnounceTime(guildId: string): number {
+    const configuration = getGuildConfiguration(guildId)
+    const savedValue = configuration.announceTime
+    return savedValue ?? 9 * ONE_HOUR_MS // 09:00
 }

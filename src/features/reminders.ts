@@ -1,9 +1,15 @@
 import { Client, EmbedBuilder, type Guild } from 'discord.js'
-import { getAnnouncementChannel, getReminderData } from '../data'
-import { remindersTimeString } from '../environment'
+import {
+    getAnnouncementChannel,
+    getReminderData,
+    getRemindersTime,
+} from '../data'
 import { getNextTime, schedule } from '../util/dates'
 import { getUsers } from '../util/guild'
-import { getCurrentlyResponsible, getDayOfResponsibilityWeek } from '../util/weekInfo'
+import {
+    getCurrentlyResponsible,
+    getDayOfResponsibilityWeek,
+} from '../util/weekInfo'
 
 /** Get an embed for the reminders today */
 export async function getRemindersEmbedToday(
@@ -26,7 +32,8 @@ export async function getRemindersEmbedToday(
     const title = `Ansvarsvecka Påminnelser ${dateString}`
 
     // Description
-    const description = '-# Använd `/reminders` kommandot om du inte vill bli pingad'
+    const description =
+        '-# Använd `/reminders` kommandot om du inte vill bli pingad'
 
     return new EmbedBuilder()
         .setColor('#ffbb00')
@@ -102,31 +109,55 @@ export async function announceReminders(guild: Guild) {
     }
 }
 
-async function announceRemindersEverywhere(client: Client): Promise<boolean> {
-    const guilds = await client.guilds.fetch()
-    const promises = guilds.map(async guild =>
-        announceReminders(await guild.fetch()).catch()
-    )
-    let success = true
-    await Promise.all(promises).catch(reason => {
-        console.warn(`Failed to announce reminders: ${reason} `)
-        success = false
+const currentGeneration = new Map<string, number>()
+
+/**
+ * Send reminders every day.
+ */
+async function remindersLoop(
+    client: Client,
+    guildId: string,
+    generation: number
+): Promise<void> {
+    // Kill loop if generation has increased
+    if (generation < (currentGeneration.get(guildId) ?? 0)) return
+
+    console.debug(`Sending reminders in ${guildId}...`)
+
+    const guild = await client.guilds.fetch(guildId)
+    announceReminders(guild).catch(reason => {
+        console.warn(`Failed to announce reminders in ${guildId}: ${reason} `)
     })
-    return success
+
+    scheduleRemindersLoop(client, guildId, generation)
 }
 
-export async function remindersLoop(client: Client): Promise<void> {
-    // Send reminders every day
-    console.log('Sending reminders...')
-    await announceRemindersEverywhere(client)
-
-    scheduleRemindersLoop(client)
-}
-
-export function scheduleRemindersLoop(client: Client): Promise<void> {
-    const next = getNextTime(remindersTimeString)
-    console.log(`Scheduling reminders for ${next}`)
+function scheduleRemindersLoop(
+    client: Client,
+    guildId: string,
+    generation: number
+): Promise<void> {
+    const remindersTime = getRemindersTime(guildId)
+    const next = getNextTime(remindersTime)
+    console.debug(`Scheduling reminders in ${guildId} for ${next}`)
     return schedule(next, () => {
-        remindersLoop(client)
+        remindersLoop(client, guildId, generation)
     })
+}
+
+export function startRemindersLoop(client: Client, guildId: string) {
+    if (currentGeneration.has(guildId)) {
+        cancelRemindersLoop(guildId)
+    } else {
+        currentGeneration.set(guildId, 0)
+    }
+
+    const generation = currentGeneration.get(guildId)!
+    scheduleRemindersLoop(client, guildId, generation)
+}
+
+export function cancelRemindersLoop(guildId: string) {
+    if (!currentGeneration.has(guildId)) return
+    const newGeneration = currentGeneration.get(guildId)! % 1_000_000_000
+    currentGeneration.set(guildId, newGeneration)
 }
