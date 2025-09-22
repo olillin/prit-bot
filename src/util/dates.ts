@@ -1,3 +1,4 @@
+import { ONE_HOUR_MS, ONE_MINUTE_MS, padHours, padMinutes } from 'iamcal'
 
 export const ONE_HOUR = 60 * 60 * 1000
 export const ONE_DAY = 24 * ONE_HOUR
@@ -8,7 +9,7 @@ export async function sleep(ms: number): Promise<void> {
 
 /**
  * Split a time string into it's parts
- * 
+ *
  * @param timeString A time of the day as a string such as "09:00:00.123" or "15:00"
  * @returns The parts of the time string: hours, minutes, seconds, milliseconds where the parts after hours are optional. Parts may not be skipped
  * @throws If the time string is invalid
@@ -30,16 +31,24 @@ export function splitTimeString(timeString: string): number[] {
 
     // Validate ranges
     if (parts[0] > 23 || parts[0] < 0) {
-        throw new Error('Invalid time string, hours part must be between 0 and 23')
+        throw new Error(
+            'Invalid time string, hours part must be between 0 and 23'
+        )
     }
     if (parts.length >= 2 && (parts[1] > 59 || parts[1] < 0)) {
-        throw new Error('Invalid time string, minutes part must be between 0 and 59')
+        throw new Error(
+            'Invalid time string, minutes part must be between 0 and 59'
+        )
     }
     if (parts.length >= 3 && (parts[2] > 59 || parts[2] < 0)) {
-        throw new Error('Invalid time string, seconds part must be between 0 and 59')
+        throw new Error(
+            'Invalid time string, seconds part must be between 0 and 59'
+        )
     }
     if (parts.length == 4 && (parts[3] > 999 || parts[3] < 0)) {
-        throw new Error('Invalid time string, milliseconds part must be between 0 and 999')
+        throw new Error(
+            'Invalid time string, milliseconds part must be between 0 and 999'
+        )
     }
 
     return parts
@@ -66,27 +75,49 @@ export function timeStringToMilliseconds(timeString: string): number {
 }
 
 /**
- * @param timeString The time as a string such as "09:00"
+ * Convert the milliseconds since midnight to a nicely formatted string of that time.
+ * @param milliseconds The time in milliseconds since midnight.
+ * @returns The formatted time string in the format HH:MM.
+ */
+export function millisecondsToTimeString(milliseconds: number): string {
+    const totalMinutes = Math.floor(milliseconds / ONE_MINUTE_MS)
+    const minutes = totalMinutes % 60
+    const hours = Math.floor(totalMinutes / 60)
+
+    if (hours >= 24) {
+        throw new Error('Time may not be longer than one day')
+    }
+
+    return `${padHours(hours)}:${padMinutes(minutes)}`
+}
+
+/**
+ * Get the absolute time that the next time of day occurs.
+ *
+ * For instance, if getting the time 12:00 at 08:00 this function will return
+ * 12:00 the same day. But if the function is run at 13:00 it will return 12:00
+ * the next day.
+ * @param time The time as milliseconds after midnight.
  * @param after Time to get next time after as a timestamp, defaults to now
  */
-export function getNextTime(
-    timeString: string,
-    after: Date = new Date()
-): Date {
-    const time = timeStringToMilliseconds(timeString)
-
+export function getNextTime(time: number, after: Date = new Date()): Date {
     const timezoneOffsetMs = after.getTimezoneOffset() * 60 * 1000
     const afterTimeMs = after.getTime()
-    const afterTimeMsWithOffset = afterTimeMs + timezoneOffsetMs
     // Time at midnight with timezone offset
     const afterDay = afterTimeMs - (afterTimeMs % ONE_DAY) + timezoneOffsetMs
     const nextTimeMs = afterDay + time
 
-    const dayOffset = Math.max(0, Math.ceil((afterTimeMs - nextTimeMs) / ONE_DAY))
+    const dayOffset = Math.max(
+        0,
+        Math.ceil((afterTimeMs - nextTimeMs) / ONE_DAY)
+    )
     return new Date(nextTimeMs + ONE_DAY * dayOffset)
 }
 
-export async function schedule(time: Date, callback: () => void): Promise<void> {
+export async function schedule(
+    time: Date,
+    callback: () => void
+): Promise<void> {
     if (isNaN(time.getTime())) {
         throw new Error('Invalid time provided')
     }

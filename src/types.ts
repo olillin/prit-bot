@@ -3,7 +3,7 @@ import type {
     Collection,
     EmojiIdentifierResolvable,
     NewsChannel,
-    TextChannel
+    TextChannel,
 } from 'discord.js'
 import type { CommandDefinition } from './util/command'
 
@@ -30,6 +30,10 @@ export interface GuildConfiguration {
     announceChannel?: string
     responsibleRole?: string
     responsibleCalendarUrl?: string
+    /** Milliseconds after midnight that announcements should be sent */
+    announceTime?: number
+    /** Milliseconds after midnight that reminders should be sent */
+    remindersTime?: number
 }
 
 export interface ReactionsDefinition {

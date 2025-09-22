@@ -7,12 +7,16 @@ import {
     REST,
     Routes,
 } from 'discord.js'
+import { ONE_HOUR_MS } from 'iamcal'
 import fs from 'node:fs'
 import path from 'node:path'
 import { discordToken } from './environment'
+import { cycleActivities } from './features/activities'
+import { startAnnounceLoop } from './features/announcements'
 import { addReaction } from './features/reactions'
+import { startRemindersLoop } from './features/reminders'
 import type { ExtendedClient } from './types'
-import type { CommandDefinition, CommandData } from './util/command'
+import type { CommandData, CommandDefinition } from './util/command'
 
 const client = new Client({
     intents: [
@@ -51,7 +55,9 @@ for (const file of commandFiles) {
 client.on(Events.InteractionCreate, async interaction => {
     if (!interaction.isChatInputCommand()) return
 
-    const command = (interaction.client as ExtendedClient).commands.get(interaction.commandName)
+    const command = (interaction.client as ExtendedClient).commands.get(
+        interaction.commandName
+    )
 
     if (!command) {
         console.error(
@@ -83,32 +89,45 @@ function registerSlashCommands(guildId: string) {
     const rest = new REST().setToken(discordToken!)
     const clientId = client.user!.id
 
-        // and deploy your commands!
-        ; (async () => {
-            try {
-                console.log(
-                    `Started refreshing ${commands.length} application (/) commands.`
-                )
+    // and deploy your commands!
+    ;(async () => {
+        try {
+            console.log(
+                `Started refreshing ${commands.length} application (/) commands.`
+            )
 
-                // The put method is used to fully refresh all commands in the guild with the current set
-                const data = await rest.put(
-                    Routes.applicationGuildCommands(clientId, guildId),
-                    { body: commands }
-                ) as object[]
+            // The put method is used to fully refresh all commands in the guild with the current set
+            const data = (await rest.put(
+                Routes.applicationGuildCommands(clientId, guildId),
+                { body: commands }
+            )) as object[]
 
-                console.log(
-                    `Successfully reloaded ${data.length} application (/) commands.`
-                )
-            } catch (error) {
-                // And of course, make sure you catch and log any errors!
-                console.error(error)
-            }
-        })()
+            console.log(
+                `Successfully reloaded ${data.length} application (/) commands.`
+            )
+        } catch (error) {
+            // And of course, make sure you catch and log any errors!
+            console.error(error)
+        }
+    })()
 }
+
+client.on(Events.ClientReady, () => {
+    cycleActivities(client.user!, ONE_HOUR_MS)
+
+    client.guilds.fetch().then(guilds => {
+        guilds.forEach(guild => {
+            startAnnounceLoop(client, guild.id)
+            startRemindersLoop(client, guild.id)
+        })
+    })
+})
 
 client.on(Events.GuildCreate, guild => {
     console.log('Joined new guild')
     registerSlashCommands(guild.id)
+    startAnnounceLoop(client, guild.id)
+    startRemindersLoop(client, guild.id)
 })
 
 client.on(Events.MessageCreate, message => {
@@ -116,11 +135,14 @@ client.on(Events.MessageCreate, message => {
 
     // Make fun of people trying to use @channel
     if (message.content.includes('@channel')) {
-        message.channel.send({
-            content: '@everyone titta här, de tror de är på Slack eller nåt'
-        }).catch(error => {
-            console.warn('Failed to react to @channel:', error)
-        })
+        message.channel
+            .send({
+                content:
+                    '@everyone titta här, de tror de är på Slack eller nåt',
+            })
+            .catch(error => {
+                console.warn('Failed to react to @channel:', error)
+            })
     }
 })
 
