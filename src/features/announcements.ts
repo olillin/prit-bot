@@ -1,14 +1,18 @@
 import type { Client, Guild, GuildMember } from 'discord.js'
-import { getAnnouncementChannel, getResponsibleRole } from '../data'
-import { announceTimeString } from '../environment'
+import {
+    getAnnouncementChannel,
+    getAnnounceTime,
+    getResponsibleRole,
+} from '../data'
 import { getNextTime, schedule } from '../util/dates'
 import { getUsers } from '../util/guild'
-import { getCurrentlyResponsible, getStudyWeek, getWeek } from '../util/weekInfo'
+import { getCurrentlyResponsible, getStudyWeek } from '../util/weekInfo'
 
 /**
  * Announce info this week in a guild
  * @param guild Guild to announce week for
  * @returns If the announcement was successful
+ * @throws If unable to make announcement­
  */
 export async function announceWeekIn(guild: Guild): Promise<boolean> {
     const week = await getStudyWeek()
@@ -55,20 +59,6 @@ ${responsibleLine}`
     return true
 }
 
-/**
- * Announce info this week in all guilds
- * @param client
- * @returns If any announcement was successful
- */
-export async function announceWeekEverywhere(client: Client): Promise<boolean> {
-    const guilds = await client.guilds.fetch()
-    const promises = guilds.map(async guild =>
-        announceWeekIn(await guild.fetch())
-    )
-    const success = (await Promise.all(promises)).some(x => x)
-    return success
-}
-
 async function assignRole(
     guild: Guild,
     users: Array<[string, GuildMember | undefined]>
@@ -97,7 +87,8 @@ async function assignRole(
                 if (user) {
                     await user.roles.add(role)
                     console.info(
-                        `Assigned role to ${nick} (${user.nickname ?? user.user.displayName
+                        `Assigned role to ${nick} (${
+                            user.nickname ?? user.user.displayName
                         })`
                     )
                 } else
@@ -113,30 +104,58 @@ async function assignRole(
     }
 }
 
+const currentGeneration = new Map<string, number>()
 
-let previousWeek: string | null = null
+async function announceLoop(
+    client: Client,
+    guildId: string,
+    generation: number
+): Promise<void> {
+    // Kill loop if generation has increased
+    if (generation < (currentGeneration.get(guildId) ?? 0)) return
 
-export async function announceLoop(client: Client): Promise<void> {
-    const currentWeek = await getWeek()
-    if (previousWeek === null) {
-        previousWeek = currentWeek
+    const isMonday = new Date().getDay() === 1
+
+    // Announce on Mondays
+    if (isMonday) {
+        console.debug(`Sending announcements in ${guildId}...`)
+        const guild = await client.guilds.fetch(guildId)
+        await announceWeekIn(guild).catch(reason => {
+            console.warn(
+                `Failed to make announcement in ${guildId}: ${reason} `
+            )
+        })
     }
 
-    // Announce responsibility week every new week
-    if (currentWeek && currentWeek !== previousWeek) {
-        console.log('Sending announcements...')
-        await announceWeekEverywhere(client)
-
-        previousWeek = currentWeek
-    }
-
-    scheduleAnnounceLoop(client)
+    scheduleAnnounceLoop(client, guildId, generation)
 }
 
-export function scheduleAnnounceLoop(client: Client): Promise<void> {
-    const next = getNextTime(announceTimeString)
-    console.log(`Scheduling announcements for ${next}`)
+function scheduleAnnounceLoop(
+    client: Client,
+    guildId: string,
+    generation: number
+): Promise<void> {
+    const announceTime = getAnnounceTime(guildId)
+    const next = getNextTime(announceTime)
+    console.debug(`Scheduling announcements in ${guildId} for ${next}`)
     return schedule(next, () => {
-        announceLoop(client)
+        announceLoop(client, guildId, generation)
     })
+}
+
+export function startAnnounceLoop(client: Client, guildId: string) {
+    if (currentGeneration.has(guildId)) {
+        cancelAnnounceLoop(guildId)
+    } else {
+        currentGeneration.set(guildId, 0)
+    }
+
+    const generation = currentGeneration.get(guildId)!
+    scheduleAnnounceLoop(client, guildId, generation)
+}
+
+export function cancelAnnounceLoop(guildId: string) {
+    if (!currentGeneration.has(guildId)) return
+    const newGeneration = currentGeneration.get(guildId)! % 1_000_000_000
+    currentGeneration.set(guildId, newGeneration)
 }
