@@ -7,7 +7,7 @@ import {
 import { getNextTime, schedule } from '../util/dates'
 import { getUsers, PerGuildLoop } from '../util/guild'
 import {
-    getCurrentlyResponsible,
+    getResponsibleNicks,
     getDayOfResponsibilityWeek,
 } from '../util/weekInfo'
 import client from '../bot'
@@ -52,7 +52,7 @@ export async function getRemindersUserLineToday(guild: Guild): Promise<string> {
     const reminderData = getReminderData(guild.id)
 
     let userLine = ''
-    const responsibleNames = await getCurrentlyResponsible(guild.id)
+    const responsibleNames = await getResponsibleNicks(guild.id)
     if (!responsibleNames) {
         throw 'Det finns ingen ansvarig idag'
     }

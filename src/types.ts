@@ -29,6 +29,7 @@ export interface GuildData {
 export interface GuildConfiguration {
     announceChannel?: string
     responsibleRole?: string
+    responsibleResponsibleRole?: string
     responsibleCalendarUrl?: string
     /** Milliseconds after midnight that announcements should be sent */
     announceTime?: number

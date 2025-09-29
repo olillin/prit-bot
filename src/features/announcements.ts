@@ -6,8 +6,9 @@ import {
 } from '../data'
 import { getNextTime, schedule } from '../util/dates'
 import { getUsers, PerGuildLoop } from '../util/guild'
-import { getCurrentlyResponsible, getStudyWeek } from '../util/weekInfo'
+import { getResponsibleNicks, getStudyWeek } from '../util/weekInfo'
 import client from '../bot'
+import { sendResponsibilityWeekReminder } from './responsibilityReminder'
 
 /**
  * Announce info this week in a guild
@@ -22,11 +23,11 @@ export async function announceWeekIn(guild: Guild): Promise<boolean> {
         return false
     }
 
-    const responsible = await getCurrentlyResponsible(guild.id)
+    const responsible = await getResponsibleNicks(guild.id)
 
     const announceChannel = await getAnnouncementChannel(guild)
     if (!announceChannel) {
-        console.warn("Didn't make announcement in ${guild}, no channel set")
+        console.warn(`Didn't make announcement in ${guild}, no channel set`)
         return false
     }
 
@@ -46,8 +47,6 @@ export async function announceWeekIn(guild: Guild): Promise<boolean> {
         }
 
         responsibleLine = `${week} har ${userList} ansvarsvecka, gör ert bästa men slit inte ut er! <:pixelnheart:1318195394781384714>`
-
-        assignRole(guild, users)
     } else {
         responsibleLine = `${week} gick det inte att hitta någon ansvarsvecka för :thinking:`
     }
@@ -117,10 +116,12 @@ export const announceLoop = new PerGuildLoop(
     },
     // getNextTime
     async context => {
-        const isMonday = new Date().getDay() === 1
+        const day = new Date().getDay()
+        const isMonday = day === 1
+        const isSunday = day === 0
 
-        // Announce on Mondays
         if (isMonday) {
+            // New week
             console.debug(`Sending announcements in ${context.guildId}...`)
             const guild = await client.guilds.fetch(context.guildId)
             await announceWeekIn(guild).catch(reason => {
@@ -128,6 +129,21 @@ export const announceLoop = new PerGuildLoop(
                     `Failed to make announcement in ${context.guildId}: ${reason} `
                 )
             })
+        } else if (isSunday) {
+            // Reminder if there is no
+            sendResponsibilityWeekReminder(context.guildId)
         }
+
+        updateResponsibilityRole(context.guildId)
     }
 )
+async function updateResponsibilityRole(guildId: string) {
+    const [guild, responsibleNicks] = await Promise.all([
+        client.guilds.fetch(guildId),
+        getResponsibleNicks(guildId),
+    ])
+    if (responsibleNicks) {
+        const users = await getUsers(responsibleNicks, guild)
+        await assignRole(guild, users)
+    }
+}

@@ -12,11 +12,11 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { discordToken } from './environment'
 import { cycleActivities } from './features/activities'
+import { announceLoop } from './features/announcements'
 import { addReaction } from './features/reactions'
+import { remindersLoop } from './features/reminders'
 import type { ExtendedClient } from './types'
 import type { CommandData, CommandDefinition } from './util/command'
-import { announceLoop } from './features/announcements'
-import { remindersLoop } from './features/reminders'
 
 const client = new Client({
     intents: [

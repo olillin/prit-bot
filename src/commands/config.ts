@@ -114,6 +114,35 @@ const commands: ConfigurationCommandOptions<any, any>[] = [
     }),
 
     defineConfigurationCommand({
+        type: ApplicationCommandOptionType.Role as const,
+        key: 'responsibleResponsibleRole' as const,
+        name: 'schedulerole',
+        description: 'Roll för den som sätter ansvarsveckor',
+
+        set: async (value, context) => {
+            const guild: Guild = context.guild!
+
+            if (!(await canUseRole(guild, value))) {
+                throw new Error(
+                    'Den rollen kan inte användas, saknar tillstånd'
+                )
+            }
+
+            return value.id
+        },
+        get: async (value, context) => {
+            const guild = context.guild!
+            const role = await getRole(value, guild)
+            if (!role) {
+                throw new Error(
+                    'Den sparade rollen för den som sätter ansvarsvecka finns inte längre'
+                )
+            }
+            return role.toString()
+        },
+    }),
+
+    defineConfigurationCommand({
         type: ApplicationCommandOptionType.String as const,
         key: 'announceTime' as const,
         name: 'announcetime',
