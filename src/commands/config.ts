@@ -5,8 +5,6 @@ import {
     PermissionFlagsBits,
     SlashCommandBuilder,
 } from 'discord.js'
-import { startAnnounceLoop } from '../features/announcements'
-import { startRemindersLoop } from '../features/reminders'
 import { AnnounceChannel } from '../types'
 import {
     addConfigurationCommands,
@@ -24,6 +22,8 @@ import {
     getAnnouncementChannel,
     getRole,
 } from '../util/guild'
+import { announceLoop } from '../features/announcements'
+import { remindersLoop } from '../features/reminders'
 
 const commands: ConfigurationCommandOptions<any, any>[] = [
     defineConfigurationCommand({
@@ -131,7 +131,7 @@ const commands: ConfigurationCommandOptions<any, any>[] = [
         get: async (value, context) => millisecondsToTimeString(value),
 
         onChange: (value, context) => {
-            startAnnounceLoop(context.client, context.guildId!)
+            announceLoop.reset(context.guildId!)
         },
     }),
 
@@ -153,7 +153,7 @@ const commands: ConfigurationCommandOptions<any, any>[] = [
         get: async (value, context) => millisecondsToTimeString(value),
 
         onChange: (value, context) => {
-            startRemindersLoop(context.client, context.guildId!)
+            remindersLoop.reset(context.guildId!)
         },
     }),
 ]

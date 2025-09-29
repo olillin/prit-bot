@@ -12,11 +12,11 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { discordToken } from './environment'
 import { cycleActivities } from './features/activities'
-import { startAnnounceLoop } from './features/announcements'
 import { addReaction } from './features/reactions'
-import { startRemindersLoop } from './features/reminders'
 import type { ExtendedClient } from './types'
 import type { CommandData, CommandDefinition } from './util/command'
+import { announceLoop } from './features/announcements'
+import { remindersLoop } from './features/reminders'
 
 const client = new Client({
     intents: [
@@ -117,8 +117,8 @@ client.on(Events.ClientReady, () => {
 
     client.guilds.fetch().then(guilds => {
         guilds.forEach(guild => {
-            startAnnounceLoop(client, guild.id)
-            startRemindersLoop(client, guild.id)
+            announceLoop.start(guild.id)
+            remindersLoop.start(guild.id)
         })
     })
 })
@@ -126,8 +126,8 @@ client.on(Events.ClientReady, () => {
 client.on(Events.GuildCreate, guild => {
     console.log('Joined new guild')
     registerSlashCommands(guild.id)
-    startAnnounceLoop(client, guild.id)
-    startRemindersLoop(client, guild.id)
+    announceLoop.start(guild.id)
+    remindersLoop.start(guild.id)
 })
 
 client.on(Events.MessageCreate, message => {

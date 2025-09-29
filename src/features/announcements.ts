@@ -5,8 +5,9 @@ import {
     getResponsibleRole,
 } from '../data'
 import { getNextTime, schedule } from '../util/dates'
-import { getUsers } from '../util/guild'
+import { getUsers, PerGuildLoop } from '../util/guild'
 import { getCurrentlyResponsible, getStudyWeek } from '../util/weekInfo'
+import client from '../bot'
 
 /**
  * Announce info this week in a guild
@@ -104,58 +105,29 @@ async function assignRole(
     }
 }
 
-const currentGeneration = new Map<string, number>()
+export const announceLoop = new PerGuildLoop(
+    // getNextTime
+    context => {
+        const announceTime = getAnnounceTime(context.guildId)
+        const nextTime = getNextTime(announceTime)
+        console.debug(
+            `Scheduling announcements in ${context.guildId} for ${nextTime}`
+        )
+        return nextTime
+    },
+    // getNextTime
+    async context => {
+        const isMonday = new Date().getDay() === 1
 
-async function announceLoop(
-    client: Client,
-    guildId: string,
-    generation: number
-): Promise<void> {
-    // Kill loop if generation has increased
-    if (generation < (currentGeneration.get(guildId) ?? 0)) return
-
-    const isMonday = new Date().getDay() === 1
-
-    // Announce on Mondays
-    if (isMonday) {
-        console.debug(`Sending announcements in ${guildId}...`)
-        const guild = await client.guilds.fetch(guildId)
-        await announceWeekIn(guild).catch(reason => {
-            console.warn(
-                `Failed to make announcement in ${guildId}: ${reason} `
-            )
-        })
+        // Announce on Mondays
+        if (isMonday) {
+            console.debug(`Sending announcements in ${context.guildId}...`)
+            const guild = await client.guilds.fetch(context.guildId)
+            await announceWeekIn(guild).catch(reason => {
+                console.warn(
+                    `Failed to make announcement in ${context.guildId}: ${reason} `
+                )
+            })
+        }
     }
-
-    scheduleAnnounceLoop(client, guildId, generation)
-}
-
-function scheduleAnnounceLoop(
-    client: Client,
-    guildId: string,
-    generation: number
-): Promise<void> {
-    const announceTime = getAnnounceTime(guildId)
-    const next = getNextTime(announceTime)
-    console.debug(`Scheduling announcements in ${guildId} for ${next}`)
-    return schedule(next, () => {
-        announceLoop(client, guildId, generation)
-    })
-}
-
-export function startAnnounceLoop(client: Client, guildId: string) {
-    if (currentGeneration.has(guildId)) {
-        cancelAnnounceLoop(guildId)
-    } else {
-        currentGeneration.set(guildId, 0)
-    }
-
-    const generation = currentGeneration.get(guildId)!
-    scheduleAnnounceLoop(client, guildId, generation)
-}
-
-export function cancelAnnounceLoop(guildId: string) {
-    if (!currentGeneration.has(guildId)) return
-    const newGeneration = currentGeneration.get(guildId)! % 1_000_000_000
-    currentGeneration.set(guildId, newGeneration)
-}
+)

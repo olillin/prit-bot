@@ -5,11 +5,12 @@ import {
     getRemindersTime,
 } from '../data'
 import { getNextTime, schedule } from '../util/dates'
-import { getUsers } from '../util/guild'
+import { getUsers, PerGuildLoop } from '../util/guild'
 import {
     getCurrentlyResponsible,
     getDayOfResponsibilityWeek,
 } from '../util/weekInfo'
+import client from '../bot'
 
 /** Get an embed for the reminders today */
 export async function getRemindersEmbedToday(
@@ -109,55 +110,25 @@ export async function announceReminders(guild: Guild) {
     }
 }
 
-const currentGeneration = new Map<string, number>()
+export const remindersLoop = new PerGuildLoop(
+    // getNextTime
+    context => {
+        const remindersTime = getRemindersTime(context.guildId)
+        const nextTime = getNextTime(remindersTime)
+        console.debug(
+            `Scheduling reminders in ${context.guildId} for ${nextTime}`
+        )
+        return nextTime
+    },
+    // getNextTime
+    async context => {
+        console.debug(`Sending reminders in ${context.guildId}...`)
 
-/**
- * Send reminders every day.
- */
-async function remindersLoop(
-    client: Client,
-    guildId: string,
-    generation: number
-): Promise<void> {
-    // Kill loop if generation has increased
-    if (generation < (currentGeneration.get(guildId) ?? 0)) return
-
-    console.debug(`Sending reminders in ${guildId}...`)
-
-    const guild = await client.guilds.fetch(guildId)
-    announceReminders(guild).catch(reason => {
-        console.warn(`Failed to announce reminders in ${guildId}: ${reason} `)
-    })
-
-    scheduleRemindersLoop(client, guildId, generation)
-}
-
-function scheduleRemindersLoop(
-    client: Client,
-    guildId: string,
-    generation: number
-): Promise<void> {
-    const remindersTime = getRemindersTime(guildId)
-    const next = getNextTime(remindersTime)
-    console.debug(`Scheduling reminders in ${guildId} for ${next}`)
-    return schedule(next, () => {
-        remindersLoop(client, guildId, generation)
-    })
-}
-
-export function startRemindersLoop(client: Client, guildId: string) {
-    if (currentGeneration.has(guildId)) {
-        cancelRemindersLoop(guildId)
-    } else {
-        currentGeneration.set(guildId, 0)
+        const guild = await client.guilds.fetch(context.guildId)
+        announceReminders(guild).catch(reason => {
+            console.warn(
+                `Failed to announce reminders in ${context.guildId}: ${reason} `
+            )
+        })
     }
-
-    const generation = currentGeneration.get(guildId)!
-    scheduleRemindersLoop(client, guildId, generation)
-}
-
-export function cancelRemindersLoop(guildId: string) {
-    if (!currentGeneration.has(guildId)) return
-    const newGeneration = currentGeneration.get(guildId)! % 1_000_000_000
-    currentGeneration.set(guildId, newGeneration)
-}
+)
