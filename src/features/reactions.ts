@@ -35,6 +35,8 @@ export function getReactions(): ReactionsConfig {
 
 export async function addReaction(message: Message) {
     if (message.author.bot) return
+    // Don't add reactions to long messages
+    if (message.content.length > 150) return
 
     const reactions = getReactions()
     const guild = message.guild!

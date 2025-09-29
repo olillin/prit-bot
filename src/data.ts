@@ -1,10 +1,6 @@
-import {
-    PermissionFlagsBits,
-    Role,
-    type Guild,
-    type GuildMember,
-} from 'discord.js'
+import { Role, type Guild, type GuildMember } from 'discord.js'
 import fs from 'fs'
+import { ONE_HOUR_MS } from 'iamcal'
 import { DATA_FILE } from './environment'
 import type {
     AnnounceChannel,
@@ -16,12 +12,9 @@ import type {
     RemindersData,
 } from './types'
 import {
-    canUseRole,
     getAnnouncementChannel as getGuildAnnouncementChannel,
     getRole,
 } from './util/guild'
-import { splitTimeString } from './util/dates'
-import { ONE_HOUR_MS } from 'iamcal'
 
 function getData(): FullData {
     if (!fs.existsSync(DATA_FILE)) {
@@ -77,6 +70,14 @@ export async function getResponsibleRole(
     const configuration = getGuildConfiguration(guild.id)
     if (!configuration.responsibleRole) return undefined
     return getRole(configuration.responsibleRole, guild)
+}
+
+export async function getResponsibleResponsibleRole(
+    guild: Guild
+): Promise<Role | undefined> {
+    const configuration = getGuildConfiguration(guild.id)
+    if (!configuration.responsibleResponsibleRole) return undefined
+    return getRole(configuration.responsibleResponsibleRole, guild)
 }
 
 export function getDiscoveredReactions(guild: Guild): DiscoveredReactionsData {

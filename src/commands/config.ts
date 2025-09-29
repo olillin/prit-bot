@@ -5,8 +5,6 @@ import {
     PermissionFlagsBits,
     SlashCommandBuilder,
 } from 'discord.js'
-import { startAnnounceLoop } from '../features/announcements'
-import { startRemindersLoop } from '../features/reminders'
 import { AnnounceChannel } from '../types'
 import {
     addConfigurationCommands,
@@ -24,6 +22,8 @@ import {
     getAnnouncementChannel,
     getRole,
 } from '../util/guild'
+import { announceLoop } from '../features/announcements'
+import { remindersLoop } from '../features/reminders'
 
 const commands: ConfigurationCommandOptions<any, any>[] = [
     defineConfigurationCommand({
@@ -114,6 +114,35 @@ const commands: ConfigurationCommandOptions<any, any>[] = [
     }),
 
     defineConfigurationCommand({
+        type: ApplicationCommandOptionType.Role as const,
+        key: 'responsibleResponsibleRole' as const,
+        name: 'schedulerole',
+        description: 'Roll för den som sätter ansvarsveckor',
+
+        set: async (value, context) => {
+            const guild: Guild = context.guild!
+
+            if (!(await canUseRole(guild, value))) {
+                throw new Error(
+                    'Den rollen kan inte användas, saknar tillstånd'
+                )
+            }
+
+            return value.id
+        },
+        get: async (value, context) => {
+            const guild = context.guild!
+            const role = await getRole(value, guild)
+            if (!role) {
+                throw new Error(
+                    'Den sparade rollen för den som sätter ansvarsvecka finns inte längre'
+                )
+            }
+            return role.toString()
+        },
+    }),
+
+    defineConfigurationCommand({
         type: ApplicationCommandOptionType.String as const,
         key: 'announceTime' as const,
         name: 'announcetime',
@@ -131,7 +160,7 @@ const commands: ConfigurationCommandOptions<any, any>[] = [
         get: async (value, context) => millisecondsToTimeString(value),
 
         onChange: (value, context) => {
-            startAnnounceLoop(context.client, context.guildId!)
+            announceLoop.reset(context.guildId!)
         },
     }),
 
@@ -153,7 +182,7 @@ const commands: ConfigurationCommandOptions<any, any>[] = [
         get: async (value, context) => millisecondsToTimeString(value),
 
         onChange: (value, context) => {
-            startRemindersLoop(context.client, context.guildId!)
+            remindersLoop.reset(context.guildId!)
         },
     }),
 ]

@@ -1,4 +1,10 @@
-import { ONE_DAY_MS, ONE_HOUR_MS, parseCalendar, type Calendar, type CalendarEvent } from 'iamcal'
+import {
+    ONE_DAY_MS,
+    ONE_HOUR_MS,
+    parseCalendar,
+    type Calendar,
+    type CalendarEvent,
+} from 'iamcal'
 import { getGuildConfiguration } from '../data'
 
 export function getCalendar(guildId: string): Promise<Calendar | undefined> {
@@ -24,17 +30,17 @@ export function getCalendar(guildId: string): Promise<Calendar | undefined> {
  * (case-insensitive).
  * @param guildId The ID of the guild which has the calendar
  * @param summaryPattern A regex pattern to match the event summary
+ * @param now The current time, can be changed to get other weeks
  * @returns The calendar event representing the responsibility week, or undefined if no matching events were found
  * @throws If the calendar was unable to be fetched
  */
-export async function getCurrentResponsibleEvent(
+export async function getResponsibleEvent(
     guildId: string,
+    now: number = Date.now(),
     summaryPattern: RegExp | undefined = /ansvar/i
 ): Promise<CalendarEvent | undefined> {
     const calendar = await getCalendar(guildId)
     if (!calendar) throw new Error('Failed to fetch the calendar')
-
-    const now = new Date().getTime()
 
     return calendar.getEvents().find(event => {
         const start = event.getStart()
@@ -68,12 +74,15 @@ export async function getCurrentResponsibleEvent(
 }
 
 /**
- * @returns The people who are currently responsible
+ * @param guildId The guild to fetch get the calendar from
+ * @param now The current time, can be changed to get other weeks
+ * @returns The nicks of the people who are currently responsible
  */
-export async function getCurrentlyResponsible(
-    guildId: string
+export async function getResponsibleNicks(
+    guildId: string,
+    now: number = Date.now()
 ): Promise<string[] | undefined> {
-    const event = await getCurrentResponsibleEvent(guildId)
+    const event = await getResponsibleEvent(guildId, now)
 
     if (!event) return undefined
 
