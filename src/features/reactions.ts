@@ -27,52 +27,63 @@ export function getReactions(): ReactionsConfig {
             }
             return parsed
         } catch (e) {
-            console.warn(`Failed to parse reactions from ${REACTIONS_FILE}: ${e}`)
+            console.warn(
+                `Failed to parse reactions from ${REACTIONS_FILE}: ${e}`
+            )
         }
     }
     return {}
 }
 
-export async function addReaction(message: Message) {
-    if (message.author.bot) return
+/**
+ * Adds reaction to a message if it matches any reaction patterns.
+ * @param message The message to add reaction to.
+ * @returns If any reaction was added.
+ */
+export async function addReaction(message: Message): Promise<boolean> {
+    if (message.author.bot) return false
     // Don't add reactions to long messages
-    if (message.content.length > 150) return
+    if (message.content.length > 150) return false
 
     const reactions = getReactions()
     const guild = message.guild!
 
     // Don't react if channel is marked
     const noReactChannels = await getNoReactChannels(guild.id)
-    if (noReactChannels.has(message.channel.id)) return
+    if (noReactChannels.has(message.channel.id)) return false
 
     // Check patterns
-    Object.entries(reactions).forEach(async ([id, { pattern, emoji }]) => {
-        const regex = new RegExp(pattern, 'i')
-        const match = regex.exec(message.content)
-        if (match) {
-            console.log(`Reacting to message with ${emoji}`)
-            message
-                .react(emoji)
-                .then(() => {
-                    console.log('Reacted successfully')
+    const results = await Promise.all(
+        Object.entries(reactions).map(async ([id, { pattern, emoji }]) => {
+            const regex = new RegExp(pattern, 'i')
+            const match = regex.exec(message.content)
+            if (match) {
+                console.log(`Reacting to message with ${emoji}`)
+                message
+                    .react(emoji)
+                    .then(() => {
+                        console.log('Reacted successfully')
 
-                    return getReactionDiscoveredBy(guild, id)
-                })
-                .then(discovered => {
-                    console.log(`Has been discovered: ${!!discovered}`)
-                    if (!discovered) {
-                        const text = match[0]
-                        return discoverReaction(message, text, id)
-                    }
-                })
-                .catch(e => {
-                    console.warn(
-                        `Error occured while reacting with ${emoji}: ${e.message}`
-                    )
-                    console.trace(e)
-                })
-        }
-    })
+                        return getReactionDiscoveredBy(guild, id)
+                    })
+                    .then(discovered => {
+                        console.log(`Has been discovered: ${!!discovered}`)
+                        if (!discovered) {
+                            const text = match[0]
+                            return discoverReaction(message, text, id)
+                        }
+                    })
+                    .catch(e => {
+                        console.warn(
+                            `Error occured while reacting with ${emoji}: ${e.message}`
+                        )
+                        console.trace(e)
+                    })
+            }
+            return !!match
+        })
+    )
+    return results.indexOf(true) !== -1
 }
 
 /**
