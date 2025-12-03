@@ -21,7 +21,7 @@
   "homepage": "https://github.com/olillin/prit-bot#readme",
   "dependencies": {
     "discord.js": "^14.18.0",
-    "iamcal": "^3.0.2",
+    "iamcal": "^3.0.3",
     "typescript": "^5.8.3"
   },
   "devDependencies": {
