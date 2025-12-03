@@ -16,15 +16,7 @@ export async function getUser(
     guild: Guild,
     nick: string
 ): Promise<GuildMember | undefined> {
-    const members = await guild.members.fetch().catch(reason => {
-        console.error(
-            `Failed to get guild members while finding user for ${nick}: ${reason}`
-        )
-        return undefined
-    })
-    if (members == undefined) {
-        return undefined
-    }
+    const members = guild.members.cache
     for (const [, member] of members) {
         const discordNickname = (
             member.nickname ?? member.user.displayName

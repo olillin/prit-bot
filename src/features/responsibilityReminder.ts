@@ -39,8 +39,6 @@ export async function sendResponsibilityWeekReminder(
         return false
     }
 
-    // Update cache
-    await guild.members.fetch()
     if (responsibleResponsibleRole.members.size === 0) {
         console.warn(
             'Unable to send reminders to set responsibility week, nobody has the role'

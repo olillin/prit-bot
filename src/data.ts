@@ -94,7 +94,7 @@ export async function getReactionDiscoveredBy(
     if (!userId) {
         return undefined
     }
-    const user = (await guild.members.fetch()).get(userId)
+    const user = guild.members.cache.get(userId)
     return user
 }
 

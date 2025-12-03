@@ -70,7 +70,7 @@ async function assignRole(
     }
 
     try {
-        const members = await guild.members.fetch()
+        const members = guild.members.cache
 
         console.log(`Removing role '${role.name}' from ${members.size} members`)
         await Promise.all(
