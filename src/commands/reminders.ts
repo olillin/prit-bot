@@ -15,7 +15,15 @@ import { announceReminders } from '../features/reminders'
 import { CommandMap } from '../util/command'
 import { defineCommand } from '../util/guild'
 
-export const DAYS = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag', 'Söndag']
+export const DAYS = [
+    'Måndagar',
+    'Tisdagar',
+    'Onsdagar',
+    'Torsdagar',
+    'Fredagar',
+    'Lördagar',
+    'Söndagar',
+]
 
 export default defineCommand({
     data: new SlashCommandBuilder()
@@ -31,18 +39,19 @@ export default defineCommand({
                     option
                         .setName('day')
                         .setDescription('Dag att hantera påminnelser för')
-                        .setChoices(DAYS.map(day => ({ name: day, value: day })))
+                        .setChoices(
+                            DAYS.map(day => ({ name: day, value: day }))
+                        )
                         .setRequired(true)
                 )
                 .addStringOption(option =>
                     option
                         .setName('message')
-                        .setDescription(
-                            'Vad påminnelsen ska säga'
-                        )
+                        .setDescription('Vad påminnelsen ska säga')
                         .setMinLength(1)
                         .setRequired(true)
-                ))
+                )
+        )
         .addSubcommand(subcommand =>
             subcommand
                 .setName('remove')
@@ -51,7 +60,9 @@ export default defineCommand({
                     option
                         .setName('day')
                         .setDescription('Dag att hantera påminnelser för')
-                        .setChoices(DAYS.map(day => ({ name: day, value: day })))
+                        .setChoices(
+                            DAYS.map(day => ({ name: day, value: day }))
+                        )
                         .setRequired(true)
                 )
                 .addIntegerOption(option =>
@@ -62,23 +73,26 @@ export default defineCommand({
                         )
                         .setMinValue(1)
                         .setRequired(true)
-                ))
+                )
+        )
         .addSubcommand(subcommand =>
-            subcommand
-                .setName('list')
-                .setDescription('Se alla påminnelser'))
+            subcommand.setName('list').setDescription('Se alla påminnelser')
+        )
         .addSubcommand(subcommand =>
             subcommand
                 .setName('remind')
-                .setDescription('Skicka påminnelser igen'))
+                .setDescription('Skicka påminnelser igen')
+        )
         .addSubcommand(subcommand =>
             subcommand
                 .setName('mute')
-                .setDescription('Sluta bli pingad av påminnelser'))
+                .setDescription('Sluta bli pingad av påminnelser')
+        )
         .addSubcommand(subcommand =>
             subcommand
                 .setName('unmute')
-                .setDescription('Bli pingad av påminnelser')),
+                .setDescription('Bli pingad av påminnelser')
+        ),
 
     async execute(interaction: ChatInputCommandInteraction) {
         const command = interaction.options.getSubcommand() as
@@ -132,9 +146,8 @@ async function remove(interaction: ChatInputCommandInteraction) {
     const day = DAYS.indexOf(dayString) + 1
 
     // Get index
-    const index = interaction.options.getInteger('index', true)
+    const index = interaction.options.getInteger('index', true) - 1
 
-    // Remove correct reminder
     const guildId = interaction.guildId
     if (!guildId) {
         throw new Error('Guild id is not defined')
@@ -159,7 +172,7 @@ async function remove(interaction: ChatInputCommandInteraction) {
 
     // Success message
     await interaction.reply({
-        content: `Tog bort påminnelse på ${dayString} med index ${index + 1}`,
+        content: `Tog bort påminnelse ${index + 1} på ${dayString}`,
         flags: MessageFlags.Ephemeral,
     })
 }
@@ -180,8 +193,9 @@ async function list(interaction: ChatInputCommandInteraction) {
     } else {
         embed.addFields(
             Object.entries(reminders).map(([day, reminders]) => {
+                const prettyDay = DAYS[parseInt(day) - 1]
                 return {
-                    name: `Dag ${day}`,
+                    name: prettyDay,
                     value: reminders
                         .map((message, i) => `${i + 1}. ${message}`)
                         .join('\n'),
