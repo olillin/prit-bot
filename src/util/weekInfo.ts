@@ -17,8 +17,13 @@ export function getCalendar(guildId: string): Promise<Calendar | undefined> {
         } else {
             fetch(url)
                 .then(response => response.text())
-                .then(text => {
-                    resolve(parseCalendar(text))
+                .then(text => parseCalendar(text))
+                .then(calendar => {
+                    resolve(calendar)
+                })
+                .catch(reason => {
+                    console.warn(`Failed to parse calendar: ${reason}`)
+                    resolve(undefined)
                 })
         }
     })
@@ -31,8 +36,7 @@ export function getCalendar(guildId: string): Promise<Calendar | undefined> {
  * @param guildId The ID of the guild which has the calendar
  * @param summaryPattern A regex pattern to match the event summary
  * @param now The current time, can be changed to get other weeks
- * @returns The calendar event representing the responsibility week, or undefined if no matching events were found
- * @throws If the calendar was unable to be fetched
+ * @returns The calendar event representing the responsibility week, or undefined if no matching events were found or the calendar could not be fetched
  */
 export async function getResponsibleEvent(
     guildId: string,
@@ -40,7 +44,7 @@ export async function getResponsibleEvent(
     summaryPattern: RegExp | undefined = /ansvar/i
 ): Promise<CalendarEvent | undefined> {
     const calendar = await getCalendar(guildId)
-    if (!calendar) throw new Error('Failed to fetch the calendar')
+    if (!calendar) return undefined
 
     return calendar.getEvents().find(event => {
         const start = event.getStart()
@@ -83,7 +87,6 @@ export async function getResponsibleNicks(
     now: number = Date.now()
 ): Promise<string[] | undefined> {
     const event = await getResponsibleEvent(guildId, now)
-
     if (!event) return undefined
 
     const extractNicks = /(?<=[\s,]|^)(?:(?!ansvar)[^,\n])+(?=[\s,]|$)/gi
