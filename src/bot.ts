@@ -69,7 +69,9 @@ client.on(Events.InteractionCreate, async interaction => {
     try {
         await command.execute(interaction)
     } catch (error) {
-        console.error(error)
+        console.error(
+            `Error while to executing command '${interaction.commandName}': ${error}`
+        )
         if (interaction.replied || interaction.deferred) {
             await interaction.followUp({
                 content: 'There was an error while executing this command!',
@@ -115,10 +117,15 @@ function registerSlashCommands(guildId: string) {
 client.on(Events.ClientReady, () => {
     cycleActivities(client.user!, ONE_HOUR_MS)
 
-    client.guilds.fetch().then(guilds => {
-        guilds.forEach(guild => {
-            announceLoop.start(guild.id)
-            remindersLoop.start(guild.id)
+    client.guilds.cache.forEach(async guild => {
+        announceLoop.start(guild.id)
+        remindersLoop.start(guild.id)
+
+        // Get initial guild members in each server. Await to avoid spam
+        await guild.members.fetch().catch(reason => {
+            console.warn(
+                `Failed to fetch members in ${guild.id}, cache may be outdated: ${reason}`
+            )
         })
     })
 })

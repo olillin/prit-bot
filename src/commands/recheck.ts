@@ -28,8 +28,9 @@ export default defineCommand({
             ephemeral: true,
         })
 
+        const messageLimit = interaction.options.getInteger('count') ?? 10
         const lastMessages = await interaction.channel?.messages.fetch({
-            limit: interaction.options.getInteger('count') ?? 10,
+            limit: messageLimit,
         })
 
         if (!lastMessages) {

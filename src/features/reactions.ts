@@ -36,6 +36,19 @@ export function getReactions(): ReactionsConfig {
 }
 
 /**
+ * Remove the parts of a message that should be ignored when checking reaction
+ * patterns.
+ * @param message The message content.
+ * @returns The message content without the ignored parts.
+ */
+export function removeIgnoredForReaction(message: string): string {
+    // Ignore URLs
+    const ignorePattern =
+        /\b(?<!@)(?:[a-z]+:\/\/)?(?:[a-z0-9]+(?:-[a-z0-9]+)*\.)+[a-zA-Z]{2,}(?:\/[^\s]*)?\b/gm
+    return message.replace(ignorePattern, '')
+}
+
+/**
  * Adds reaction to a message if it matches any reaction patterns.
  * @param message The message to add reaction to.
  * @returns If any reaction was added.
@@ -53,10 +66,11 @@ export async function addReaction(message: Message): Promise<boolean> {
     if (noReactChannels.has(message.channel.id)) return false
 
     // Check patterns
+    const messageContent = removeIgnoredForReaction(message.content)
     const results = await Promise.all(
         Object.entries(reactions).map(async ([id, { pattern, emoji }]) => {
             const regex = new RegExp(pattern, 'i')
-            const match = regex.exec(message.content)
+            const match = regex.exec(messageContent)
             if (match) {
                 console.log(`Reacting to message with ${emoji}`)
                 message

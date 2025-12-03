@@ -16,15 +16,7 @@ export async function getUser(
     guild: Guild,
     nick: string
 ): Promise<GuildMember | undefined> {
-    const members = await guild.members.fetch().catch(reason => {
-        console.error(
-            `Failed to get guild members while finding user for ${nick}: ${reason}`
-        )
-        return undefined
-    })
-    if (members == undefined) {
-        return undefined
-    }
+    const members = guild.members.cache
     for (const [, member] of members) {
         const discordNickname = (
             member.nickname ?? member.user.displayName
@@ -56,13 +48,10 @@ export async function getAnnouncementChannel(
     const botPermissions = botMember.permissions
     if (!botPermissions.has(PermissionFlagsBits.SendMessages)) return undefined
 
-    let channel
-    try {
-        channel = await guild.channels.fetch(id)
-    } catch (e) {
-        console.warn(`Failed to get announcement channel: ${e}`)
+    let channel = await guild.channels.fetch(id).catch(reason => {
+        console.warn(`Failed to get announcement channel: ${reason}`)
         return undefined
-    }
+    })
 
     return channel?.isSendable()
         ? (channel as unknown as AnnounceChannel)

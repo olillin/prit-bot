@@ -15,6 +15,7 @@ import {
     getAnnouncementChannel as getGuildAnnouncementChannel,
     getRole,
 } from './util/guild'
+import { DAYS } from './commands/reminders'
 
 function getData(): FullData {
     if (!fs.existsSync(DATA_FILE)) {
@@ -94,7 +95,7 @@ export async function getReactionDiscoveredBy(
     if (!userId) {
         return undefined
     }
-    const user = (await guild.members.fetch()).get(userId)
+    const user = guild.members.cache.get(userId)
     return user
 }
 
@@ -191,9 +192,7 @@ export function setReminderData(
  * Add a new reminder for the responsibility week
  * @param guildId The ID of the guild to add the reminder to
  * @param day Which day of the responsibility week the reminder should
- * be sent on. Note that this is not the same as the weekday: 1 means the first
- * day of the responsibility week regardless of whether the responsibility week
- * starts on a Monday or Tuesday
+ * be sent on, where 1 is Monday and 7 is Sunday.
  * @param message What the reminder is for
  */
 export function addReminder(guildId: string, day: number, message: string) {
@@ -209,24 +208,25 @@ export function addReminder(guildId: string, day: number, message: string) {
 /**
  * Remove a reminder for the responsibility week
  * @param guildId The ID of the guild to remove the reminder from
- * @param day Which day to remove a reminder from
- * @param index Which reminder to remove from the list of reminders for that day
+ * @param day Which day to remove a reminder from, where 1 is Monday and 7 is Sunday.
+ * @param index Which reminder to remove from the list of reminders for that day, starting at 0.
  */
 export function removeReminder(guildId: string, day: number, index: number) {
     const data = getReminderData(guildId)
 
+    const prettyDay = DAYS[day - 1]
     if (data.days[day]) {
         const removed = data.days[day].splice(index, 1)
 
         if (removed.length === 0) {
-            throw `Det finns ingen påminnelse med index ${index} för dag ${day}`
+            throw `Det finns ingen påminnelse ${index + 1} för ${prettyDay}`
         }
         // Delete list if empty
         if (data.days[day].length === 0) {
             delete data.days[day]
         }
     } else {
-        throw `Det finns inga påminnelser dag ${day}`
+        throw `Det finns inga påminnelser att ta bort på ${prettyDay}`
     }
     setReminderData(guildId, data)
 }
