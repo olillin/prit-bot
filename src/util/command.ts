@@ -3,6 +3,7 @@ import {
     ApplicationCommandOptionType,
     ChatInputCommandInteraction,
     MessageFlags,
+    PermissionsBitField,
     SlashCommandAttachmentOption,
     SlashCommandBooleanOption,
     SlashCommandBuilder,
@@ -25,6 +26,17 @@ export interface CommandDefinition {
         | SlashCommandOptionsOnlyBuilder
         | SlashCommandSubcommandsOnlyBuilder
     execute(interaction: ChatInputCommandInteraction): Promise<void>
+    requiredPermissions?: PermissionsBitField
+}
+
+export function isCommandDefinition(
+    maybeCommandDefinition: Object
+): maybeCommandDefinition is CommandDefinition {
+    return (
+        maybeCommandDefinition.hasOwnProperty('data') &&
+        maybeCommandDefinition.hasOwnProperty('execute') &&
+        maybeCommandDefinition.hasOwnProperty('requiredPermissions')
+    )
 }
 
 export type CommandData = ReturnType<SlashCommandBuilder['toJSON']>
