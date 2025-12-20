@@ -8,6 +8,8 @@ Student Division at Chalmers.
 The bot can be added to your server by using
 [this invite link](https://discordapp.com/oauth2/authorize?client_id=1344643574112714783).
 
+Want to host the bot on your own server? See [HOSTING.md](HOSTING.md).
+
 ### Setup
 
 The bot has a few variables which can be configured with the `/config` slash
