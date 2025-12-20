@@ -1,6 +1,6 @@
 {
   "name": "prit-bot",
-  "version": "1.13.2",
+  "version": "1.13.3",
   "description": "Discord bot for P.R.I.T.",
   "scripts": {
     "build": "rimraf out && tsc",
@@ -22,13 +22,13 @@
   "dependencies": {
     "discord.js": "^14.18.0",
     "iamcal": "^3.0.3",
+    "rimraf": "^6.1.2",
     "typescript": "^5.8.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.22.0",
     "@types/node": "^22.14.1",
     "eslint": "^9.22.0",
-    "globals": "^16.0.0",
-    "rimraf": "^6.0.1"
+    "globals": "^16.0.0"
   }
 }
