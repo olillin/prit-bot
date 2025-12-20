@@ -6,6 +6,7 @@ import {
 } from '../data'
 import {
     EmbedBuilder,
+    ThreadChannel,
     type APIEmbed,
     type EmojiIdentifierResolvable,
     type GuildMember,
@@ -49,21 +50,45 @@ export function removeIgnoredForReaction(message: string): string {
 }
 
 /**
+ * Check if this message should be reacted to.
+ * @param message The mesage to check.
+ * @returns true if the message should be reacted to.
+ */
+export async function canReact(message: Message): Promise<boolean> {
+    // Don't add reactions to bot messages
+    if (message.author.bot) return false
+
+    // Don't add reactions to long messages
+    if (message.content.length > 150) return false
+
+    // Don't react if (parent) channel is marked as a no-react channel
+    const guild = message.guild!
+    const noReactChannels = await getNoReactChannels(guild.id)
+    const channel = message.channel
+    if (
+        noReactChannels.has(channel.id) ||
+        (channel.isThread() &&
+            channel.parentId !== null &&
+            noReactChannels.has(channel.parentId))
+    ) {
+        return false
+    }
+
+    // Message is okay to react to
+    return true
+}
+
+/**
  * Adds reaction to a message if it matches any reaction patterns.
  * @param message The message to add reaction to.
  * @returns If any reaction was added.
  */
 export async function addReaction(message: Message): Promise<boolean> {
-    if (message.author.bot) return false
-    // Don't add reactions to long messages
-    if (message.content.length > 150) return false
+    const reactToMessage = await canReact(message)
+    if (!reactToMessage) return false
 
     const reactions = getReactions()
     const guild = message.guild!
-
-    // Don't react if channel is marked
-    const noReactChannels = await getNoReactChannels(guild.id)
-    if (noReactChannels.has(message.channel.id)) return false
 
     // Check patterns
     const messageContent = removeIgnoredForReaction(message.content)
