@@ -1,4 +1,5 @@
 import {
+    ChatInputCommandInteraction,
     Client,
     Collection,
     Events,
@@ -53,8 +54,12 @@ for (const file of commandFiles) {
 
 // Command executor
 client.on(Events.InteractionCreate, async interaction => {
-    if (!interaction.isChatInputCommand()) return
+    if (interaction.isChatInputCommand()) {
+        await handleSlashCommand(interaction)
+    }
+})
 
+async function handleSlashCommand(interaction: ChatInputCommandInteraction) {
     const command = (interaction.client as ExtendedClient).commands.get(
         interaction.commandName
     )
@@ -84,7 +89,7 @@ client.on(Events.InteractionCreate, async interaction => {
             })
         }
     }
-})
+}
 
 function registerSlashCommands(guildId: string) {
     // Construct and prepare an instance of the REST module

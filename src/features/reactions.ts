@@ -86,6 +86,7 @@ export async function addReaction(message: Message): Promise<boolean> {
                             const text = match[0]
                             return discoverReaction(message, text, id)
                         }
+                        return undefined
                     })
                     .catch(e => {
                         console.warn(

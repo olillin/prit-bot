@@ -25,6 +25,7 @@ export async function getUser(
             return member
         }
     }
+    return undefined
 }
 
 export function getUsers(

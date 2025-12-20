@@ -63,3 +63,7 @@ export interface ParsedRemindersData {
     }
     muted: string[]
 }
+
+export type Concrete<Type> = {
+    [Property in keyof Type]-?: Type[Property]
+}
