@@ -61,11 +61,6 @@ export interface SlashCommandOptions extends SlashCommandOptionsBase {
     11: [SlashCommandAttachmentOption, 'getAttachment']
 }
 
-export type ConfigurationKey = keyof GuildConfiguration
-export type ConfigurationType<KeyType extends ConfigurationKey> = NonNullable<
-    GuildConfiguration[KeyType]
->
-
 export type CommandOptionWithType<OptionType extends SlashCommandOptionTypes> =
     SlashCommandOptions[OptionType][0]
 export type CommandOptionReturnType<
@@ -75,70 +70,6 @@ export type CommandOptionReturnType<
         ChatInputCommandInteraction['options'][SlashCommandOptions[OptionType][1]]
     >
 >
-
-export interface ConfigurationCommandOptions<
-    OptionType extends SlashCommandOptionTypes,
-    KeyType extends ConfigurationKey
-> {
-    /** The type of command option */
-    type: OptionType
-    /* The key to the value in the configuration */
-    key: KeyType
-
-    /** The name of the command */
-    name: string
-    /**
-     * The descriptive name of what this command will set. Used in subcommand
-     * descriptions and replies.
-     * @example "Link to calendar"
-     */
-    description: string
-
-    /**
-     * The name of the option in the 'set' subcommand. Defaults to command name
-     * if unset.
-     */
-    optionName?: string
-    /** Set extra properties for the option like min and max values. */
-    optionExtras?: (option: CommandOptionWithType<OptionType>) => void
-
-    /**
-     * Convert the option value to a the string value to be saved in the
-     * configuration. If the value cannot be used, throw an error with an
-     * explanatory message.
-     */
-    set: (
-        value: CommandOptionReturnType<OptionType>,
-        context: ChatInputCommandInteraction
-    ) => ConfigurationType<KeyType> | Promise<ConfigurationType<KeyType>>
-
-    /**
-     * Convert the saved value to the string representation which should be sent
-     */
-    get: (
-        value: ConfigurationType<KeyType>,
-        context: ChatInputCommandInteraction
-    ) => string | Promise<string>
-
-    /**
-     * Will be run when the value is changed or removed.
-     * @param value The new value of the configuration property.
-     * @param context The interaction that triggered the change.
-     */
-    onChange?: (
-        value: ConfigurationType<KeyType> | undefined,
-        context: ChatInputCommandInteraction
-    ) => void
-}
-
-export function defineConfigurationCommand<
-    OptionType extends SlashCommandOptionTypes,
-    KeyType extends ConfigurationKey
->(
-    options: ConfigurationCommandOptions<OptionType, KeyType>
-): ConfigurationCommandOptions<OptionType, KeyType> {
-    return options
-}
 
 export function addConfigurationCommand<
     OptionType extends SlashCommandOptionTypes,

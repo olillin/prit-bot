@@ -27,15 +27,13 @@ export interface GuildData {
 }
 
 export interface GuildConfiguration {
-    announceChannel?: string
-    responsibleRole?: string
-    responsibleResponsibleRole?: string
-    responsibleCalendarUrl?: string
-    /** Milliseconds after midnight that announcements should be sent */
-    announceTime?: number
-    /** Milliseconds after midnight that reminders should be sent */
-    remindersTime?: number
+    variables: 
 }
+
+export type ConfigurationKey = keyof GuildConfiguration
+export type ConfigurationType<KeyType extends ConfigurationKey> = NonNullable<
+    GuildConfiguration[KeyType]
+>
 
 export interface ReactionsDefinition {
     pattern: string
