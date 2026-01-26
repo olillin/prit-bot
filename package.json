@@ -1,6 +1,6 @@
 {
   "name": "prit-bot",
-  "version": "1.13.3",
+  "version": "1.13.4",
   "description": "Discord bot for P.R.I.T.",
   "scripts": {
     "build": "rimraf out && tsc",
@@ -30,5 +30,10 @@
     "@types/node": "^22.14.1",
     "eslint": "^9.22.0",
     "globals": "^16.0.0"
+  },
+  "overrides": {
+    "discord.js": {
+      "undici": "^6.23.0"
+    }
   }
 }
