@@ -30,5 +30,10 @@
     "@types/node": "^22.14.1",
     "eslint": "^9.22.0",
     "globals": "^16.0.0"
+  },
+  "overrides": {
+    "discord.js": {
+      "undici": "^6.23.0"
+    }
   }
 }
