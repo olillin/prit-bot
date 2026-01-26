@@ -4,7 +4,7 @@ name: Test Node.js Package
 
 on:
     push:
-    pr:
+    pull_request:
 
 jobs:
     build:
