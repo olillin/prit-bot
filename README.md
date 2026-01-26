@@ -1,5 +1,7 @@
 # P.R.I.T. Bot
 
+[![GitHub branch builds](https://img.shields.io/github/check-runs/olillin/prit-bot/main?style=flat&label=build)](https://github.com/olillin/prit-bot/actions/workflows/build.yml?query=branch%3Amain)
+
 This is a Discord bot developed by and for P.R.I.T. of the Software Engineering
 Student Division at Chalmers.
 
