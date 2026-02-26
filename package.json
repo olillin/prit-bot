@@ -1,6 +1,6 @@
 {
   "name": "prit-bot",
-  "version": "1.13.5",
+  "version": "1.13.6",
   "description": "Discord bot for P.R.I.T.",
   "scripts": {
     "build": "rimraf out && tsc",
