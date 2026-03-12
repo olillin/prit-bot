@@ -15,7 +15,16 @@ import {
     getAnnouncementChannel as getGuildAnnouncementChannel,
     getRole,
 } from './util/guild'
-import { DAYS } from './commands/reminders'
+
+export const DAYS = [
+    'Måndagar',
+    'Tisdagar',
+    'Onsdagar',
+    'Torsdagar',
+    'Fredagar',
+    'Lördagar',
+    'Söndagar',
+]
 
 function getData(): FullData {
     if (!fs.existsSync(DATA_FILE)) {

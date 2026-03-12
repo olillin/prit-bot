@@ -2,10 +2,12 @@
   "name": "prit-bot",
   "version": "1.13.6",
   "description": "Discord bot for P.R.I.T.",
+  "main": "bundle/main.js",
+  "type": "commonjs",
   "scripts": {
-    "build": "rimraf out && tsc",
-    "start": "cd out && node main.js",
-    "startenv": "cd out && node --env-file=../.env main.js",
+    "build": "tsc && rollup --config rollup.config.mjs",
+    "start": "node .",
+    "startenv": "node --env-file=.env .",
     "lint": "eslint",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -20,9 +22,12 @@
   },
   "homepage": "https://github.com/olillin/prit-bot#readme",
   "dependencies": {
+    "@rollup/plugin-commonjs": "^29.0.2",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
     "discord.js": "^14.18.0",
-    "iamcal": "^3.0.3",
-    "rimraf": "^6.1.2",
+    "iamcal": "^4.1.0",
+    "rollup": "^4.59.0",
     "typescript": "^5.8.3"
   },
   "devDependencies": {

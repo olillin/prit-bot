@@ -10,20 +10,12 @@ import {
     getReminderData,
     removeReminder,
     removeReminderMutedUser,
+    DAYS,
 } from '../data'
 import { announceReminders } from '../features/reminders'
 import { CommandMap } from '../util/command'
 import { defineCommand } from '../util/guild'
 
-export const DAYS = [
-    'Måndagar',
-    'Tisdagar',
-    'Onsdagar',
-    'Torsdagar',
-    'Fredagar',
-    'Lördagar',
-    'Söndagar',
-]
 
 export default defineCommand({
     data: new SlashCommandBuilder()

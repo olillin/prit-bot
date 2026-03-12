@@ -1,7 +1,4 @@
-import { ONE_HOUR_MS, ONE_MINUTE_MS, padHours, padMinutes } from 'iamcal'
-
-export const ONE_HOUR = 60 * 60 * 1000
-export const ONE_DAY = 24 * ONE_HOUR
+import { ONE_DAY_MS, ONE_HOUR_MS, ONE_MINUTE_MS, padHours, padMinutes } from 'iamcal'
 
 export async function sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms))
@@ -65,7 +62,7 @@ export function timeStringToMilliseconds(timeString: string): number {
     parts.forEach((part, index) => {
         const msIndex = 3
         if (index < msIndex) {
-            time += (ONE_HOUR * part) / 60 ** index
+            time += (ONE_HOUR_MS * part) / 60 ** index
         } else {
             time += part
         }
@@ -104,14 +101,14 @@ export function getNextTime(time: number, after: Date = new Date()): Date {
     const timezoneOffsetMs = after.getTimezoneOffset() * 60 * 1000
     const afterTimeMs = after.getTime()
     // Time at midnight with timezone offset
-    const afterDay = afterTimeMs - (afterTimeMs % ONE_DAY) + timezoneOffsetMs
+    const afterDay = afterTimeMs - (afterTimeMs % ONE_DAY_MS) + timezoneOffsetMs
     const nextTimeMs = afterDay + time
 
     const dayOffset = Math.max(
         0,
-        Math.ceil((afterTimeMs - nextTimeMs) / ONE_DAY)
+        Math.ceil((afterTimeMs - nextTimeMs) / ONE_DAY_MS)
     )
-    return new Date(nextTimeMs + ONE_DAY * dayOffset)
+    return new Date(nextTimeMs + ONE_DAY_MS * dayOffset)
 }
 
 export async function schedule(
