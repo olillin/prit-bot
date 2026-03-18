@@ -1,6 +1,5 @@
 import {
     Client,
-    Collection,
     Events,
     GatewayIntentBits,
     MessageFlags,
@@ -8,15 +7,13 @@ import {
     Routes,
 } from 'discord.js'
 import { ONE_HOUR_MS } from 'iamcal'
-import fs from 'node:fs'
-import path from 'node:path'
 import { discordToken } from './environment'
 import { cycleActivities } from './features/activities'
 import { announceLoop } from './features/announcements'
 import { addReaction } from './features/reactions'
 import { remindersLoop } from './features/reminders'
 import type { ExtendedClient } from './types'
-import type { CommandData, CommandDefinition } from './util/command'
+import commands from './commands'
 
 const client = new Client({
     intents: [
@@ -26,30 +23,10 @@ const client = new Client({
         GatewayIntentBits.MessageContent,
     ],
 }) as ExtendedClient
+client.commands = commands
+
 export default client
 
-client.commands = new Collection<string, CommandDefinition>()
-const commands: CommandData[] = []
-
-const commandFolder = path.join(__dirname, 'commands')
-const commandFiles = fs
-    .readdirSync(commandFolder)
-    .filter(file => file.endsWith('.js'))
-
-for (const file of commandFiles) {
-    const filePath = path.join(commandFolder, file)
-    const command = require(filePath).default as CommandDefinition
-    // Set a new item in the Collection with the key as the command name and the value as the exported module
-    if ('data' in command && 'execute' in command) {
-        client.commands.set(command.data.name, command)
-        commands.push(command.data.toJSON())
-    } else {
-        console.warn(
-            `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property:`
-        )
-        console.warn(command)
-    }
-}
 
 // Command executor
 client.on(Events.InteractionCreate, async interaction => {
@@ -91,24 +68,22 @@ function registerSlashCommands(guildId: string) {
     const rest = new REST().setToken(discordToken!)
     const clientId = client.user!.id
 
-    // and deploy your commands!
+    // Deploy the application commands to the guild
     ;(async () => {
         try {
             console.log(
-                `Started refreshing ${commands.length} application (/) commands.`
+                `Started refreshing ${client.commands.size} application (/) commands.`
             )
-
             // The put method is used to fully refresh all commands in the guild with the current set
             const data = (await rest.put(
                 Routes.applicationGuildCommands(clientId, guildId),
-                { body: commands }
+                { body: commands.map(command => command.data.toJSON()) }
             )) as object[]
 
             console.log(
                 `Successfully reloaded ${data.length} application (/) commands.`
             )
         } catch (error) {
-            // And of course, make sure you catch and log any errors!
             console.error(error)
         }
     })()

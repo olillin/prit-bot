@@ -37,9 +37,6 @@ RUN --mount=type=bind,source=package.json,target=package.json \
 # Copy the rest of the source files into the image.
 COPY . .
 
-# Generate the Prisma client
-RUN npx prisma generate
-
 # Run the build script.
 RUN pnpm build
 
@@ -58,18 +55,12 @@ USER node
 # Copy package.json so that package manager commands can be used.
 COPY package.json pnpm-lock.yaml .
 
-# Install Prisma
-RUN --mount=type=cache,target=/pnpm/store \
-    pnpm add prisma
-
 # Copy the production dependencies from the deps stage and also
 # the built application from the build stage into the image.
 COPY --from=build /usr/src/app/bundle ./bundle
-COPY --from=build /usr/src/app/prisma ./prisma
-COPY --from=build /usr/src/app/prisma.config.ts ./prisma.config.ts
 
 # Expose the port that the application listens on.
 EXPOSE 8080
 
 # Run the application.
-CMD ["/bin/sh", "-c", "pnpm exec prisma migrate deploy && pnpm start"]
+CMD ["pnpm", "start"]
