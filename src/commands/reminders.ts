@@ -16,7 +16,6 @@ import { announceReminders } from '../features/reminders'
 import { CommandMap } from '../util/command'
 import { defineCommand } from '../util/guild'
 
-
 export default defineCommand({
     data: new SlashCommandBuilder()
         .setName('reminders') //

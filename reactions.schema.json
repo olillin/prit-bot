@@ -1,27 +1,24 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "type": "object",
-  "properties": {
-    "$schema": {
-      "type": "string"
-    }
-  },
-  "additionalProperties": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
-    "required": [
-      "pattern",
-      "emoji"
-    ],
     "properties": {
-      "pattern": {
-        "description": "Regex pattern to check",
-        "type": "string"
-      },
-      "emoji": {
-        "description": "Emoji",
-        "type": "string",
-        "pattern": "^(.{0,3}|<:\\w+:\\d+>)$"
-      }
+        "$schema": {
+            "type": "string"
+        }
+    },
+    "additionalProperties": {
+        "type": "object",
+        "required": ["pattern", "emoji"],
+        "properties": {
+            "pattern": {
+                "description": "Regex pattern to check",
+                "type": "string"
+            },
+            "emoji": {
+                "description": "Emoji",
+                "type": "string",
+                "pattern": "^(.{0,3}|<:\\w+:\\d+>)$"
+            }
+        }
     }
-  }
 }

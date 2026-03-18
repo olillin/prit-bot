@@ -29,9 +29,8 @@ export async function sendResponsibilityWeekReminder(
 
     // Get who to send to
     const guild = await client.guilds.fetch(guildId)
-    const responsibleResponsibleRole = await getResponsibleResponsibleRole(
-        guild
-    )
+    const responsibleResponsibleRole =
+        await getResponsibleResponsibleRole(guild)
     if (!responsibleResponsibleRole) {
         console.warn(
             'Unable to send reminders to set responsibility week, no responsible responsible role'

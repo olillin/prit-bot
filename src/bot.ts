@@ -27,7 +27,6 @@ client.commands = commands
 
 export default client
 
-
 // Command executor
 client.on(Events.InteractionCreate, async interaction => {
     if (!interaction.isChatInputCommand()) return

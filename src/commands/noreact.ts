@@ -29,7 +29,8 @@ export default defineCommand({
                             ChannelType.PrivateThread
                         )
                         .setRequired(true)
-                ))
+                )
+        )
         .addSubcommand(subcommand =>
             subcommand
                 .setName('remove')
@@ -46,14 +47,19 @@ export default defineCommand({
                             ChannelType.PrivateThread
                         )
                         .setRequired(true)
-                ))
+                )
+        )
         .addSubcommand(subcommand =>
             subcommand
                 .setName('list')
-                .setDescription('Se vilka kanaler som är markerade')),
+                .setDescription('Se vilka kanaler som är markerade')
+        ),
 
     async execute(interaction: ChatInputCommandInteraction) {
-        const command = interaction.options.getSubcommand() as 'add' | 'remove' | 'list'
+        const command = interaction.options.getSubcommand() as
+            | 'add'
+            | 'remove'
+            | 'list'
 
         const commandMap: CommandMap = {
             add,
@@ -131,8 +137,8 @@ async function list(interaction: ChatInputCommandInteraction) {
                     noReactChannels.size === 0
                         ? 'Inga kanaler markerade'
                         : Array.from(noReactChannels)
-                            .map(id => `- <#${id}>`)
-                            .join('\n')
+                              .map(id => `- <#${id}>`)
+                              .join('\n')
                 ),
         ],
         flags: MessageFlags.Ephemeral,

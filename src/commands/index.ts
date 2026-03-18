@@ -11,16 +11,16 @@ import { default as vecka } from './vecka'
 const commands = new Collection<string, CommandDefinition>()
 
 const definitions: CommandDefinition[] = [
-	announce,
-	config,
-	noreact,
-	reactions,
-	recheck,
-	reminders,
-	vecka,
+    announce,
+    config,
+    noreact,
+    reactions,
+    recheck,
+    reminders,
+    vecka,
 ]
 definitions.forEach(definition => {
-	commands.set(definition.data.name, definition)
+    commands.set(definition.data.name, definition)
 })
 
 export default commands

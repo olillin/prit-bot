@@ -1,4 +1,10 @@
-import { ONE_DAY_MS, ONE_HOUR_MS, ONE_MINUTE_MS, padHours, padMinutes } from 'iamcal'
+import {
+    ONE_DAY_MS,
+    ONE_HOUR_MS,
+    ONE_MINUTE_MS,
+    padHours,
+    padMinutes,
+} from 'iamcal'
 
 export async function sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms))

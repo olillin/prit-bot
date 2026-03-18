@@ -46,7 +46,7 @@ export type SlashCommandOptionTypes = Exclude<
 export type SlashCommandOptionsBase = {
     [type in SlashCommandOptionTypes]: [
         ApplicationCommandOptionBase,
-        keyof ChatInputCommandInteraction['options']
+        keyof ChatInputCommandInteraction['options'],
     ]
 }
 export interface SlashCommandOptions extends SlashCommandOptionsBase {
@@ -69,7 +69,7 @@ export type ConfigurationType<KeyType extends ConfigurationKey> = NonNullable<
 export type CommandOptionWithType<OptionType extends SlashCommandOptionTypes> =
     SlashCommandOptions[OptionType][0]
 export type CommandOptionReturnType<
-    OptionType extends SlashCommandOptionTypes
+    OptionType extends SlashCommandOptionTypes,
 > = NonNullable<
     ReturnType<
         ChatInputCommandInteraction['options'][SlashCommandOptions[OptionType][1]]
@@ -78,7 +78,7 @@ export type CommandOptionReturnType<
 
 export interface ConfigurationCommandOptions<
     OptionType extends SlashCommandOptionTypes,
-    KeyType extends ConfigurationKey
+    KeyType extends ConfigurationKey,
 > {
     /** The type of command option */
     type: OptionType
@@ -133,7 +133,7 @@ export interface ConfigurationCommandOptions<
 
 export function defineConfigurationCommand<
     OptionType extends SlashCommandOptionTypes,
-    KeyType extends ConfigurationKey
+    KeyType extends ConfigurationKey,
 >(
     options: ConfigurationCommandOptions<OptionType, KeyType>
 ): ConfigurationCommandOptions<OptionType, KeyType> {
@@ -142,7 +142,7 @@ export function defineConfigurationCommand<
 
 export function addConfigurationCommand<
     OptionType extends SlashCommandOptionTypes,
-    KeyType extends ConfigurationKey
+    KeyType extends ConfigurationKey,
 >(
     command: ConfigurationCommandOptions<OptionType, KeyType>,
     builder: SlashCommandBuilder
@@ -294,7 +294,7 @@ export function getOption<T extends SlashCommandOptionTypes>(
 
 export async function executeConfigurationCommand<
     OptionType extends SlashCommandOptionTypes,
-    KeyType extends ConfigurationKey
+    KeyType extends ConfigurationKey,
 >(
     command: ConfigurationCommandOptions<OptionType, KeyType>,
     interaction: ChatInputCommandInteraction
