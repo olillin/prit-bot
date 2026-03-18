@@ -36,10 +36,5 @@
     "eslint": "^9.22.0",
     "globals": "^16.0.0",
     "rolldown": "1.0.0-rc.9"
-  },
-  "overrides": {
-    "discord.js": {
-      "undici": "^6.23.0"
-    }
   }
 }
