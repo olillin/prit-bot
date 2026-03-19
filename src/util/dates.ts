@@ -6,10 +6,6 @@ import {
     padMinutes,
 } from 'iamcal'
 
-export async function sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms))
-}
-
 /**
  * Split a time string into it's parts
  *
@@ -117,29 +113,16 @@ export function getNextTime(time: number, after: Date = new Date()): Date {
     return new Date(nextTimeMs + ONE_DAY_MS * dayOffset)
 }
 
-export async function schedule(
-    time: Date,
-    callback: () => void
-): Promise<void> {
+export function schedule(time: Date, callback: () => void): void {
     if (isNaN(time.getTime())) {
         throw new Error('Invalid time provided')
     }
 
-    return new Promise((resolve, reject) => {
-        const now = Date.now()
-        const timeUntil = time.getTime() - now
-        if (timeUntil < 0) {
-            reject(new Error('Time is in the past'))
-            return
-        }
+    const now = Date.now()
+    const timeUntil = time.getTime() - now
+    if (timeUntil < 0) {
+        throw new Error('Time is in the past')
+    }
 
-        setTimeout(() => {
-            try {
-                callback()
-                resolve()
-            } catch (error) {
-                reject(error)
-            }
-        }, timeUntil)
-    })
+    setTimeout(callback, timeUntil)
 }

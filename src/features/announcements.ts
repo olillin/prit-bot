@@ -1,10 +1,10 @@
-import type { Client, Guild, GuildMember } from 'discord.js'
+import type { Guild, GuildMember } from 'discord.js'
 import {
     getAnnouncementChannel,
     getAnnounceTime,
     getResponsibleRole,
 } from '../data'
-import { getNextTime, schedule } from '../util/dates'
+import { getNextTime } from '../util/dates'
 import { getUsers, PerGuildLoop } from '../util/guild'
 import { getResponsibleNicks, getStudyWeek } from '../util/weekInfo'
 import client from '../bot'
@@ -27,13 +27,13 @@ export async function announceWeekIn(guild: Guild): Promise<boolean> {
 
     const announceChannel = await getAnnouncementChannel(guild)
     if (!announceChannel) {
-        console.warn(`Didn't make announcement in ${guild}, no channel set`)
+        console.warn(`Didn't make announcement in ${guild.id}, no channel set`)
         return false
     }
 
     let responsibleLine = ''
     if (responsible) {
-        const users = await getUsers(responsible, guild)
+        const users = getUsers(responsible, guild)
         const stringUsers = users.map(
             ([name, user]) => user?.toString() ?? `@${name}`
         )
@@ -51,7 +51,7 @@ export async function announceWeekIn(guild: Guild): Promise<boolean> {
         responsibleLine = `${week} gick det inte att hitta någon ansvarsvecka för :thinking:`
     }
 
-    announceChannel.send(
+    await announceChannel.send(
         `### Det är en ny vecka!
 ${responsibleLine}`
     )
@@ -74,9 +74,9 @@ async function assignRole(
 
         console.log(`Removing role '${role.name}' from ${members.size} members`)
         await Promise.all(
-            members.map(member => {
+            members.map(async member => {
                 if (member?.roles?.cache.some(r => r.id === role.id)) {
-                    member.roles.remove(role)
+                    return await member.roles.remove(role)
                 }
             })
         )
@@ -110,12 +110,12 @@ export const announceLoop = new PerGuildLoop(
         const announceTime = getAnnounceTime(context.guildId)
         const nextTime = getNextTime(announceTime)
         console.debug(
-            `Scheduling announcements in ${context.guildId} for ${nextTime}`
+            `Scheduling announcements in ${context.guildId} for ${nextTime.toLocaleTimeString()}`
         )
         return nextTime
     },
     // getNextTime
-    async context => {
+    context => {
         const day = new Date().getDay()
         const isMonday = day === 1
         const isSunday = day === 0
@@ -123,18 +123,28 @@ export const announceLoop = new PerGuildLoop(
         if (isMonday) {
             // New week
             console.debug(`Sending announcements in ${context.guildId}...`)
-            const guild = await client.guilds.fetch(context.guildId)
-            await announceWeekIn(guild).catch(reason => {
+            client.guilds
+                .fetch(context.guildId)
+                .then(guild => announceWeekIn(guild))
+                .catch(reason => {
+                    console.warn(
+                        `Failed to make weekly announcement in ${context.guildId}: ${reason}`
+                    )
+                })
+        } else if (isSunday) {
+            // Reminder if there is no responsibility week
+            sendResponsibilityWeekReminder(context.guildId).catch(reason => {
                 console.warn(
-                    `Failed to make announcement in ${context.guildId}: ${reason} `
+                    `Failed to send responsibility reminder for guild ${context.guildId}: ${reason}`
                 )
             })
-        } else if (isSunday) {
-            // Reminder if there is no
-            sendResponsibilityWeekReminder(context.guildId)
         }
 
-        updateResponsibilityRole(context.guildId)
+        updateResponsibilityRole(context.guildId).catch(reason => {
+            console.warn(
+                `Failed to update responsibility role for guild ${context.guildId}: ${reason}`
+            )
+        })
     }
 )
 async function updateResponsibilityRole(guildId: string) {
@@ -143,7 +153,7 @@ async function updateResponsibilityRole(guildId: string) {
         getResponsibleNicks(guildId),
     ])
     if (responsibleNicks) {
-        const users = await getUsers(responsibleNicks, guild)
+        const users = getUsers(responsibleNicks, guild)
         await assignRole(guild, users)
     }
 }

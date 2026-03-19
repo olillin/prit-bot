@@ -24,7 +24,7 @@ export default defineCommand({
         const discoveredPretty = Object.entries(discovered).map(
             ([id, discoveredBy]) => {
                 const { emoji } = reactions[id]
-                return `${emoji} **${id}** upptäckt av <@${discoveredBy}>`
+                return `${emoji.toString()} **${id}** upptäckt av <@${discoveredBy}>`
             }
         )
         const body =
@@ -44,6 +44,6 @@ export default defineCommand({
                     'https://www.emoji.family/api/emojis/❔/twemoji/png/64',
             }).data
 
-        interaction.reply({ embeds: [embed] })
+        await interaction.reply({ embeds: [embed] })
     },
 })

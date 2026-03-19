@@ -4,7 +4,6 @@ import {
     type Role,
     type Guild,
     type GuildMember,
-    Client,
 } from 'discord.js'
 import type { AnnounceChannel } from '../types'
 import type { CommandDefinition } from './command'
@@ -12,10 +11,7 @@ import { schedule } from './dates'
 
 /** Get a user in a guild from their nick */
 
-export async function getUser(
-    guild: Guild,
-    nick: string
-): Promise<GuildMember | undefined> {
+export function getUser(guild: Guild, nick: string): GuildMember | undefined {
     const members = guild.members.cache
     for (const [, member] of members) {
         const discordNickname = (
@@ -30,10 +26,8 @@ export async function getUser(
 export function getUsers(
     nicks: string[],
     guild: Guild
-): Promise<Array<[string, GuildMember | undefined]>> {
-    return Promise.all(
-        nicks.map(async name => [name, await getUser(guild, name)])
-    )
+): Array<[string, GuildMember | undefined]> {
+    return nicks.map(name => [name, getUser(guild, name)])
 }
 
 export function defineCommand<T extends CommandDefinition>(commandData: T): T {
@@ -48,7 +42,7 @@ export async function getAnnouncementChannel(
     const botPermissions = botMember.permissions
     if (!botPermissions.has(PermissionFlagsBits.SendMessages)) return undefined
 
-    let channel = await guild.channels.fetch(id).catch(reason => {
+    const channel = await guild.channels.fetch(id).catch(reason => {
         console.warn(`Failed to get announcement channel: ${reason}`)
         return undefined
     })
@@ -80,7 +74,7 @@ export async function getRole(
     const role = await guild.roles.fetch(id)
 
     if (!role) return undefined
-    if (!canUseRole(guild, role)) return undefined
+    if (!(await canUseRole(guild, role))) return undefined
 
     return role
 }
@@ -138,9 +132,9 @@ export class PerGuildLoop {
         return this._currentGeneration.get(guildId) ?? 0
     }
 
-    private loop(context: GuildLoopContext): Promise<void> {
+    private loop(context: GuildLoopContext): void {
         const nextTime = this.getNextTime(context)
-        return schedule(nextTime, () => {
+        schedule(nextTime, () => {
             // Kill loop if generation has increased
             if (context.generation < this.getGeneration(context.guildId)) return
 

@@ -13,7 +13,7 @@ import {
     DAYS,
 } from '../data'
 import { announceReminders } from '../features/reminders'
-import { CommandMap } from '../util/command'
+import { CommandMap, editReplyWithError, replyWithError } from '../util/command'
 import { defineCommand } from '../util/guild'
 
 export default defineCommand({
@@ -103,7 +103,7 @@ export default defineCommand({
             unmute,
         }
 
-        commandMap[command](interaction)
+        await commandMap[command](interaction)
     },
 })
 
@@ -149,7 +149,7 @@ async function remove(interaction: ChatInputCommandInteraction) {
     } catch (message) {
         if (typeof message === 'string') {
             await interaction.reply({
-                content: message as string,
+                content: message,
                 flags: MessageFlags.Ephemeral,
             })
         } else {
@@ -211,13 +211,9 @@ async function send(interaction: ChatInputCommandInteraction) {
     })
     try {
         await announceReminders(interaction.guild)
-    } catch (message) {
-        console.error('Failed to announce reminders: ' + message)
-        if (typeof message !== 'string') {
-            await interaction.editReply('Något gick fel, försök igen senare')
-        } else {
-            await interaction.editReply(message)
-        }
+    } catch (error) {
+        console.error('Failed to announce reminders:', error)
+        await editReplyWithError(interaction, error)
         return
     }
     await interaction.editReply('Påminnelser skickade!')
@@ -231,19 +227,9 @@ async function mute(interaction: ChatInputCommandInteraction) {
 
     try {
         addReminderMutedUser(guildId, interaction.user.id)
-    } catch (message) {
-        if (typeof message !== 'string') {
-            console.warn('Failed to unmute reminders: ' + message)
-            await interaction.reply({
-                content: 'Something went wrong, please try again later',
-                flags: MessageFlags.Ephemeral,
-            })
-            return
-        }
-        await interaction.reply({
-            content: message,
-            flags: MessageFlags.Ephemeral,
-        })
+    } catch (error) {
+        console.warn('Failed to unmute reminders:', error)
+        await replyWithError(interaction, error, true)
         return
     }
     await interaction.reply({
@@ -260,19 +246,9 @@ async function unmute(interaction: ChatInputCommandInteraction) {
 
     try {
         removeReminderMutedUser(guildId, interaction.user.id)
-    } catch (message) {
-        if (typeof message !== 'string') {
-            console.warn('Failed to unmute reminders: ' + message)
-            await interaction.reply({
-                content: 'Something went wrong, please try again later',
-                flags: MessageFlags.Ephemeral,
-            })
-            return
-        }
-        await interaction.reply({
-            content: message,
-            flags: MessageFlags.Ephemeral,
-        })
+    } catch (error) {
+        console.warn('Failed to unmute reminders:', error)
+        await replyWithError(interaction, error, true)
         return
     }
     await interaction.reply({

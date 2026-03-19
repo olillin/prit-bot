@@ -8,6 +8,7 @@ import {
 import { AnnounceChannel } from '../types'
 import {
     addConfigurationCommands,
+    CommandResponseError,
     configurationCommandExecutor,
     ConfigurationCommandOptions,
     defineConfigurationCommand,
@@ -25,6 +26,7 @@ import {
 import { announceLoop } from '../features/announcements'
 import { remindersLoop } from '../features/reminders'
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const commands: ConfigurationCommandOptions<any, any>[] = [
     defineConfigurationCommand({
         type: ApplicationCommandOptionType.String as const,
@@ -34,14 +36,14 @@ const commands: ConfigurationCommandOptions<any, any>[] = [
 
         optionName: 'url',
 
-        set: (value, context) => {
+        set: (value, _context) => {
             const urlPattern = /^\w+:\/\/(?:.+?)?(?:\..+?)+$/
             if (!urlPattern.test(value)) {
-                throw new Error('Ogiltig URL')
+                throw new CommandResponseError('Ogiltig URL')
             }
             return value
         },
-        get: (value, context) => value,
+        get: (value, _context) => value,
     }),
 
     defineConfigurationCommand({
@@ -65,7 +67,7 @@ const commands: ConfigurationCommandOptions<any, any>[] = [
                 permissions?.has(PermissionFlagsBits.SendMessages) &&
                 permissions.has(PermissionFlagsBits.ViewChannel)
             if (!hasPermission) {
-                throw new Error(
+                throw new CommandResponseError(
                     'Den här kanalen kan inte användas för uppdateringar, saknar tillstånd'
                 )
             }
@@ -76,7 +78,7 @@ const commands: ConfigurationCommandOptions<any, any>[] = [
             const guild = context.guild!
             const channel = await getAnnouncementChannel(value, guild)
             if (!channel) {
-                throw new Error(
+                throw new CommandResponseError(
                     'Den sparade kanalen för utskick finns inte längre'
                 )
             }
@@ -94,7 +96,7 @@ const commands: ConfigurationCommandOptions<any, any>[] = [
             const guild: Guild = context.guild!
 
             if (!(await canUseRole(guild, value))) {
-                throw new Error(
+                throw new CommandResponseError(
                     'Den rollen kan inte användas, saknar tillstånd'
                 )
             }
@@ -105,7 +107,7 @@ const commands: ConfigurationCommandOptions<any, any>[] = [
             const guild = context.guild!
             const role = await getRole(value, guild)
             if (!role) {
-                throw new Error(
+                throw new CommandResponseError(
                     'Den sparade rollen för ansvarsvecka finns inte längre'
                 )
             }
@@ -123,7 +125,7 @@ const commands: ConfigurationCommandOptions<any, any>[] = [
             const guild: Guild = context.guild!
 
             if (!(await canUseRole(guild, value))) {
-                throw new Error(
+                throw new CommandResponseError(
                     'Den rollen kan inte användas, saknar tillstånd'
                 )
             }
@@ -134,7 +136,7 @@ const commands: ConfigurationCommandOptions<any, any>[] = [
             const guild = context.guild!
             const role = await getRole(value, guild)
             if (!role) {
-                throw new Error(
+                throw new CommandResponseError(
                     'Den sparade rollen för den som sätter ansvarsvecka finns inte längre'
                 )
             }
@@ -148,18 +150,14 @@ const commands: ConfigurationCommandOptions<any, any>[] = [
         name: 'announcetime',
         description: 'Tid som ansvarsveckor skickas ut',
 
-        set: async (value, context) => {
-            try {
-                const milliseconds = timeStringToMilliseconds(value)
-                return milliseconds
-            } catch (e) {
-                throw e
-            }
+        set: (value, _context) => {
+            const milliseconds = timeStringToMilliseconds(value)
+            return milliseconds
         },
 
-        get: async (value, context) => millisecondsToTimeString(value),
+        get: (value, _context) => millisecondsToTimeString(value),
 
-        onChange: (value, context) => {
+        onChange: (_value, context) => {
             announceLoop.reset(context.guildId!)
         },
     }),
@@ -170,18 +168,14 @@ const commands: ConfigurationCommandOptions<any, any>[] = [
         name: 'reminderstime',
         description: 'Tid som påminnelser skickas ut',
 
-        set: async (value, context) => {
-            try {
-                const milliseconds = timeStringToMilliseconds(value)
-                return milliseconds
-            } catch (e) {
-                throw e
-            }
+        set: (value, _context) => {
+            const milliseconds = timeStringToMilliseconds(value)
+            return milliseconds
         },
 
-        get: async (value, context) => millisecondsToTimeString(value),
+        get: (value, _context) => millisecondsToTimeString(value),
 
-        onChange: (value, context) => {
+        onChange: (_value, context) => {
             remindersLoop.reset(context.guildId!)
         },
     }),

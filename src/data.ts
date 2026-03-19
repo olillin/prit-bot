@@ -15,6 +15,7 @@ import {
     getAnnouncementChannel as getGuildAnnouncementChannel,
     getRole,
 } from './util/guild'
+import { CommandResponseError } from './util/command'
 
 export const DAYS = [
     'Måndagar',
@@ -31,8 +32,7 @@ function getData(): FullData {
         return {}
     }
     const text = fs.readFileSync(DATA_FILE, 'utf-8')
-    const parsed = JSON.parse(text)
-    return parsed
+    return JSON.parse(text) as FullData
 }
 
 function writeData(data: FullData) {
@@ -95,10 +95,10 @@ export function getDiscoveredReactions(guild: Guild): DiscoveredReactionsData {
     return data?.discoveredReactions ?? {}
 }
 
-export async function getReactionDiscoveredBy(
+export function getReactionDiscoveredBy(
     guild: Guild,
     id: string
-): Promise<GuildMember | undefined> {
+): GuildMember | undefined {
     const discovered = getDiscoveredReactions(guild)
     const userId = discovered[id]
     if (!userId) {
@@ -228,14 +228,18 @@ export function removeReminder(guildId: string, day: number, index: number) {
         const removed = data.days[day].splice(index, 1)
 
         if (removed.length === 0) {
-            throw `Det finns ingen påminnelse ${index + 1} för ${prettyDay}`
+            throw new CommandResponseError(
+                `Det finns ingen påminnelse ${index + 1} för ${prettyDay}`
+            )
         }
         // Delete list if empty
         if (data.days[day].length === 0) {
             delete data.days[day]
         }
     } else {
-        throw `Det finns inga påminnelser att ta bort på ${prettyDay}`
+        throw new CommandResponseError(
+            `Det finns inga påminnelser att ta bort på ${prettyDay}`
+        )
     }
     setReminderData(guildId, data)
 }
@@ -243,7 +247,7 @@ export function removeReminder(guildId: string, day: number, index: number) {
 export function addReminderMutedUser(guildId: string, userId: string) {
     const data = getReminderData(guildId)
     if (data.muted.includes(userId)) {
-        throw 'Du får redan inte påminnelser'
+        throw new CommandResponseError('Du får redan inte påminnelser')
     } else {
         data.muted.push(userId)
     }
@@ -254,7 +258,7 @@ export function removeReminderMutedUser(guildId: string, userId: string) {
     const data = getReminderData(guildId)
     const index = data.muted.indexOf(userId)
     if (index === -1) {
-        throw 'Du får redan påminnelser'
+        throw new CommandResponseError('Du får redan påminnelser')
     } else {
         data.muted.splice(index, 1)
     }

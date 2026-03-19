@@ -6,7 +6,6 @@ import {
 } from '../data'
 import {
     EmbedBuilder,
-    ThreadChannel,
     type APIEmbed,
     type EmojiIdentifierResolvable,
     type GuildMember,
@@ -16,24 +15,22 @@ import type { ReactionsConfig } from '../types'
 import { REACTIONS_FILE } from '../environment'
 
 export function getReactions(): ReactionsConfig {
-    if (fs.existsSync(REACTIONS_FILE)) {
-        const text = fs.readFileSync(REACTIONS_FILE, 'utf8')
+    if (!fs.existsSync(REACTIONS_FILE)) return {}
 
-        try {
-            const parsed = JSON.parse(text)
-            for (const key in parsed) {
-                if (key.startsWith('$')) {
-                    delete parsed[key]
-                }
+    const text = fs.readFileSync(REACTIONS_FILE, 'utf8')
+
+    try {
+        const parsed = JSON.parse(text) as ReactionsConfig
+        for (const key in parsed) {
+            if (key.startsWith('$')) {
+                delete parsed[key]
             }
-            return parsed
-        } catch (e) {
-            console.warn(
-                `Failed to parse reactions from ${REACTIONS_FILE}: ${e}`
-            )
         }
+        return parsed
+    } catch (e) {
+        console.warn(`Failed to parse reactions from ${REACTIONS_FILE}:`, e)
+        return {}
     }
-    return {}
 }
 
 /**
@@ -54,7 +51,7 @@ export function removeIgnoredForReaction(message: string): string {
  * @param message The mesage to check.
  * @returns true if the message should be reacted to.
  */
-export async function canReact(message: Message): Promise<boolean> {
+export function canReact(message: Message): boolean {
     // Don't add reactions to bot messages
     if (message.author.bot) return false
 
@@ -63,7 +60,7 @@ export async function canReact(message: Message): Promise<boolean> {
 
     // Don't react if (parent) channel is marked as a no-react channel
     const guild = message.guild!
-    const noReactChannels = await getNoReactChannels(guild.id)
+    const noReactChannels = getNoReactChannels(guild.id)
     const channel = message.channel
     if (
         noReactChannels.has(channel.id) ||
@@ -83,8 +80,8 @@ export async function canReact(message: Message): Promise<boolean> {
  * @param message The message to add reaction to.
  * @returns If any reaction was added.
  */
-export async function addReaction(message: Message): Promise<boolean> {
-    const reactToMessage = await canReact(message)
+export function addReaction(message: Message): boolean {
+    const reactToMessage = canReact(message)
     if (!reactToMessage) return false
 
     const reactions = getReactions()
@@ -92,12 +89,12 @@ export async function addReaction(message: Message): Promise<boolean> {
 
     // Check patterns
     const messageContent = removeIgnoredForReaction(message.content)
-    const results = await Promise.all(
-        Object.entries(reactions).map(async ([id, { pattern, emoji }]) => {
+    const results = Object.entries(reactions).map(
+        ([id, { pattern, emoji }]) => {
             const regex = new RegExp(pattern, 'i')
             const match = regex.exec(messageContent)
             if (match) {
-                console.log(`Reacting to message with ${emoji}`)
+                console.log(`Reacting to message with ${emoji.toString()}`)
                 message
                     .react(emoji)
                     .then(() => {
@@ -114,13 +111,14 @@ export async function addReaction(message: Message): Promise<boolean> {
                     })
                     .catch(e => {
                         console.warn(
-                            `Error occured while reacting with ${emoji}: ${e.message}`
+                            `Error occured while reacting with ${emoji.toString()}:`,
+                            e
                         )
                         console.trace(e)
                     })
             }
             return !!match
-        })
+        }
     )
     return results.indexOf(true) !== -1
 }
@@ -140,25 +138,21 @@ async function discoverReaction(
         return
     }
 
-    const reactions = await getReactions()
+    const reactions = getReactions()
     const { emoji } = reactions[reactionId]
 
     const member = message.guild.members.cache.get(message.author.id)
     if (!member) {
         throw new Error('Could not find message author in guild')
     }
-    console.log(`New reaction discovered by ${member}`)
+    console.log(`New reaction discovered by ${member.toString()}`)
 
     // Send message
     const embed = discoverReactionEmbed(member, text, emoji)
     await message.channel.send({ embeds: [embed] })
 
     // Mark as discovered
-    await setReactionDiscoveredBy(
-        message.guild.id,
-        reactionId,
-        message.author.id
-    )
+    setReactionDiscoveredBy(message.guild.id, reactionId, message.author.id)
 }
 
 /**
@@ -176,13 +170,13 @@ function discoverReactionEmbed(
         const id = isCustom[1]
         imageUrl = `https://cdn.discordapp.com/emojis/${id}.webp`
     } else {
-        imageUrl = `https://www.emoji.family/api/emojis/${emoji}/twemoji/png/128`
+        imageUrl = `https://www.emoji.family/api/emojis/${emoji.toString()}/twemoji/png/128`
     }
 
     return new EmbedBuilder()
         .setTitle('Ny reaktion upptäckt!')
         .setDescription(
-            `${member} upptäckte en ny reaktion genom att skicka "${text}"!`
+            `${member.toString()} upptäckte en ny reaktion genom att skicka "${text}"!`
         )
         .setColor('#09cdda')
         .setImage(imageUrl).data

@@ -28,7 +28,7 @@ client.commands = commands
 export default client
 
 // Command executor
-client.on(Events.InteractionCreate, async interaction => {
+client.on(Events.InteractionCreate, interaction => {
     if (!interaction.isChatInputCommand()) return
 
     const command = (interaction.client as ExtendedClient).commands.get(
@@ -42,11 +42,10 @@ client.on(Events.InteractionCreate, async interaction => {
         return
     }
 
-    try {
-        await command.execute(interaction)
-    } catch (error) {
+    command.execute(interaction).catch(async error => {
         console.error(
-            `Error while to executing command '${interaction.commandName}': ${error}`
+            `Error while to executing command '${interaction.commandName}':`,
+            error
         )
         if (interaction.replied || interaction.deferred) {
             await interaction.followUp({
@@ -59,44 +58,42 @@ client.on(Events.InteractionCreate, async interaction => {
                 flags: MessageFlags.Ephemeral,
             })
         }
-    }
+    })
 })
 
-function registerSlashCommands(guildId: string) {
+async function registerSlashCommands(guildId: string) {
     // Construct and prepare an instance of the REST module
     const rest = new REST().setToken(discordToken!)
     const clientId = client.user!.id
 
     // Deploy the application commands to the guild
-    ;(async () => {
-        try {
-            console.log(
-                `Started refreshing ${client.commands.size} application (/) commands.`
-            )
-            // The put method is used to fully refresh all commands in the guild with the current set
-            const data = (await rest.put(
-                Routes.applicationGuildCommands(clientId, guildId),
-                { body: commands.map(command => command.data.toJSON()) }
-            )) as object[]
+    try {
+        console.log(
+            `Started refreshing ${client.commands.size} application (/) commands.`
+        )
+        // The put method is used to fully refresh all commands in the guild with the current set
+        const data = (await rest.put(
+            Routes.applicationGuildCommands(clientId, guildId),
+            { body: commands.map(command => command.data.toJSON()) }
+        )) as object[]
 
-            console.log(
-                `Successfully reloaded ${data.length} application (/) commands.`
-            )
-        } catch (error) {
-            console.error(error)
-        }
-    })()
+        console.log(
+            `Successfully reloaded ${data.length} application (/) commands.`
+        )
+    } catch (error) {
+        console.error(error)
+    }
 }
 
 client.on(Events.ClientReady, () => {
     cycleActivities(client.user!, ONE_HOUR_MS)
 
-    client.guilds.cache.forEach(async guild => {
+    client.guilds.cache.forEach(guild => {
         announceLoop.start(guild.id)
         remindersLoop.start(guild.id)
 
         // Get initial guild members in each server. Await to avoid spam
-        await guild.members.fetch().catch(reason => {
+        guild.members.fetch().catch(reason => {
             console.warn(
                 `Failed to fetch members in ${guild.id}, cache may be outdated: ${reason}`
             )
@@ -106,7 +103,9 @@ client.on(Events.ClientReady, () => {
 
 client.on(Events.GuildCreate, guild => {
     console.log('Joined new guild')
-    registerSlashCommands(guild.id)
+    registerSlashCommands(guild.id).catch(reason => {
+        console.error('Failed to register slash commands:', reason)
+    })
     announceLoop.start(guild.id)
     remindersLoop.start(guild.id)
 })
@@ -128,9 +127,13 @@ client.on(Events.MessageCreate, message => {
 })
 
 client.on(Events.ClientReady, () => {
-    client.guilds.cache.forEach(guild => {
-        registerSlashCommands(guild.id)
-    })
-
-    console.log('Bot is ready')
+    Promise.all(
+        client.guilds.cache.map(guild => registerSlashCommands(guild.id))
+    )
+        .then(() => {
+            console.log('Bot is ready')
+        })
+        .catch(reason => {
+            console.error('Bot failed to get ready:', reason)
+        })
 })
