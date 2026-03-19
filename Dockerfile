@@ -21,6 +21,7 @@ FROM base AS deps
 # into this layer.
 RUN --mount=type=bind,source=package.json,target=package.json \
     --mount=type=bind,source=pnpm-lock.yaml,target=pnpm-lock.yaml \
+    --mount=type=bind,source=pnpm-workspace.yaml,target=pnpm-workspace.yaml \
     --mount=type=cache,target=/pnpm/store \
     pnpm install --prod
 
@@ -31,6 +32,7 @@ FROM deps AS build
 # Install dev dependencies for build
 RUN --mount=type=bind,source=package.json,target=package.json \
     --mount=type=bind,source=pnpm-lock.yaml,target=pnpm-lock.yaml \
+    --mount=type=bind,source=pnpm-workspace.yaml,target=pnpm-workspace.yaml \
     --mount=type=cache,target=/pnpm/store \
     pnpm install
 
@@ -53,7 +55,7 @@ RUN chown -R node:node /usr/src/app
 USER node
 
 # Copy package.json so that package manager commands can be used.
-COPY package.json pnpm-lock.yaml .
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .
 
 # Copy the production dependencies from the deps stage and also
 # the built application from the build stage into the image.
