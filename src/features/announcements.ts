@@ -114,11 +114,17 @@ export const announceLoop = new PerGuildLoop(
         )
         return nextTime
     },
-    // getNextTime
-    context => {
+    // action
+    async context => {
         const day = new Date().getDay()
         const isMonday = day === 1
         const isSunday = day === 0
+
+        await updateResponsibilityRole(context.guildId).catch(reason => {
+            console.warn(
+                `Failed to update responsibility role for guild ${context.guildId}: ${reason}`
+            )
+        })
 
         if (isMonday) {
             // New week
@@ -139,12 +145,6 @@ export const announceLoop = new PerGuildLoop(
                 )
             })
         }
-
-        updateResponsibilityRole(context.guildId).catch(reason => {
-            console.warn(
-                `Failed to update responsibility role for guild ${context.guildId}: ${reason}`
-            )
-        })
     }
 )
 async function updateResponsibilityRole(guildId: string) {
