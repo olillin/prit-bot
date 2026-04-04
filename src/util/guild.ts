@@ -79,11 +79,13 @@ export async function getRole(
     return role
 }
 
+export type MaybePromise<T> = T | Promise<T>
+
 export class PerGuildLoop {
     private _currentGeneration: Map<string, number>
 
     getNextTime: (context: GuildLoopContext) => Date
-    action: (context: GuildLoopContext) => void
+    action: (context: GuildLoopContext) => MaybePromise<void>
 
     /**
      * @param getNextTime A function which returns the next time the loop should run.
@@ -91,7 +93,7 @@ export class PerGuildLoop {
      */
     constructor(
         getNextTime: (context: GuildLoopContext) => Date,
-        action: (context: GuildLoopContext) => void
+        action: (context: GuildLoopContext) => MaybePromise<void>
     ) {
         this.getNextTime = getNextTime
         this.action = action
@@ -138,9 +140,26 @@ export class PerGuildLoop {
             // Kill loop if generation has increased
             if (context.generation < this.getGeneration(context.guildId)) return
 
-            this.action(context)
-
-            this.loop(context)
+            Promise.resolve(this.action(context))
+                .catch(reason => {
+                    console.error(
+                        'Failed to perform guild loop action. Context:',
+                        context,
+                        '\nReason:',
+                        reason
+                    )
+                })
+                .then(() => {
+                    this.loop(context)
+                })
+                .catch(reason => {
+                    console.error(
+                        'Failed to continue guild loop. Context:',
+                        context,
+                        '\nReason:',
+                        reason
+                    )
+                })
         })
     }
 }
