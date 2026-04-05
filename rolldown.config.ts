@@ -3,9 +3,10 @@ import { defineConfig } from 'rolldown'
 
 export default defineConfig({
     input: 'out/main.js',
+    platform: 'node',
     output: {
         dir: 'bundle',
-        format: 'cjs',
+        format: 'es',
     },
     // plugins: [json()],
 })
