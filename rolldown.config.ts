@@ -8,5 +8,6 @@ export default defineConfig({
         dir: 'bundle',
         format: 'es',
     },
+    external: ['zlib-sync'],
     // plugins: [json()],
 })

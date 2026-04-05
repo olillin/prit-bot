@@ -1,2 +1,5 @@
 overrides:
-    'undici@<6.24.0': '^6.24.0'
+    undici@<6.24.0: ^6.24.0
+
+patchedDependencies:
+    discord.js: patches/discord.js.patch

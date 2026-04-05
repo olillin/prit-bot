@@ -1,0 +1,13 @@
+diff --git a/src/client/Client.js b/src/client/Client.js
+index f73a70d1cebcd1371d8ce5c8df625fc93412525b..bb72a7c03ea7b5704e3c3d2f4523810549124a9e 100644
+--- a/src/client/Client.js
++++ b/src/client/Client.js
+@@ -529,7 +529,7 @@ class Client extends BaseClient {
+    * @private
+    */
+   _eval(script) {
+-    return eval(script);
++    throw new Error("eval has been disabled for security and bundling compatibility")
+   }
+ 
+   /**
