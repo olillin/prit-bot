@@ -1,4 +1,5 @@
 overrides:
+    picomatch@>=4.0.0 <4.0.4: '>=4.0.4'
     undici@<6.24.0: ^6.24.0
 
 patchedDependencies:
