@@ -6,8 +6,8 @@ bot. For instructions about how to add the official bot to your server, see
 
 ## Prerequisites
 
-To run the bot you must have Node.js installed, you can download it from the
-[Node.js downloads page](https://nodejs.org/en/download).
+To run the bot you need Docker compose, see the
+[official installation guide](https://docs.docker.com/compose/install).
 
 ## Setup
 
@@ -19,25 +19,18 @@ To run the bot you must have Node.js installed, you can download it from the
       and the **Send Messages**, **Manage Roles** and **Mention Everyone**
       permissions.
 
-2. Clone the repository and install dependencies:
+2. Copy the `compose.yaml` file from this repository into a new directory.
+
+3. Open the file and replace the comment after `TOKEN: ` with the bot token
+   from the Discord Developer Portal.
+
+4. Create three JSON files with an empty JSON object in them (`{}`):
+    - `data.json`
+    - `activities.json`
+    - `reactions.json`
+
+5. Then run the compose file:
 
     ```console
-    git clone https://github.com/olillin/prit-bot
-    cd prit-bot
-    npm install
-    ```
-
-3. Create a `.env` file and copy the contents from `.env.example`. Paste the bot
-   token from the Discord Developer Portal.
-
-4. Build the bot:
-
-    ```console
-    npm run build
-    ```
-
-5. Run the bot with the environment file:
-
-    ```console
-    npm run startenv
+    docker compose up
     ```
