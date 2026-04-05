@@ -22,6 +22,7 @@ FROM base AS deps
 RUN --mount=type=bind,source=package.json,target=package.json \
     --mount=type=bind,source=pnpm-lock.yaml,target=pnpm-lock.yaml \
     --mount=type=bind,source=pnpm-workspace.yaml,target=pnpm-workspace.yaml \
+    --mount=type=bind,source=patches,target=patches \
     --mount=type=cache,target=/pnpm/store \
     pnpm install --prod
 
@@ -33,6 +34,7 @@ FROM deps AS build
 RUN --mount=type=bind,source=package.json,target=package.json \
     --mount=type=bind,source=pnpm-lock.yaml,target=pnpm-lock.yaml \
     --mount=type=bind,source=pnpm-workspace.yaml,target=pnpm-workspace.yaml \
+    --mount=type=bind,source=patches,target=patches \
     --mount=type=cache,target=/pnpm/store \
     pnpm install
 
