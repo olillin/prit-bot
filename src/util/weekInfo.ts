@@ -96,29 +96,17 @@ export async function getResponsibleNicks(
     return Array.of(...match).map(m => m[0].trim())
 }
 
-/**
- * @returns The day of the responsibility week, starting at 1
- */
-export function getDayOfResponsibilityWeek(guildId: string): number {
-    const today = new Date()
-    return today.getDay()
-}
+export async function scrapeWeek(url: string): Promise<string> {
+    const response = await fetch(url)
+    const text = await response.text()
 
-export function scrapeWeek(url: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-        fetch(url).then(async response => {
-            const text = await response.text()
+    const pattern = /<time.{0,30}>(.+?)<\/time>/
+    const match = text.match(pattern)
 
-            const pattern = /<time.{0,30}>(.+?)<\/time>/
-            const match = text.match(pattern)
-
-            if (match) {
-                resolve(match[1])
-            } else {
-                reject(`Invalid response from ${url}`)
-            }
-        })
-    })
+    if (!match) {
+        throw new Error(`Invalid response from ${url}`)
+    }
+    return match[1]
 }
 
 export async function getWeek(): Promise<string | null> {

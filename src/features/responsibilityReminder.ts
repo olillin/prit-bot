@@ -29,9 +29,8 @@ export async function sendResponsibilityWeekReminder(
 
     // Get who to send to
     const guild = await client.guilds.fetch(guildId)
-    const responsibleResponsibleRole = await getResponsibleResponsibleRole(
-        guild
-    )
+    const responsibleResponsibleRole =
+        await getResponsibleResponsibleRole(guild)
     if (!responsibleResponsibleRole) {
         console.warn(
             'Unable to send reminders to set responsibility week, no responsible responsible role'
@@ -46,14 +45,16 @@ export async function sendResponsibilityWeekReminder(
         return false
     }
 
-    responsibleResponsibleRole.members.forEach(member => {
-        console.debug(
-            `Sending reminder to assign responsibility week to ${member.id} (${member.displayName})`
-        )
-        member.send(
-            'Hej! Jag märkte att det inte finns någon som har ansvarsvecka imorgon så tänkte påminna dig :blush:'
-        )
-    })
+    await Promise.all(
+        responsibleResponsibleRole.members.map(async member => {
+            console.debug(
+                `Sending reminder to assign responsibility week to ${member.id} (${member.displayName})`
+            )
+            await member.send(
+                'Hej! Jag märkte att det inte finns någon som har ansvarsvecka imorgon så tänkte påminna dig :blush:'
+            )
+        })
+    )
 
     return true
 }

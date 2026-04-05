@@ -28,7 +28,7 @@ To run the bot you must have Node.js installed, you can download it from the
     ```
 
 3. Create a `.env` file and copy the contents from `.env.example`. Paste the bot
-    token from the Discord Developer Portal.
+   token from the Discord Developer Portal.
 
 4. Build the bot:
 

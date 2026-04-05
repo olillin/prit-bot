@@ -8,7 +8,9 @@ function main() {
     }
 
     console.log('Starting bot...')
-    client.login(discordToken!)
+    client.login(discordToken).catch(reason => {
+        console.error('Bot failed to login:', reason)
+    })
 }
 
 main()

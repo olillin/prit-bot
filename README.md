@@ -52,7 +52,7 @@ the week number, study week and responsibility week info.
 
 ### Responsibility weeks
 
-P.R.I.T. typically operates using the concept of *responsibility weeks* (sv.
+P.R.I.T. typically operates using the concept of _responsibility weeks_ (sv.
 ansvarsveckor) where a few people are responsible for the routine work in
 Hubben.
 
@@ -63,9 +63,9 @@ be met:
 
 - The calendar URL is set. See [Variables](#variables).
 - There is an ongoing event in the calendar for the responsibility week:
-  - The event must be a whole week long.
-  - The event summary/title must contain the word "Ansvar".
-  - The rest of the event summary/title should be a comma-separated list of the names of the people who are assigned to the responsibility week.
+    - The event must be a whole week long.
+    - The event summary/title must contain the word "Ansvar".
+    - The rest of the event summary/title should be a comma-separated list of the names of the people who are assigned to the responsibility week.
 - The name in the event must be included in the nickname or display name of that person in your Discord server.
 
 For example an event with the name "Ansvar: Cal, Göken" will cause the bot to
@@ -106,7 +106,7 @@ of the reminders after it will change.
 
 ### Message reactions
 
-Certain *special phrases* will trigger a fun reaction to be added to the
+Certain _special phrases_ will trigger a fun reaction to be added to the
 message! If you are the first person to discover the reaction the bot will
 announce this! All discovered reactions along with who discovered them can be
 viewed with the `/reactions` command.

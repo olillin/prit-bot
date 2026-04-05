@@ -1,25 +1,21 @@
-import { Client, EmbedBuilder, type Guild } from 'discord.js'
+import { EmbedBuilder, type Guild } from 'discord.js'
 import {
     getAnnouncementChannel,
     getReminderData,
     getRemindersTime,
 } from '../data'
-import { getNextTime, schedule } from '../util/dates'
+import { getNextTime } from '../util/dates'
 import { getUsers, PerGuildLoop } from '../util/guild'
-import {
-    getResponsibleNicks,
-    getDayOfResponsibilityWeek,
-} from '../util/weekInfo'
+import { getResponsibleNicks } from '../util/weekInfo'
 import client from '../bot'
+import { CommandResponseError } from '../util/command'
 
 /** Get an embed for the reminders today */
-export async function getRemindersEmbedToday(
-    guild: Guild
-): Promise<EmbedBuilder | null> {
+export function getRemindersEmbedToday(guild: Guild): EmbedBuilder | null {
     const reminderData = getReminderData(guild.id)
-    const day = getDayOfResponsibilityWeek(guild.id)
+    const weekDay = new Date().getDay()
 
-    const reminders = reminderData.days[day]
+    const reminders = reminderData.days[weekDay]
     if (!reminders || reminders.length === 0) {
         return null
     }
@@ -54,10 +50,10 @@ export async function getRemindersUserLineToday(guild: Guild): Promise<string> {
     let userLine = ''
     const responsibleNames = await getResponsibleNicks(guild.id)
     if (!responsibleNames) {
-        throw 'Det finns ingen ansvarig idag'
+        throw new CommandResponseError('Det finns ingen ansvarig idag')
     }
     if (responsibleNames) {
-        const responsibleUsers = await getUsers(responsibleNames, guild)
+        const responsibleUsers = getUsers(responsibleNames, guild)
 
         const mutedIds = reminderData.muted
         const userStrings = responsibleUsers.map(([nick, user]) =>
@@ -74,16 +70,22 @@ export async function getRemindersUserLineToday(guild: Guild): Promise<string> {
 export async function announceReminders(guild: Guild) {
     let embed: EmbedBuilder | null
     try {
-        embed = await getRemindersEmbedToday(guild)
+        embed = getRemindersEmbedToday(guild)
     } catch (message) {
         if (typeof message === 'string') {
-            throw `Kunde inte skicka påminnelser: ${message} `
+            throw new CommandResponseError(
+                `Kunde inte skicka påminnelser: ${message} `
+            )
         } else {
-            throw 'Kunde inte skicka påminnelser, ett okänt fel inträffade'
+            throw new CommandResponseError(
+                'Kunde inte skicka påminnelser, ett okänt fel inträffade'
+            )
         }
     }
     if (!embed) {
-        throw 'Skickade inte påminnelser, inga påminnelser idag'
+        throw new CommandResponseError(
+            'Skickade inte påminnelser, inga påminnelser idag'
+        )
     }
 
     let userLine: string
@@ -91,22 +93,28 @@ export async function announceReminders(guild: Guild) {
         userLine = await getRemindersUserLineToday(guild)
     } catch (message) {
         if (typeof message === 'string') {
-            throw `Skickade inte skicka påminnelser: ${message} `
+            throw new CommandResponseError(
+                `Skickade inte skicka påminnelser: ${message} `
+            )
         } else {
-            throw 'Kunde inte skicka påminnelser, ett okänt fel inträffade'
+            throw new CommandResponseError(
+                'Kunde inte skicka påminnelser, ett okänt fel inträffade'
+            )
         }
     }
 
     const channel = await getAnnouncementChannel(guild)
     if (!channel) {
-        throw 'Skickade inte påminnelser, ingen kanal angiven'
+        throw new CommandResponseError(
+            'Skickade inte påminnelser, ingen kanal angiven'
+        )
     }
 
     try {
         await channel.send({ content: userLine, embeds: [embed] })
     } catch (e) {
         console.error('Failed to send reminders', e)
-        throw 'Misslyckades med att skicka meddelande'
+        throw new CommandResponseError('Misslyckades med att skicka meddelande')
     }
 }
 
@@ -116,19 +124,27 @@ export const remindersLoop = new PerGuildLoop(
         const remindersTime = getRemindersTime(context.guildId)
         const nextTime = getNextTime(remindersTime)
         console.debug(
-            `Scheduling reminders in ${context.guildId} for ${nextTime}`
+            `Scheduling reminders in ${context.guildId} for ${nextTime.toLocaleTimeString()}`
         )
         return nextTime
     },
-    // getNextTime
-    async context => {
-        console.debug(`Sending reminders in ${context.guildId}...`)
+    // action
+    context => {
+        client.guilds
+            .fetch(context.guildId)
+            .then(guild => {
+                console.debug(`Sending reminders in ${context.guildId}...`)
 
-        const guild = await client.guilds.fetch(context.guildId)
-        announceReminders(guild).catch(reason => {
-            console.warn(
-                `Failed to announce reminders in ${context.guildId}: ${reason} `
-            )
-        })
+                announceReminders(guild).catch(reason => {
+                    console.warn(
+                        `Failed to send reminders in ${context.guildId}: ${reason}`
+                    )
+                })
+            })
+            .catch(reason => {
+                console.error(
+                    `Failed to send reminders in ${context.guildId}: ${reason}`
+                )
+            })
     }
 )

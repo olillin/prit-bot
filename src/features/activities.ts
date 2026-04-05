@@ -3,7 +3,6 @@ import type { ActivityOptions, ClientUser } from 'discord.js'
 import { ActivityType } from 'discord.js'
 import fs from 'fs'
 import { ACTIVITIES_FILE } from '../environment'
-import { sleep } from '../util/dates'
 
 export const DEFAULT_ACTIVITIES: ActivityOptions[] = [
     {
@@ -17,7 +16,7 @@ export function getActivities(): ActivityOptions[] {
         const text = fs.readFileSync(ACTIVITIES_FILE, 'utf8')
 
         try {
-            const parsed: ActivityOptions[] = JSON.parse(text)
+            const parsed = JSON.parse(text) as ActivityOptions[]
 
             if (parsed.length === 0) {
                 console.warn(
@@ -51,30 +50,28 @@ export function getActivities(): ActivityOptions[] {
  * @param clientUser Discord client user to change activity for
  * @param interval Delay between activity changes in milliseconds
  */
-export async function cycleActivities(
+export function cycleActivities(
     clientUser: ClientUser,
-    interval: number
-): Promise<never> {
-    let previousActivity: ActivityOptions | undefined = undefined
-    while (true) {
-        // Get new activity
-        const activities = getActivities()
-        let activity: ActivityOptions | undefined = previousActivity
-        while (
-            activity === undefined ||
-            (activities.length > 1 &&
-                JSON.stringify(activity) === JSON.stringify(previousActivity))
-        ) {
-            activity = activities[Math.floor(Math.random() * activities.length)]
-        }
-
-        console.log(
-            `Set activity to (${ActivityType[activity.type!]}) ${activity.name}`
-        )
-        await clientUser.setActivity(activity)
-
-        await sleep(interval)
-
-        previousActivity = activity
+    interval: number,
+    previousActivity: ActivityOptions | undefined = undefined
+) {
+    // Get new activity
+    const activities = getActivities()
+    let activity = previousActivity
+    while (
+        activity == undefined ||
+        (activities.length > 1 &&
+            JSON.stringify(activity) === JSON.stringify(previousActivity))
+    ) {
+        activity = activities[Math.floor(Math.random() * activities.length)]
     }
+
+    console.log(
+        `Set activity to (${ActivityType[activity.type!]}) ${activity.name}`
+    )
+    clientUser.setActivity(activity)
+
+    setTimeout(() => {
+        cycleActivities(clientUser, interval, activity)
+    }, interval)
 }

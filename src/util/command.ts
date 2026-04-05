@@ -46,7 +46,7 @@ export type SlashCommandOptionTypes = Exclude<
 export type SlashCommandOptionsBase = {
     [type in SlashCommandOptionTypes]: [
         ApplicationCommandOptionBase,
-        keyof ChatInputCommandInteraction['options']
+        keyof ChatInputCommandInteraction['options'],
     ]
 }
 export interface SlashCommandOptions extends SlashCommandOptionsBase {
@@ -69,7 +69,7 @@ export type ConfigurationType<KeyType extends ConfigurationKey> = NonNullable<
 export type CommandOptionWithType<OptionType extends SlashCommandOptionTypes> =
     SlashCommandOptions[OptionType][0]
 export type CommandOptionReturnType<
-    OptionType extends SlashCommandOptionTypes
+    OptionType extends SlashCommandOptionTypes,
 > = NonNullable<
     ReturnType<
         ChatInputCommandInteraction['options'][SlashCommandOptions[OptionType][1]]
@@ -78,7 +78,7 @@ export type CommandOptionReturnType<
 
 export interface ConfigurationCommandOptions<
     OptionType extends SlashCommandOptionTypes,
-    KeyType extends ConfigurationKey
+    KeyType extends ConfigurationKey,
 > {
     /** The type of command option */
     type: OptionType
@@ -133,7 +133,7 @@ export interface ConfigurationCommandOptions<
 
 export function defineConfigurationCommand<
     OptionType extends SlashCommandOptionTypes,
-    KeyType extends ConfigurationKey
+    KeyType extends ConfigurationKey,
 >(
     options: ConfigurationCommandOptions<OptionType, KeyType>
 ): ConfigurationCommandOptions<OptionType, KeyType> {
@@ -142,7 +142,7 @@ export function defineConfigurationCommand<
 
 export function addConfigurationCommand<
     OptionType extends SlashCommandOptionTypes,
-    KeyType extends ConfigurationKey
+    KeyType extends ConfigurationKey,
 >(
     command: ConfigurationCommandOptions<OptionType, KeyType>,
     builder: SlashCommandBuilder
@@ -229,8 +229,11 @@ export function addConfigurationCommand<
     )
 }
 
-export function addConfigurationCommands(
-    commands: ConfigurationCommandOptions<any, any>[],
+export function addConfigurationCommands<
+    OptionType extends SlashCommandOptionTypes,
+    KeyType extends ConfigurationKey,
+>(
+    commands: ConfigurationCommandOptions<OptionType, KeyType>[],
     builder: SlashCommandBuilder
 ) {
     commands.forEach(command => {
@@ -292,9 +295,41 @@ export function getOption<T extends SlashCommandOptionTypes>(
     }
 }
 
+/** Represents an error that should be presented to the user. */
+export class CommandResponseError extends Error {
+    constructor(message: string) {
+        super(message)
+    }
+}
+
+export async function replyWithError(
+    interaction: ChatInputCommandInteraction,
+    error: unknown,
+    ephemeral: boolean = false
+) {
+    await interaction.reply({
+        content:
+            error instanceof CommandResponseError
+                ? error.message
+                : 'Något gick fel, försök igen senare',
+        flags: ephemeral ? MessageFlags.Ephemeral : undefined,
+    })
+}
+
+export async function editReplyWithError(
+    interaction: ChatInputCommandInteraction,
+    error: unknown
+) {
+    if (error instanceof CommandResponseError) {
+        await interaction.editReply(error.message)
+    } else {
+        await interaction.editReply('Något gick fel, försök igen senare')
+    }
+}
+
 export async function executeConfigurationCommand<
     OptionType extends SlashCommandOptionTypes,
-    KeyType extends ConfigurationKey
+    KeyType extends ConfigurationKey,
 >(
     command: ConfigurationCommandOptions<OptionType, KeyType>,
     interaction: ChatInputCommandInteraction
@@ -312,10 +347,21 @@ export async function executeConfigurationCommand<
         try {
             convertedValue = await command.set(value, interaction)
         } catch (e) {
-            interaction.reply({
-                content: (e as Error).message,
-                flags: MessageFlags.Ephemeral,
-            })
+            if (e instanceof CommandResponseError) {
+                await interaction.reply({
+                    content: e.message,
+                    flags: MessageFlags.Ephemeral,
+                })
+            } else {
+                await interaction.reply({
+                    content: 'Ett oväntat fel inträffade, försök igen senare',
+                    flags: MessageFlags.Ephemeral,
+                })
+                console.error(
+                    `Unexpected error while executing command '${command.name}':`,
+                    e
+                )
+            }
             return
         }
 
@@ -325,12 +371,12 @@ export async function executeConfigurationCommand<
 
         try {
             const prettyValue = await command.get(convertedValue, interaction)
-            interaction.reply({
+            await interaction.reply({
                 content: `${command.description} har uppdaterats till ${prettyValue}`,
                 flags: MessageFlags.Ephemeral,
             })
         } catch {
-            interaction.reply({
+            await interaction.reply({
                 content: `${command.description} har uppdaterats`,
                 flags: MessageFlags.Ephemeral,
             })
@@ -340,7 +386,7 @@ export async function executeConfigurationCommand<
     } else if (subcommand === 'unset') {
         const configuration = getGuildConfiguration(guildId)
         if (configuration[command.key] === undefined) {
-            interaction.reply({
+            await interaction.reply({
                 content: `${command.description} har redan tagits bort`,
                 flags: MessageFlags.Ephemeral,
             })
@@ -350,7 +396,7 @@ export async function executeConfigurationCommand<
         delete configuration[command.key]
         setGuildConfiguration(guildId, configuration)
 
-        interaction.reply({
+        await interaction.reply({
             content: `${command.description} har tagits bort`,
             flags: MessageFlags.Ephemeral,
         })
@@ -360,7 +406,7 @@ export async function executeConfigurationCommand<
         const configuration = getGuildConfiguration(guildId)
         const value = configuration[command.key]
         if (!value) {
-            interaction.reply({
+            await interaction.reply({
                 content: `${command.description} saknas`,
                 flags: MessageFlags.Ephemeral,
             })
@@ -369,26 +415,29 @@ export async function executeConfigurationCommand<
 
         try {
             const prettyValue = await command.get(value, interaction)
-            interaction.reply({
+            await interaction.reply({
                 content: `${command.description} har värdet ${prettyValue}`,
                 flags: MessageFlags.Ephemeral,
             })
         } catch (e) {
-            interaction.reply({
+            await interaction.reply({
                 content: (e as Error).message,
                 flags: MessageFlags.Ephemeral,
             })
         }
     } else {
-        interaction.reply({
+        await interaction.reply({
             content: `Ett oväntat fel inträffade. Ogiltigt subkommando`,
             flags: MessageFlags.Ephemeral,
         })
     }
 }
 
-export function configurationCommandExecutor(
-    commands: ConfigurationCommandOptions<any, any>[]
+export function configurationCommandExecutor<
+    OptionType extends SlashCommandOptionTypes,
+    KeyType extends ConfigurationKey,
+>(
+    commands: ConfigurationCommandOptions<OptionType, KeyType>[]
 ): (interaction: ChatInputCommandInteraction) => Promise<void> {
     return async (interaction: ChatInputCommandInteraction) => {
         const subcommandGroup = interaction.options.getSubcommandGroup(true)
@@ -402,6 +451,6 @@ export function configurationCommandExecutor(
             })
             return
         }
-        executeConfigurationCommand(command, interaction)
+        await executeConfigurationCommand(command, interaction)
     }
 }

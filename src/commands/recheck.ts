@@ -1,10 +1,8 @@
 import {
     SlashCommandBuilder,
-    EmbedBuilder,
     type ChatInputCommandInteraction,
 } from 'discord.js'
-import { getDiscoveredReactions } from '../data'
-import { addReaction, getReactions } from '../features/reactions'
+import { addReaction } from '../features/reactions'
 import { defineCommand } from '../util/guild'
 
 export default defineCommand({
@@ -22,9 +20,7 @@ export default defineCommand({
     async execute(interaction: ChatInputCommandInteraction) {
         if (!interaction.guild) return
 
-        const reactions = getReactions()
-
-        interaction.deferReply({
+        await interaction.deferReply({
             ephemeral: true,
         })
 
@@ -34,21 +30,19 @@ export default defineCommand({
         })
 
         if (!lastMessages) {
-            interaction.editReply(
+            await interaction.editReply(
                 'Kunde inte hämta meddelanden i den här kanalen.'
             )
             return
         }
 
         let reactionCount = 0
-        await Promise.all(
-            lastMessages?.map(async message => {
-                const success = await addReaction(message)
-                if (success) reactionCount++
-            })
-        )
+        lastMessages?.forEach(message => {
+            const success = addReaction(message)
+            if (success) reactionCount++
+        })
 
-        interaction.editReply(
+        await interaction.editReply(
             `Kollat meddelanden och hittade ${reactionCount} reaktioner.`
         )
     },

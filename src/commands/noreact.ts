@@ -29,7 +29,8 @@ export default defineCommand({
                             ChannelType.PrivateThread
                         )
                         .setRequired(true)
-                ))
+                )
+        )
         .addSubcommand(subcommand =>
             subcommand
                 .setName('remove')
@@ -46,14 +47,19 @@ export default defineCommand({
                             ChannelType.PrivateThread
                         )
                         .setRequired(true)
-                ))
+                )
+        )
         .addSubcommand(subcommand =>
             subcommand
                 .setName('list')
-                .setDescription('Se vilka kanaler som är markerade')),
+                .setDescription('Se vilka kanaler som är markerade')
+        ),
 
     async execute(interaction: ChatInputCommandInteraction) {
-        const command = interaction.options.getSubcommand() as 'add' | 'remove' | 'list'
+        const command = interaction.options.getSubcommand() as
+            | 'add'
+            | 'remove'
+            | 'list'
 
         const commandMap: CommandMap = {
             add,
@@ -61,7 +67,7 @@ export default defineCommand({
             list,
         }
 
-        commandMap[command](interaction)
+        await commandMap[command](interaction)
     },
 })
 
@@ -73,7 +79,7 @@ async function add(interaction: ChatInputCommandInteraction) {
         throw new Error('Guild id is not defined')
     }
 
-    const noReactChannels = await getNoReactChannels(guildId)
+    const noReactChannels = getNoReactChannels(guildId)
     if (noReactChannels.has(channelId)) {
         await interaction.reply({
             content: 'Kanalen är redan markerad',
@@ -82,7 +88,7 @@ async function add(interaction: ChatInputCommandInteraction) {
         return
     }
     noReactChannels.add(channelId)
-    await setNoReactChannels(guildId, noReactChannels)
+    setNoReactChannels(guildId, noReactChannels)
 
     await interaction.reply({
         content: `Kommer inte längre skicka reaktioner i kanalen <#${channelId}>`,
@@ -98,7 +104,7 @@ async function remove(interaction: ChatInputCommandInteraction) {
     if (!guildId) {
         throw new Error('Guild id is not defined')
     }
-    const noReactChannels = await getNoReactChannels(guildId)
+    const noReactChannels = getNoReactChannels(guildId)
     if (!noReactChannels.has(channelId)) {
         await interaction.reply({
             content: 'Kanalen är inte markerad',
@@ -107,7 +113,7 @@ async function remove(interaction: ChatInputCommandInteraction) {
         return
     }
     noReactChannels.delete(channelId)
-    await setNoReactChannels(guildId, noReactChannels)
+    setNoReactChannels(guildId, noReactChannels)
 
     await interaction.reply({
         content: `Kommer reagera i kanalen <#${channelId}>`,
@@ -120,7 +126,7 @@ async function list(interaction: ChatInputCommandInteraction) {
     if (!guildId) {
         throw new Error('Guild id is not defined')
     }
-    const noReactChannels = await getNoReactChannels(guildId)
+    const noReactChannels = getNoReactChannels(guildId)
 
     await interaction.reply({
         embeds: [
@@ -131,8 +137,8 @@ async function list(interaction: ChatInputCommandInteraction) {
                     noReactChannels.size === 0
                         ? 'Inga kanaler markerade'
                         : Array.from(noReactChannels)
-                            .map(id => `- <#${id}>`)
-                            .join('\n')
+                              .map(id => `- <#${id}>`)
+                              .join('\n')
                 ),
         ],
         flags: MessageFlags.Ephemeral,

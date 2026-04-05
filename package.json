@@ -1,39 +1,44 @@
 {
-  "name": "prit-bot",
-  "version": "1.13.6",
-  "description": "Discord bot for P.R.I.T.",
-  "scripts": {
-    "build": "rimraf out && tsc",
-    "start": "cd out && node main.js",
-    "startenv": "cd out && node --env-file=../.env main.js",
-    "lint": "eslint",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/olillin/prit-bot.git"
-  },
-  "author": "Olillin <oli@olillin.com>",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/olillin/prit-bot/issues"
-  },
-  "homepage": "https://github.com/olillin/prit-bot#readme",
-  "dependencies": {
-    "discord.js": "^14.18.0",
-    "iamcal": "^3.0.3",
-    "rimraf": "^6.1.2",
-    "typescript": "^5.8.3"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.22.0",
-    "@types/node": "^22.14.1",
-    "eslint": "^9.22.0",
-    "globals": "^16.0.0"
-  },
-  "overrides": {
-    "discord.js": {
-      "undici": "^6.23.0"
+    "name": "prit-bot",
+    "version": "1.14.0",
+    "description": "Discord bot for P.R.I.T.",
+    "homepage": "https://github.com/olillin/prit-bot#readme",
+    "bugs": {
+        "url": "https://github.com/olillin/prit-bot/issues"
+    },
+    "license": "MIT",
+    "author": "Olillin <oli@olillin.com>",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/olillin/prit-bot.git"
+    },
+    "type": "module",
+    "main": "bundle/main.js",
+    "scripts": {
+        "build": "tsc && rolldown -c",
+        "start": "node .",
+        "startenv": "node --env-file=.env .",
+        "fmt": "oxfmt",
+        "fmt:check": "oxfmt --check",
+        "lint": "oxlint",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "packageManager": "pnpm@10.28.0",
+    "dependencies": {
+        "@rollup/plugin-commonjs": "^29.0.2",
+        "@rollup/plugin-json": "^6.1.0",
+        "@rollup/plugin-node-resolve": "^16.0.3",
+        "discord.js": "^14.26.2",
+        "iamcal": "^4.1.0",
+        "rollup": "^4.59.0",
+        "typescript": "^5.8.3"
+    },
+    "devDependencies": {
+        "@types/node": "^22.14.1",
+        "globals": "^16.0.0",
+        "oxfmt": "^0.41.0",
+        "oxlint": "^1.56.0",
+        "oxlint-tsgolint": "^0.17.0",
+        "rolldown": "1.0.0-rc.9"
     }
-  }
 }
