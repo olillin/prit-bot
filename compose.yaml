@@ -1,0 +1,31 @@
+# This is an example of how to run the bot in production using the image
+# from GitHub Packages and bind mounts for data and configuration files.
+
+name: prit-bot
+
+services:
+    app:
+        image: ghcr.io/olillin/prit-bot
+        restart: unless-stopped
+
+        environment:
+            TOKEN: # Discord bot token goes here
+
+        volumes:
+            - type: bind
+              source: ./data.json
+              target: /usr/src/app/data.json
+              bind:
+                  create_host_path: false
+            - type: bind
+              source: ./reactions.json
+              target: /usr/src/app/reactions.json
+              read_only: true
+              bind:
+                  create_host_path: false
+            - type: bind
+              source: ./activities.json
+              target: /usr/src/app/activities.json
+              read_only: true
+              bind:
+                  create_host_path: false
