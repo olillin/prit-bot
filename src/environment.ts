@@ -7,7 +7,7 @@ export const ACTIVITIES_FILE = './activities.json'
 export const discordToken =
     process.env.TOKEN ??
     (process.env.TOKEN_FILE
-        ? fs.readFileSync(process.env.TOKEN_FILE)
+        ? fs.readFileSync(process.env.TOKEN_FILE, 'utf-8')
         : undefined)
 
 /**
