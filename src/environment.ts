@@ -1,10 +1,14 @@
-import fs from 'fs'
+import fs from 'node:fs'
 
 export const DATA_FILE = './data.json'
 export const REACTIONS_FILE = './reactions.json'
 export const ACTIVITIES_FILE = './activities.json'
 
-export const discordToken = process.env.TOKEN
+export const discordToken =
+    process.env.TOKEN ??
+    (process.env.TOKEN_FILE
+        ? fs.readFileSync(process.env.TOKEN_FILE)
+        : undefined)
 
 /**
  * Checks whether the environment is valid and prints warnings if not
