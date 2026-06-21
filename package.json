@@ -20,6 +20,7 @@
         "startenv": "node --env-file=.env .",
         "fmt": "oxfmt",
         "fmt:check": "oxfmt --check",
+        "postinstall": "(copy-env-cli || true)",
         "lint": "oxlint",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
@@ -29,12 +30,17 @@
         "@rollup/plugin-json": "^6.1.0",
         "@rollup/plugin-node-resolve": "^16.0.3",
         "discord.js": "^14.26.2",
+        "drizzle-orm": "^0.45.2",
         "iamcal": "^4.1.0",
+        "pg": "^8.22.0",
         "rollup": "^4.59.0",
         "typescript": "^5.8.3"
     },
     "devDependencies": {
-        "@types/node": "^22.14.1",
+        "@types/node": "^24.13.2",
+        "@types/pg": "^8.20.0",
+        "copy-env-cli": "^1.0.0",
+        "drizzle-kit": "^0.31.10",
         "globals": "^16.0.0",
         "oxfmt": "^0.41.0",
         "oxlint": "^1.56.0",
