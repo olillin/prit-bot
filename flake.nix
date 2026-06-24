@@ -24,6 +24,7 @@
           export PRISMA_INTROSPECTION_ENGINE_BINARY="${prisma-engines}/bin/introspection-engine"
           export PRISMA_FMT_BINARY="${prisma-engines}/bin/prisma-fmt"
           export PATH="$PWD/node_modules/.bin/:$PATH"
+          export NIXSHELL="$NIXSHELL+prit-bot"
         '';
       };
     });
