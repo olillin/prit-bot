@@ -25,20 +25,20 @@
     },
     "packageManager": "pnpm@10.28.0",
     "dependencies": {
-        "@rollup/plugin-commonjs": "^29.0.2",
+        "@rollup/plugin-commonjs": "^29.0.3",
         "@rollup/plugin-json": "^6.1.0",
         "@rollup/plugin-node-resolve": "^16.0.3",
-        "discord.js": "^14.26.2",
-        "iamcal": "^4.1.0",
-        "rollup": "^4.59.0",
-        "typescript": "^5.8.3"
+        "discord.js": "^14.26.4",
+        "iamcal": "^4.1.1",
+        "rollup": "^4.62.2",
+        "typescript": "^5.9.3"
     },
     "devDependencies": {
-        "@types/node": "^22.14.1",
-        "globals": "^16.0.0",
+        "@types/node": "^22.20.0",
+        "globals": "^16.5.0",
         "oxfmt": "^0.41.0",
-        "oxlint": "^1.56.0",
-        "oxlint-tsgolint": "^0.17.0",
+        "oxlint": "^1.71.0",
+        "oxlint-tsgolint": "^0.17.4",
         "rolldown": "1.0.0-rc.9"
     }
 }
