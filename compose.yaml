@@ -12,7 +12,7 @@ services:
         restart: unless-stopped
         user: postgres
         environment:
-            - POSTGRES_DB=spill-the-tea
+            - POSTGRES_DB=prit-bot
             - POSTGRES_PASSWORD=secret-dev-password
 
         ports:
