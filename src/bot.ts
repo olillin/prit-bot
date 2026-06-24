@@ -86,7 +86,9 @@ async function registerSlashCommands(guildId: string) {
 }
 
 client.on(Events.ClientReady, () => {
-    cycleActivities(client.user!, ONE_HOUR_MS)
+    cycleActivities(client.user!, ONE_HOUR_MS).catch(reason => {
+        console.warn(`Failed to cycle activities: ${reason}`)
+    })
 
     client.guilds.cache.forEach(guild => {
         announceLoop.start(guild.id)

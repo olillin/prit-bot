@@ -21,7 +21,7 @@
         "fmt": "oxfmt",
         "fmt:check": "oxfmt --check",
         "postinstall": "(copy-env-cli || true)",
-        "lint": "oxlint",
+        "lint": "oxlint -c .oxlintrc.json",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "packageManager": "pnpm@10.28.0",

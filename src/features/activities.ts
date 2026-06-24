@@ -53,6 +53,8 @@ export async function cycleActivities(
     clientUser.setActivity(activity)
 
     setTimeout(() => {
-        cycleActivities(clientUser, interval)
+        cycleActivities(clientUser, interval).catch(reason => {
+            console.warn(`Failed to cycle activities: ${reason}`)
+        })
     }, interval)
 }
