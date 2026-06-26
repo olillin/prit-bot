@@ -22,7 +22,8 @@
         "fmt:check": "oxfmt --check",
         "postinstall": "(copy-env-cli || true)",
         "lint": "oxlint -c .oxlintrc.json",
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "migrate-from-json": "tsx --env-file=.env src/db/migrateFromJson.ts"
     },
     "packageManager": "pnpm@10.28.0",
     "dependencies": {
@@ -45,6 +46,7 @@
         "oxfmt": "^0.41.0",
         "oxlint": "^1.71.0",
         "oxlint-tsgolint": "^0.17.4",
-        "rolldown": "1.0.0-rc.9"
+        "rolldown": "1.0.0-rc.9",
+        "tsx": "^4.22.4"
     }
 }

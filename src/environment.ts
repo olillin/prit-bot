@@ -10,6 +10,12 @@ export const discordToken =
         ? fs.readFileSync(process.env.TOKEN_FILE, 'utf-8')
         : undefined)
 
+export const databaseUrl =
+    process.env.DATABASE_URL ??
+    (process.env.DATABASE_URL_FILE
+        ? fs.readFileSync(process.env.DATABASE_URL_FILE, 'utf-8')
+        : undefined)
+
 /**
  * Checks whether the environment is valid and prints warnings if not
  * @returns If the environment is valid
@@ -23,12 +29,20 @@ export function validateEnvironment(): boolean {
         valid = false
     }
 
-    // Check if data file is readable and writable
-    try {
-        fs.accessSync(DATA_FILE, fs.constants.R_OK | fs.constants.W_OK)
-    } catch {
-        console.error(`Cannot read and write ${DATA_FILE}`)
+    // Check database URL is present
+    if (!databaseUrl) {
+        console.error('Missing required environment DATABASE_URL')
         valid = false
+    }
+
+    // Check if old JSON files exist
+    for (const file of [DATA_FILE, REACTIONS_FILE, ACTIVITIES_FILE]) {
+        if (fs.existsSync(file)) {
+            console.error(
+                `Found old ${file} file, please run 'pnpm migrate-from-json' and delete the file`
+            )
+            valid = false
+        }
     }
 
     return valid

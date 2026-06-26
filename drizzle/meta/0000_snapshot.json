@@ -1,5 +1,5 @@
 {
-    "id": "c4cb8306-0bf9-4faf-a59d-8bbb1f247d5e",
+    "id": "bc8d4bf0-ae35-43ea-bda5-a294419506d1",
     "prevId": "00000000-0000-0000-0000-000000000000",
     "version": "7",
     "dialect": "postgresql",
@@ -78,7 +78,7 @@
                     "tableTo": "guilds",
                     "columnsFrom": ["guildId"],
                     "columnsTo": ["id"],
-                    "onDelete": "no action",
+                    "onDelete": "cascade",
                     "onUpdate": "no action"
                 },
                 "discovered_reactions_reactionId_reactions_id_fk": {
@@ -87,7 +87,7 @@
                     "tableTo": "reactions",
                     "columnsFrom": ["reactionId"],
                     "columnsTo": ["id"],
-                    "onDelete": "no action",
+                    "onDelete": "cascade",
                     "onUpdate": "no action"
                 }
             },
@@ -97,13 +97,7 @@
                     "columns": ["guildId", "reactionId"]
                 }
             },
-            "uniqueConstraints": {
-                "discovered_reactions_userSnowflake_unique": {
-                    "name": "discovered_reactions_userSnowflake_unique",
-                    "nullsNotDistinct": false,
-                    "columns": ["userSnowflake"]
-                }
-            },
+            "uniqueConstraints": {},
             "policies": {},
             "checkConstraints": {},
             "isRLSEnabled": false
@@ -137,19 +131,19 @@
                 },
                 "announceChannel": {
                     "name": "announceChannel",
-                    "type": "varchar",
+                    "type": "bigint",
                     "primaryKey": false,
                     "notNull": false
                 },
                 "responsibleRole": {
                     "name": "responsibleRole",
-                    "type": "varchar",
+                    "type": "bigint",
                     "primaryKey": false,
                     "notNull": false
                 },
                 "responsibleResponsibleRole": {
                     "name": "responsibleResponsibleRole",
-                    "type": "varchar",
+                    "type": "bigint",
                     "primaryKey": false,
                     "notNull": false
                 },
@@ -173,17 +167,17 @@
                 },
                 "noReactChannels": {
                     "name": "noReactChannels",
-                    "type": "varchar[]",
+                    "type": "bigint[]",
                     "primaryKey": false,
                     "notNull": true,
-                    "default": "ARRAY[]::varchar[]"
+                    "default": "ARRAY[]::bigint[]"
                 },
                 "mutedUsers": {
                     "name": "mutedUsers",
-                    "type": "varchar[]",
+                    "type": "bigint[]",
                     "primaryKey": false,
                     "notNull": true,
-                    "default": "ARRAY[]::varchar[]"
+                    "default": "ARRAY[]::bigint[]"
                 }
             },
             "indexes": {},
@@ -220,6 +214,12 @@
                         "cache": "1",
                         "cycle": false
                     }
+                },
+                "displayName": {
+                    "name": "displayName",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
                 },
                 "pattern": {
                     "name": "pattern",
@@ -262,7 +262,7 @@
                     "name": "message",
                     "type": "varchar",
                     "primaryKey": false,
-                    "notNull": false
+                    "notNull": true
                 }
             },
             "indexes": {},
@@ -273,7 +273,7 @@
                     "tableTo": "guilds",
                     "columnsFrom": ["guildId"],
                     "columnsTo": ["id"],
-                    "onDelete": "no action",
+                    "onDelete": "cascade",
                     "onUpdate": "no action"
                 }
             },

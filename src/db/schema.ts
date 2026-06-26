@@ -8,28 +8,34 @@ import {
     smallint,
 } from 'drizzle-orm/pg-core'
 
+const snowflake = (name?: string) => {
+    if (name) return bigint(name, { mode: 'bigint' })
+    else return bigint({ mode: 'bigint' })
+}
+
 export const guilds = pgTable('guilds', {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    snowflake: bigint({ mode: 'bigint' }).notNull().unique(),
+    snowflake: snowflake().notNull().unique(),
 
-    announceChannel: varchar(),
-    responsibleRole: varchar(),
-    responsibleResponsibleRole: varchar(),
+    announceChannel: snowflake(),
+    responsibleRole: snowflake(),
+    responsibleResponsibleRole: snowflake(),
     responsibleCalendarUrl: varchar(),
     announceTime: integer(),
     remindTime: integer(),
-    noReactChannels: varchar()
+    noReactChannels: snowflake()
         .array()
         .notNull()
-        .default(sql`ARRAY[]::varchar[]`),
-    mutedUsers: varchar()
+        .default(sql`ARRAY[]::bigint[]`),
+    mutedUsers: snowflake()
         .array()
         .notNull()
-        .default(sql`ARRAY[]::varchar[]`),
+        .default(sql`ARRAY[]::bigint[]`),
 })
 
 export const reactions = pgTable('reactions', {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    displayName: varchar().notNull(),
     pattern: varchar().notNull(),
     emoji: varchar().notNull(),
 })
@@ -39,27 +45,37 @@ export const discoveredReactions = pgTable(
     {
         guildId: integer()
             .notNull()
-            .references(() => guilds.id),
+            .references(() => guilds.id, { onDelete: 'cascade' }),
         reactionId: integer()
             .notNull()
-            .references(() => reactions.id),
-        userSnowflake: bigint({ mode: 'bigint' }).notNull().unique(),
+            .references(() => reactions.id, { onDelete: 'cascade' }),
+        userSnowflake: snowflake().notNull(),
     },
     t => [primaryKey({ columns: [t.guildId, t.reactionId] })]
 )
+
+export const activityTypes = [
+    'Competing',
+    'Custom',
+    'Listening',
+    'Playing',
+    'Streaming',
+    'Watching',
+] as const
+
+export type ActivityType = (typeof activityTypes)[number]
+export function isActivityType(
+    maybeActivityType: unknown
+): maybeActivityType is ActivityType {
+    if (typeof maybeActivityType !== 'string') return false
+    return (activityTypes as readonly string[]).includes(maybeActivityType)
+}
 
 export const activities = pgTable('activities', {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
     name: varchar().notNull(),
     type: varchar({
-        enum: [
-            'Playing',
-            'Streaming',
-            'Listening',
-            'Watching',
-            'Custom',
-            'Competing',
-        ],
+        enum: activityTypes,
     })
         .notNull()
         .default('Custom'),
@@ -68,7 +84,7 @@ export const activities = pgTable('activities', {
 export const reminders = pgTable('reminders', {
     guildId: integer()
         .notNull()
-        .references(() => guilds.id),
+        .references(() => guilds.id, { onDelete: 'cascade' }),
     day: smallint().notNull(),
-    message: varchar(),
+    message: varchar().notNull(),
 })
