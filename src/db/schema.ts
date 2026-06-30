@@ -17,17 +17,17 @@ export const guilds = pgTable('guilds', {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
     snowflake: snowflake().notNull().unique(),
 
-    announceChannel: snowflake(),
-    responsibleRole: snowflake(),
-    responsibleResponsibleRole: snowflake(),
-    responsibleCalendarUrl: varchar(),
-    announceTime: integer(),
-    remindTime: integer(),
-    noReactChannels: snowflake()
+    announceChannel: snowflake('announce_channel'),
+    responsibleRole: snowflake('responsible_role'),
+    responsibleResponsibleRole: snowflake('responsible_responsible_role'),
+    responsibleCalendarUrl: varchar('responsible_calendar_url'),
+    announceTime: integer('announce_time'),
+    remindTime: integer('remind_time'),
+    noReactChannels: snowflake('no_react_channels')
         .array()
         .notNull()
         .default(sql`ARRAY[]::bigint[]`),
-    mutedUsers: snowflake()
+    noPingUsers: snowflake('no_ping_users')
         .array()
         .notNull()
         .default(sql`ARRAY[]::bigint[]`),
@@ -35,7 +35,7 @@ export const guilds = pgTable('guilds', {
 
 export const reactions = pgTable('reactions', {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    displayName: varchar().notNull(),
+    displayName: varchar('display_name').notNull(),
     pattern: varchar().notNull(),
     emoji: varchar().notNull(),
 })
@@ -43,13 +43,13 @@ export const reactions = pgTable('reactions', {
 export const discoveredReactions = pgTable(
     'discovered_reactions',
     {
-        guildId: integer()
+        guildId: integer('guild_id')
             .notNull()
             .references(() => guilds.id, { onDelete: 'cascade' }),
-        reactionId: integer()
+        reactionId: integer('reaction_id')
             .notNull()
             .references(() => reactions.id, { onDelete: 'cascade' }),
-        userSnowflake: snowflake().notNull(),
+        userSnowflake: snowflake('user_snowflake').notNull(),
     },
     t => [primaryKey({ columns: [t.guildId, t.reactionId] })]
 )
@@ -82,7 +82,7 @@ export const activities = pgTable('activities', {
 })
 
 export const reminders = pgTable('reminders', {
-    guildId: integer()
+    guildId: integer('guild_id')
         .notNull()
         .references(() => guilds.id, { onDelete: 'cascade' }),
     day: smallint().notNull(),

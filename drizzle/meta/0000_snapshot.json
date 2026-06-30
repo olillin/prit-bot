@@ -1,5 +1,5 @@
 {
-    "id": "bc8d4bf0-ae35-43ea-bda5-a294419506d1",
+    "id": "8323ddec-fdd3-42db-9c3c-8d317db0ea42",
     "prevId": "00000000-0000-0000-0000-000000000000",
     "version": "7",
     "dialect": "postgresql",
@@ -51,20 +51,20 @@
             "name": "discovered_reactions",
             "schema": "",
             "columns": {
-                "guildId": {
-                    "name": "guildId",
+                "guild_id": {
+                    "name": "guild_id",
                     "type": "integer",
                     "primaryKey": false,
                     "notNull": true
                 },
-                "reactionId": {
-                    "name": "reactionId",
+                "reaction_id": {
+                    "name": "reaction_id",
                     "type": "integer",
                     "primaryKey": false,
                     "notNull": true
                 },
-                "userSnowflake": {
-                    "name": "userSnowflake",
+                "user_snowflake": {
+                    "name": "user_snowflake",
                     "type": "bigint",
                     "primaryKey": false,
                     "notNull": true
@@ -72,29 +72,29 @@
             },
             "indexes": {},
             "foreignKeys": {
-                "discovered_reactions_guildId_guilds_id_fk": {
-                    "name": "discovered_reactions_guildId_guilds_id_fk",
+                "discovered_reactions_guild_id_guilds_id_fk": {
+                    "name": "discovered_reactions_guild_id_guilds_id_fk",
                     "tableFrom": "discovered_reactions",
                     "tableTo": "guilds",
-                    "columnsFrom": ["guildId"],
+                    "columnsFrom": ["guild_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
                     "onUpdate": "no action"
                 },
-                "discovered_reactions_reactionId_reactions_id_fk": {
-                    "name": "discovered_reactions_reactionId_reactions_id_fk",
+                "discovered_reactions_reaction_id_reactions_id_fk": {
+                    "name": "discovered_reactions_reaction_id_reactions_id_fk",
                     "tableFrom": "discovered_reactions",
                     "tableTo": "reactions",
-                    "columnsFrom": ["reactionId"],
+                    "columnsFrom": ["reaction_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
                     "onUpdate": "no action"
                 }
             },
             "compositePrimaryKeys": {
-                "discovered_reactions_guildId_reactionId_pk": {
-                    "name": "discovered_reactions_guildId_reactionId_pk",
-                    "columns": ["guildId", "reactionId"]
+                "discovered_reactions_guild_id_reaction_id_pk": {
+                    "name": "discovered_reactions_guild_id_reaction_id_pk",
+                    "columns": ["guild_id", "reaction_id"]
                 }
             },
             "uniqueConstraints": {},
@@ -129,51 +129,51 @@
                     "primaryKey": false,
                     "notNull": true
                 },
-                "announceChannel": {
-                    "name": "announceChannel",
+                "announce_channel": {
+                    "name": "announce_channel",
                     "type": "bigint",
                     "primaryKey": false,
                     "notNull": false
                 },
-                "responsibleRole": {
-                    "name": "responsibleRole",
+                "responsible_role": {
+                    "name": "responsible_role",
                     "type": "bigint",
                     "primaryKey": false,
                     "notNull": false
                 },
-                "responsibleResponsibleRole": {
-                    "name": "responsibleResponsibleRole",
+                "responsible_responsible_role": {
+                    "name": "responsible_responsible_role",
                     "type": "bigint",
                     "primaryKey": false,
                     "notNull": false
                 },
-                "responsibleCalendarUrl": {
-                    "name": "responsibleCalendarUrl",
+                "responsible_calendar_url": {
+                    "name": "responsible_calendar_url",
                     "type": "varchar",
                     "primaryKey": false,
                     "notNull": false
                 },
-                "announceTime": {
-                    "name": "announceTime",
+                "announce_time": {
+                    "name": "announce_time",
                     "type": "integer",
                     "primaryKey": false,
                     "notNull": false
                 },
-                "remindTime": {
-                    "name": "remindTime",
+                "remind_time": {
+                    "name": "remind_time",
                     "type": "integer",
                     "primaryKey": false,
                     "notNull": false
                 },
-                "noReactChannels": {
-                    "name": "noReactChannels",
+                "no_react_channels": {
+                    "name": "no_react_channels",
                     "type": "bigint[]",
                     "primaryKey": false,
                     "notNull": true,
                     "default": "ARRAY[]::bigint[]"
                 },
-                "mutedUsers": {
-                    "name": "mutedUsers",
+                "no_ping_users": {
+                    "name": "no_ping_users",
                     "type": "bigint[]",
                     "primaryKey": false,
                     "notNull": true,
@@ -215,8 +215,8 @@
                         "cycle": false
                     }
                 },
-                "displayName": {
-                    "name": "displayName",
+                "display_name": {
+                    "name": "display_name",
                     "type": "varchar",
                     "primaryKey": false,
                     "notNull": true
@@ -246,8 +246,8 @@
             "name": "reminders",
             "schema": "",
             "columns": {
-                "guildId": {
-                    "name": "guildId",
+                "guild_id": {
+                    "name": "guild_id",
                     "type": "integer",
                     "primaryKey": false,
                     "notNull": true
@@ -267,11 +267,11 @@
             },
             "indexes": {},
             "foreignKeys": {
-                "reminders_guildId_guilds_id_fk": {
-                    "name": "reminders_guildId_guilds_id_fk",
+                "reminders_guild_id_guilds_id_fk": {
+                    "name": "reminders_guild_id_guilds_id_fk",
                     "tableFrom": "reminders",
                     "tableTo": "guilds",
-                    "columnsFrom": ["guildId"],
+                    "columnsFrom": ["guild_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
                     "onUpdate": "no action"

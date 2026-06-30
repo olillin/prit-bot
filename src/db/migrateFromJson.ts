@@ -145,9 +145,9 @@ async function migrateGuild(
         guildRow.noReactChannels = noReactChannels
     }
 
-    const mutedUsers = guildData.reminders?.muted?.map(BigInt)
-    if (mutedUsers !== undefined) {
-        guildRow.mutedUsers = mutedUsers
+    const noPingUsers = guildData.reminders?.muted?.map(BigInt)
+    if (noPingUsers !== undefined) {
+        guildRow.noPingUsers = noPingUsers
     }
 
     console.log(`Inserting guild ${guildSnowflake} as `, guildRow)
