@@ -7,10 +7,11 @@ import {
 import {
     addReminder,
     addReminderMutedUser,
-    getReminderData,
+    getReminders,
     removeReminder,
     removeReminderMutedUser,
     DAYS,
+    getGuildId,
 } from '../data'
 import { announceReminders } from '../features/reminders'
 import { CommandMap, editReplyWithError, replyWithError } from '../util/command'
@@ -119,9 +120,14 @@ async function add(interaction: ChatInputCommandInteraction) {
         })
         return
     }
-    const guildId = interaction.guildId
+    const guildSnowflake = interaction.guildId
+    if (!guildSnowflake) {
+        throw new Error('Guild snowflake is not defined')
+    }
+
+    const guildId = await getGuildId(guildSnowflake)
     if (!guildId) {
-        throw new Error('Guild id is not defined')
+        throw new Error('Guild is missing from database')
     }
 
     addReminder(guildId, day, message)

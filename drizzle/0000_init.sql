@@ -33,6 +33,7 @@ CREATE TABLE "reactions" (
 );
 --> statement-breakpoint
 CREATE TABLE "reminders" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "reminders_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"guild_id" integer NOT NULL,
 	"day" smallint NOT NULL,
 	"message" varchar NOT NULL

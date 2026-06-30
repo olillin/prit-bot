@@ -82,6 +82,7 @@ export const activities = pgTable('activities', {
 })
 
 export const reminders = pgTable('reminders', {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
     guildId: integer('guild_id')
         .notNull()
         .references(() => guilds.id, { onDelete: 'cascade' }),

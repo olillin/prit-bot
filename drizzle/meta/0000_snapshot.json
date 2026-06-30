@@ -1,5 +1,5 @@
 {
-    "id": "8323ddec-fdd3-42db-9c3c-8d317db0ea42",
+    "id": "c8ba9a57-082e-4fbb-b4f3-8f89501c6bcb",
     "prevId": "00000000-0000-0000-0000-000000000000",
     "version": "7",
     "dialect": "postgresql",
@@ -246,6 +246,23 @@
             "name": "reminders",
             "schema": "",
             "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "integer",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "identity": {
+                        "type": "always",
+                        "name": "reminders_id_seq",
+                        "schema": "public",
+                        "increment": "1",
+                        "startWith": "1",
+                        "minValue": "1",
+                        "maxValue": "2147483647",
+                        "cache": "1",
+                        "cycle": false
+                    }
+                },
                 "guild_id": {
                     "name": "guild_id",
                     "type": "integer",

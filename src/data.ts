@@ -1,21 +1,18 @@
 import { Role, type Guild, type GuildMember } from 'discord.js'
-import fs from 'fs'
 import { ONE_HOUR_MS } from 'iamcal'
-import { DATA_FILE } from './environment'
 import type {
     AnnounceChannel,
-    DiscoveredReactionsData,
-    FullData,
-    GuildConfiguration,
-    GuildData,
-    ParsedRemindersData,
-    RemindersData,
+    DiscoveredReaction,
+    RemindersByDay,
 } from './types'
 import {
     getAnnouncementChannel as getGuildAnnouncementChannel,
     getRole,
 } from './util/guild'
 import { CommandResponseError } from './util/command'
+import db from './db/client'
+import * as schema from './db/schema'
+import { and, eq } from 'drizzle-orm'
 
 export const DAYS = [
     'Måndagar',
@@ -27,115 +24,141 @@ export const DAYS = [
     'Söndagar',
 ]
 
-function getData(): FullData {
-    if (!fs.existsSync(DATA_FILE)) {
-        return {}
-    }
-    const text = fs.readFileSync(DATA_FILE, 'utf-8')
-    return JSON.parse(text) as FullData
-}
-
-function writeData(data: FullData) {
-    const text = JSON.stringify(data)
-    fs.writeFileSync(DATA_FILE, text, 'utf-8')
-}
-
-export function getGuildData(guildId: string): GuildData {
-    const guilds = getData().guilds
-    if (!guilds) return {}
-    return guilds[guildId] ?? {}
-}
-
-export function writeGuildData(guildId: string, data: GuildData) {
-    const guilds = getData().guilds ?? {}
-    guilds[guildId] = data
-    writeData({ ...getData(), guilds })
-}
-
-export function getGuildConfiguration(guildId: string): GuildConfiguration {
-    const data = getGuildData(guildId)
-    return data.configuration ?? {}
-}
-
-export function setGuildConfiguration(
-    guildId: string,
-    configuration: GuildConfiguration
-) {
-    const data = getGuildData(guildId)
-    data.configuration = configuration
-    writeGuildData(guildId, data)
+export async function getGuildId(
+    guildSnowflake: string | bigint
+): Promise<number | null> {
+    const guildIdResult = await db
+        .select({ guildId: schema.guilds.id })
+        .from(schema.guilds)
+        .where(eq(schema.guilds.snowflake, BigInt(guildSnowflake)))
+    if (guildIdResult.length === 0) return null
+    return guildIdResult[0].guildId
 }
 
 export async function getAnnouncementChannel(
     guild: Guild
 ): Promise<AnnounceChannel | undefined> {
-    const configuration = getGuildConfiguration(guild.id)
-    if (!configuration.announceChannel) return undefined
-    return getGuildAnnouncementChannel(configuration.announceChannel, guild)
+    const result = await db
+        .select({ announceChannel: schema.guilds.announceChannel })
+        .from(schema.guilds)
+        .where(eq(schema.guilds.snowflake, BigInt(guild.id)))
+    if (result.length === 0) return undefined
+
+    const { announceChannel } = result[0]
+    if (announceChannel == null) return undefined
+    return getGuildAnnouncementChannel(announceChannel.toString(), guild)
 }
 
 export async function getResponsibleRole(
     guild: Guild
 ): Promise<Role | undefined> {
-    const configuration = getGuildConfiguration(guild.id)
-    if (!configuration.responsibleRole) return undefined
-    return getRole(configuration.responsibleRole, guild)
+    const result = await db
+        .select({ responsibleRole: schema.guilds.responsibleRole })
+        .from(schema.guilds)
+        .where(eq(schema.guilds.snowflake, BigInt(guild.id)))
+    if (result.length === 0) return undefined
+
+    const { responsibleRole } = result[0]
+    if (responsibleRole == null) return undefined
+    return getRole(responsibleRole.toString(), guild)
 }
 
 export async function getResponsibleResponsibleRole(
     guild: Guild
 ): Promise<Role | undefined> {
-    const configuration = getGuildConfiguration(guild.id)
-    if (!configuration.responsibleResponsibleRole) return undefined
-    return getRole(configuration.responsibleResponsibleRole, guild)
+    const result = await db
+        .select({
+            responsibleResponsibleRole:
+                schema.guilds.responsibleResponsibleRole,
+        })
+        .from(schema.guilds)
+        .where(eq(schema.guilds.snowflake, BigInt(guild.id)))
+    if (result.length === 0) return undefined
+
+    const { responsibleResponsibleRole } = result[0]
+    if (responsibleResponsibleRole == null) return undefined
+    return getRole(responsibleResponsibleRole.toString(), guild)
 }
 
-export function getDiscoveredReactions(guild: Guild): DiscoveredReactionsData {
-    const data = getGuildData(guild.id)
-    return data?.discoveredReactions ?? {}
+export async function getDiscoveredReactions(
+    guildId: number
+): Promise<DiscoveredReaction[]> {
+    const result = await db
+        .select()
+        .from(schema.discoveredReactions)
+        .innerJoin(
+            schema.reactions,
+            eq(schema.discoveredReactions.reactionId, schema.reactions.id)
+        )
+        .where(eq(schema.discoveredReactions.guildId, guildId))
+
+    return result.map(
+        reaction =>
+            ({
+                id: reaction.discovered_reactions.reactionId,
+                displayName: reaction.reactions.displayName,
+                emoji: reaction.reactions.emoji,
+                pattern: reaction.reactions.pattern,
+                discoveredBy:
+                    reaction.discovered_reactions.userSnowflake.toString(),
+            }) satisfies DiscoveredReaction
+    )
 }
 
-export function getReactionDiscoveredBy(
-    guild: Guild,
-    id: string
-): GuildMember | undefined {
-    const discovered = getDiscoveredReactions(guild)
-    const userId = discovered[id]
-    if (!userId) {
-        return undefined
-    }
-    const user = guild.members.cache.get(userId)
+export async function getReactionDiscoveredBy(
+    id: number,
+    guild: Guild
+): Promise<GuildMember | undefined> {
+    const guildId = await getGuildId(guild.id)
+    if (guildId === null) return undefined
+
+    const result = await db
+        .select({ userSnowflake: schema.discoveredReactions.userSnowflake })
+        .from(schema.discoveredReactions)
+        .where(
+            and(
+                eq(schema.discoveredReactions.guildId, guildId),
+                eq(schema.discoveredReactions.reactionId, id)
+            )
+        )
+
+    if (result.length === 0) return undefined
+    const { userSnowflake } = result[0]
+    const user = guild.members.cache.get(userSnowflake.toString())
     return user
 }
 
 /**
- * Set who discovered a reaction
+ * Register who discovered a reaction.
  */
-export function setReactionDiscoveredBy(
-    guildId: string,
-    id: string,
-    userId: string | undefined
+export async function addDiscoveredReaction(
+    guildId: number,
+    reactionId: number,
+    userSnowflake: string | bigint
 ) {
-    const data = getGuildData(guildId)
-    const discovered = data?.discoveredReactions ?? {}
-    if (userId) {
-        discovered[id] = userId
-    } else {
-        delete discovered[id]
-    }
-    data.discoveredReactions = discovered
-    writeGuildData(guildId, data)
+    await db.insert(schema.discoveredReactions).values({
+        guildId,
+        reactionId,
+        userSnowflake: BigInt(userSnowflake),
+    })
 }
 
 /**
  * Get the channels that should not be reacted in
  * @param guildId
- * @returns the set of channel ids that should not be reacted in
+ * @returns the set of channel ids/snowflakes that should not be reacted in
  */
-export function getNoReactChannels(guildId: string): Set<string> {
-    const data = getGuildData(guildId)
-    const noReactChannels = data?.noReactChannels ?? []
-    return new Set(noReactChannels)
+export async function getNoReactChannels(
+    guildId: number
+): Promise<Set<string>> {
+    const result = await db
+        .select({ noReactChannels: schema.guilds.noReactChannels })
+        .from(schema.guilds)
+        .where(eq(schema.discoveredReactions.guildId, guildId))
+
+    if (result.length === 0) return new Set()
+    const { noReactChannels } = result[0]
+    return new Set(noReactChannels.map(BigInt.toString))
 }
 
 /**
@@ -143,58 +166,42 @@ export function getNoReactChannels(guildId: string): Set<string> {
  * @param guildId
  * @param channelIds the set of channel ids that should not be reacted in
  */
-export function setNoReactChannels(
-    guildId: string,
+export async function setNoReactChannels(
+    guildId: number,
     channelIds: Iterable<string>
 ) {
-    const data = getGuildData(guildId)
-    data.noReactChannels = Array.from(channelIds)
-    writeGuildData(guildId, data)
+    const bigIntChannelIds = Array.from(channelIds).map(BigInt)
+    await db
+        .update(schema.guilds)
+        .set({ noReactChannels: bigIntChannelIds })
+        .where(eq(schema.guilds.id, guildId))
 }
 
 /**
- * Get the reminder-related data for a guild
- * @returns The reminder-related data
+ * Get the reminders in a guild
+ * @returns The reminders grouped by day
  */
-export function getReminderData(guildId: string): ParsedRemindersData {
-    const data = getGuildData(guildId)
-    const reminderData = data?.reminders ?? {}
-    // Create missing properties
-    if (!reminderData.days) {
-        reminderData.days = {}
-    }
-    if (!reminderData.muted) {
-        reminderData.muted = []
-    }
+export async function getReminders(guildId: number): Promise<RemindersByDay> {
+    const result = await db
+        .select()
+        .from(schema.reminders)
+        .where(eq(schema.reminders.guildId, guildId))
+        .groupBy(schema.reminders.day)
 
-    // Convert days to ints
-    const parsed = {
-        days: Object.fromEntries(
-            Object.entries(reminderData.days) //
-                .map(([day, message]) => [parseInt(day), message])
-        ),
-        muted: reminderData.muted,
+    const days: RemindersByDay = {
+        1: [],
+        2: [],
+        3: [],
+        4: [],
+        5: [],
+        6: [],
+        7: [],
     }
 
-    return parsed
-}
-
-export function setReminderData(
-    guildId: string,
-    reminderData: ParsedRemindersData
-) {
-    // Convert days to strings
-    const newReminderData: RemindersData = {
-        ...reminderData,
-        days: Object.fromEntries(
-            Object.entries(reminderData.days) //
-                .map(([day, message]) => [day.toString(), message])
-        ),
-    }
-
-    const data = getGuildData(guildId)
-    data.reminders = newReminderData
-    writeGuildData(guildId, data)
+    result.forEach(reminder => {
+        days[reminder.day].push(reminder.message)
+    })
+    return days
 }
 
 /**
@@ -204,73 +211,86 @@ export function setReminderData(
  * be sent on, where 1 is Monday and 7 is Sunday.
  * @param message What the reminder is for
  */
-export function addReminder(guildId: string, day: number, message: string) {
-    const data = getReminderData(guildId)
-    if (!data.days[day]) {
-        data.days[day] = [message]
-    } else {
-        data.days[day].push(message)
-    }
-    setReminderData(guildId, data)
+export async function addReminder(
+    guildId: number,
+    day: number,
+    message: string
+) {
+    await db.insert(schema.reminders).values({
+        guildId,
+        day,
+        message,
+    })
 }
 
 /**
  * Remove a reminder for the responsibility week
+ * @param id The ID of the reminder
  * @param guildId The ID of the guild to remove the reminder from
- * @param day Which day to remove a reminder from, where 1 is Monday and 7 is Sunday.
- * @param index Which reminder to remove from the list of reminders for that day, starting at 0.
  */
-export function removeReminder(guildId: string, day: number, index: number) {
-    const data = getReminderData(guildId)
-
-    const prettyDay = DAYS[day - 1]
-    if (data.days[day]) {
-        const removed = data.days[day].splice(index, 1)
-
-        if (removed.length === 0) {
-            throw new CommandResponseError(
-                `Det finns ingen påminnelse ${index + 1} för ${prettyDay}`
+export async function removeReminder(id: number, guildId: number) {
+    // TODO: Make sure an error is thrown when there is no matching entry
+    await db
+        .delete(schema.reminders)
+        .where(
+            and(
+                eq(schema.reminders.id, id),
+                eq(schema.reminders.guildId, guildId)
             )
-        }
-        // Delete list if empty
-        if (data.days[day].length === 0) {
-            delete data.days[day]
-        }
-    } else {
-        throw new CommandResponseError(
-            `Det finns inga påminnelser att ta bort på ${prettyDay}`
         )
-    }
-    setReminderData(guildId, data)
-}
-
-export function addReminderMutedUser(guildId: string, userId: string) {
-    const data = getReminderData(guildId)
-    if (data.muted.includes(userId)) {
-        throw new CommandResponseError('Du får redan inte påminnelser')
-    } else {
-        data.muted.push(userId)
-    }
-    setReminderData(guildId, data)
-}
-
-export function removeReminderMutedUser(guildId: string, userId: string) {
-    const data = getReminderData(guildId)
-    const index = data.muted.indexOf(userId)
-    if (index === -1) {
-        throw new CommandResponseError('Du får redan påminnelser')
-    } else {
-        data.muted.splice(index, 1)
-    }
-    setReminderData(guildId, data)
 }
 
 /**
- * @returns The IDs of users who are muted for reminders
+ * @returns The snowflakes of users who are muted for reminders
  */
-export function getReminderMutedUsers(guildId: string): string[] {
-    const data = getReminderData(guildId)
-    return data.muted
+export async function getNoPingUsers(guildId: number): Promise<bigint[]> {
+    const result = await db
+        .select({ noPingUsers: schema.guilds.noPingUsers })
+        .from(schema.guilds)
+        .where(eq(schema.guilds.id, guildId))
+    if (result.length === 0) return []
+    return result[0].noPingUsers
+}
+
+export async function isNoPingUser(
+    guildId: number,
+    userSnowflake: string | bigint
+): Promise<boolean> {
+    const noPingUsers = await getNoPingUsers(guildId)
+    return noPingUsers.includes(BigInt(userSnowflake))
+}
+
+export async function addNoPingUser(
+    guildId: number,
+    userSnowflake: string | bigint
+) {
+    const snowflake = BigInt(userSnowflake)
+    const noPingUsers = await getNoPingUsers(guildId)
+    if (noPingUsers.includes(snowflake)) {
+        throw new CommandResponseError('Du får redan inte påminnelser')
+    }
+    noPingUsers.push(snowflake)
+    await db
+        .update(schema.guilds)
+        .set({ noPingUsers })
+        .where(eq(schema.guilds.id, guildId))
+}
+
+export async function removeNoPingUser(
+    guildId: number,
+    userSnowflake: string | bigint
+) {
+    const snowflake = BigInt(userSnowflake)
+    const noPingUsers = await getNoPingUsers(guildId)
+    const index = noPingUsers.indexOf(snowflake)
+    if (index === -1) {
+        throw new CommandResponseError('Du får redan påminnelser')
+    }
+    noPingUsers.splice(index, 1)
+    await db
+        .update(schema.guilds)
+        .set({ noPingUsers })
+        .where(eq(schema.guilds.id, guildId))
 }
 
 /**
@@ -278,10 +298,15 @@ export function getReminderMutedUsers(guildId: string): string[] {
  * @param guildId The ID of the guild to get the time for.
  * @returns The saved value, or the default time representing 13:00.
  */
-export function getRemindersTime(guildId: string): number {
-    const configuration = getGuildConfiguration(guildId)
-    const savedValue = configuration.remindersTime
-    return savedValue ?? 13 * ONE_HOUR_MS // 13:00
+export async function getRemindTime(guildId: number): Promise<number> {
+    const DEFAULT = 13 * ONE_HOUR_MS // 13:00
+
+    const result = await db
+        .select({ remindTime: schema.guilds.remindTime })
+        .from(schema.guilds)
+        .where(eq(schema.guilds.id, guildId))
+    if (result.length === 0) return DEFAULT
+    return result[0].remindTime ?? DEFAULT
 }
 
 /**
@@ -290,8 +315,13 @@ export function getRemindersTime(guildId: string): number {
  * @param guildId The ID of the guild to get the time for.
  * @returns The saved value, or the default time representing 09:00.
  */
-export function getAnnounceTime(guildId: string): number {
-    const configuration = getGuildConfiguration(guildId)
-    const savedValue = configuration.announceTime
-    return savedValue ?? 9 * ONE_HOUR_MS // 09:00
+export async function getAnnounceTime(guildId: number): Promise<number> {
+    const DEFAULT = 9 * ONE_HOUR_MS // 09:00
+
+    const result = await db
+        .select({ announceTime: schema.guilds.announceTime })
+        .from(schema.guilds)
+        .where(eq(schema.guilds.id, guildId))
+    if (result.length === 0) return DEFAULT
+    return result[0].announceTime ?? DEFAULT
 }

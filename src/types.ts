@@ -13,19 +13,6 @@ export interface ExtendedClient extends Client {
 
 export type AnnounceChannel = NewsChannel | TextChannel
 
-export interface FullData {
-    guilds?: {
-        [guildId: string]: GuildData
-    }
-}
-
-export interface GuildData {
-    configuration?: GuildConfiguration
-    discoveredReactions?: DiscoveredReactionsData
-    noReactChannels?: string[]
-    reminders?: RemindersData
-}
-
 export interface GuildConfiguration {
     announceChannel?: string
     responsibleRole?: string
@@ -37,29 +24,18 @@ export interface GuildConfiguration {
     remindersTime?: number
 }
 
-export interface ReactionsDefinition {
+export interface Reaction {
+    id: number
+    displayName: string
     pattern: string
     emoji: EmojiIdentifierResolvable
 }
 
-export interface ReactionsConfig {
-    [id: string]: ReactionsDefinition
+export interface DiscoveredReaction extends Reaction {
+    /** Snowflake of user who discovered the reaction. */
+    discoveredBy: string
 }
 
-export interface DiscoveredReactionsData {
-    [id: string]: string
-}
-
-export interface RemindersData {
-    days?: {
-        [day: string]: string[]
-    }
-    muted?: string[]
-}
-
-export interface ParsedRemindersData {
-    days: {
-        [day: number]: string[]
-    }
-    muted: string[]
+export interface RemindersByDay {
+    [day: number]: string[]
 }
