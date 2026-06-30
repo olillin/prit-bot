@@ -6,10 +6,10 @@ import {
 } from 'discord.js'
 import {
     addReminder,
-    addReminderMutedUser,
+    addNoPingUser,
     getReminders,
     removeReminder,
-    removeReminderMutedUser,
+    removeNoPingUser,
     DAYS,
     getGuildId,
 } from '../data'
@@ -175,31 +175,36 @@ async function remove(interaction: ChatInputCommandInteraction) {
 }
 
 async function list(interaction: ChatInputCommandInteraction) {
-    const guildId = interaction.guildId
-    if (!guildId) {
+    const guildSnowflake = interaction.guildId
+    if (!guildSnowflake) {
         throw new Error('Guild id is not defined')
     }
-    const reminders = getReminderData(guildId).days
+    const guildId = await getGuildId(guildSnowflake)
+    if (guildId === null) {
+        throw new Error('Guild could not be found')
+    }
+    const reminders = await getReminders(guildId)
 
     const embed = new EmbedBuilder()
         .setTitle('Påminnelser för Ansvarsveckor')
         .setColor('#ffbb00')
 
-    if (Object.keys(reminders).length === 0) {
-        embed.setDescription('Det finns inga påminnelser')
-    } else {
-        embed.addFields(
-            Object.entries(reminders).map(([day, reminders]) => {
-                const prettyDay = DAYS[parseInt(day) - 1]
+    embed.addFields(
+        (Object.entries(reminders) as unknown as [number, string[]][]).map(
+            ([day, messages]) => {
+                const prettyDay = DAYS[day - 1]
                 return {
                     name: prettyDay,
-                    value: reminders
-                        .map((message, i) => `${i + 1}. ${message}`)
-                        .join('\n'),
+                    value:
+                        messages.length === 0
+                            ? '-# *Inga påminnelser*'
+                            : messages
+                                  .map((message, i) => `${i + 1}. ${message}`)
+                                  .join('\n'),
                 }
-            })
+            }
         )
-    }
+    )
 
     await interaction.reply({
         embeds: [embed],
@@ -226,13 +231,17 @@ async function send(interaction: ChatInputCommandInteraction) {
 }
 
 async function mute(interaction: ChatInputCommandInteraction) {
-    const guildId = interaction.guildId
-    if (!guildId) {
+    const guildSnowflake = interaction.guildId
+    if (!guildSnowflake) {
         throw new Error('Guild id is not defined')
+    }
+    const guildId = await getGuildId(guildSnowflake)
+    if (!guildId) {
+        throw new Error('Guild is missing from database')
     }
 
     try {
-        addReminderMutedUser(guildId, interaction.user.id)
+        addNoPingUser(guildId, interaction.user.id)
     } catch (error) {
         console.warn('Failed to unmute reminders:', error)
         await replyWithError(interaction, error, true)
@@ -245,13 +254,17 @@ async function mute(interaction: ChatInputCommandInteraction) {
 }
 
 async function unmute(interaction: ChatInputCommandInteraction) {
-    const guildId = interaction.guildId
-    if (!guildId) {
+    const guildSnowflake = interaction.guildId
+    if (!guildSnowflake) {
         throw new Error('Guild id is not defined')
+    }
+    const guildId = await getGuildId(guildSnowflake)
+    if (!guildId) {
+        throw new Error('Guild is missing from database')
     }
 
     try {
-        removeReminderMutedUser(guildId, interaction.user.id)
+        removeNoPingUser(guildId, interaction.user.id)
     } catch (error) {
         console.warn('Failed to unmute reminders:', error)
         await replyWithError(interaction, error, true)

@@ -16,8 +16,13 @@ import {
     SlashCommandSubcommandsOnlyBuilder,
     SlashCommandUserOption,
 } from 'discord.js'
-import { getGuildConfiguration, setGuildConfiguration } from '../data'
-import type { GuildConfiguration } from '../types'
+import {
+    getGuildConfigValue,
+    getGuildId,
+    GuildConfigKey,
+    GuildConfigType,
+    setGuildConfigValue,
+} from '../data'
 
 export interface CommandDefinition {
     data:
@@ -61,11 +66,6 @@ export interface SlashCommandOptions extends SlashCommandOptionsBase {
     11: [SlashCommandAttachmentOption, 'getAttachment']
 }
 
-export type ConfigurationKey = keyof GuildConfiguration
-export type ConfigurationType<KeyType extends ConfigurationKey> = NonNullable<
-    GuildConfiguration[KeyType]
->
-
 export type CommandOptionWithType<OptionType extends SlashCommandOptionTypes> =
     SlashCommandOptions[OptionType][0]
 export type CommandOptionReturnType<
@@ -78,7 +78,7 @@ export type CommandOptionReturnType<
 
 export interface ConfigurationCommandOptions<
     OptionType extends SlashCommandOptionTypes,
-    KeyType extends ConfigurationKey,
+    KeyType extends GuildConfigKey,
 > {
     /** The type of command option */
     type: OptionType
@@ -110,13 +110,13 @@ export interface ConfigurationCommandOptions<
     set: (
         value: CommandOptionReturnType<OptionType>,
         context: ChatInputCommandInteraction
-    ) => ConfigurationType<KeyType> | Promise<ConfigurationType<KeyType>>
+    ) => GuildConfigType<KeyType> | Promise<GuildConfigType<KeyType>>
 
     /**
      * Convert the saved value to the string representation which should be sent
      */
     get: (
-        value: ConfigurationType<KeyType>,
+        value: GuildConfigType<KeyType>,
         context: ChatInputCommandInteraction
     ) => string | Promise<string>
 
@@ -126,14 +126,14 @@ export interface ConfigurationCommandOptions<
      * @param context The interaction that triggered the change.
      */
     onChange?: (
-        value: ConfigurationType<KeyType> | undefined,
+        value: GuildConfigType<KeyType> | undefined,
         context: ChatInputCommandInteraction
     ) => void
 }
 
 export function defineConfigurationCommand<
     OptionType extends SlashCommandOptionTypes,
-    KeyType extends ConfigurationKey,
+    KeyType extends GuildConfigKey,
 >(
     options: ConfigurationCommandOptions<OptionType, KeyType>
 ): ConfigurationCommandOptions<OptionType, KeyType> {
@@ -142,7 +142,7 @@ export function defineConfigurationCommand<
 
 export function addConfigurationCommand<
     OptionType extends SlashCommandOptionTypes,
-    KeyType extends ConfigurationKey,
+    KeyType extends GuildConfigKey,
 >(
     command: ConfigurationCommandOptions<OptionType, KeyType>,
     builder: SlashCommandBuilder
@@ -231,7 +231,7 @@ export function addConfigurationCommand<
 
 export function addConfigurationCommands<
     OptionType extends SlashCommandOptionTypes,
-    KeyType extends ConfigurationKey,
+    KeyType extends GuildConfigKey,
 >(
     commands: ConfigurationCommandOptions<OptionType, KeyType>[],
     builder: SlashCommandBuilder
@@ -329,13 +329,25 @@ export async function editReplyWithError(
 
 export async function executeConfigurationCommand<
     OptionType extends SlashCommandOptionTypes,
-    KeyType extends ConfigurationKey,
+    KeyType extends GuildConfigKey,
 >(
     command: ConfigurationCommandOptions<OptionType, KeyType>,
     interaction: ChatInputCommandInteraction
 ) {
     const subcommand = interaction.options.getSubcommand(true)
-    const guildId = interaction.guildId!
+    const guildSnowflake = interaction.guildId!
+    const guildId = await getGuildId(guildSnowflake)
+    if (guildId === null) {
+        await interaction.reply({
+            content: 'Kunde inte hitta konfigurationen för denna server',
+            flags: MessageFlags.Ephemeral,
+        })
+        console.error(
+            `Failed to get guild id while executing command '${command.name}'`
+        )
+        return
+    }
+
     if (subcommand === 'set') {
         const value = getOption(
             interaction,
@@ -343,7 +355,7 @@ export async function executeConfigurationCommand<
             command.type
         )
 
-        let convertedValue: ConfigurationType<KeyType>
+        let convertedValue: GuildConfigType<KeyType>
         try {
             convertedValue = await command.set(value, interaction)
         } catch (e) {
@@ -365,9 +377,7 @@ export async function executeConfigurationCommand<
             return
         }
 
-        const configuration = getGuildConfiguration(guildId)
-        configuration[command.key] = convertedValue
-        setGuildConfiguration(guildId, configuration)
+        await setGuildConfigValue(guildId, command.key, convertedValue)
 
         try {
             const prettyValue = await command.get(convertedValue, interaction)
@@ -384,8 +394,8 @@ export async function executeConfigurationCommand<
 
         if (command.onChange) command.onChange(convertedValue, interaction)
     } else if (subcommand === 'unset') {
-        const configuration = getGuildConfiguration(guildId)
-        if (configuration[command.key] === undefined) {
+        const oldValue = await getGuildConfigValue(guildId, command.key)
+        if (oldValue == undefined) {
             await interaction.reply({
                 content: `${command.description} har redan tagits bort`,
                 flags: MessageFlags.Ephemeral,
@@ -393,8 +403,7 @@ export async function executeConfigurationCommand<
             return
         }
 
-        delete configuration[command.key]
-        setGuildConfiguration(guildId, configuration)
+        await setGuildConfigValue(guildId, command.key, null)
 
         await interaction.reply({
             content: `${command.description} har tagits bort`,
@@ -403,9 +412,8 @@ export async function executeConfigurationCommand<
 
         if (command.onChange) command.onChange(undefined, interaction)
     } else if (subcommand === 'get') {
-        const configuration = getGuildConfiguration(guildId)
-        const value = configuration[command.key]
-        if (!value) {
+        const value = await getGuildConfigValue(guildId, command.key)
+        if (value == undefined) {
             await interaction.reply({
                 content: `${command.description} saknas`,
                 flags: MessageFlags.Ephemeral,
@@ -435,7 +443,7 @@ export async function executeConfigurationCommand<
 
 export function configurationCommandExecutor<
     OptionType extends SlashCommandOptionTypes,
-    KeyType extends ConfigurationKey,
+    KeyType extends GuildConfigKey,
 >(
     commands: ConfigurationCommandOptions<OptionType, KeyType>[]
 ): (interaction: ChatInputCommandInteraction) => Promise<void> {

@@ -35,6 +35,51 @@ export async function getGuildId(
     return guildIdResult[0].guildId
 }
 
+export type GuildConfigKey =
+    | 'announceChannel'
+    | 'responsibleRole'
+    | 'responsibleResponsibleRole'
+    | 'responsibleCalendarUrl'
+    | 'announceTime'
+    | 'remindTime'
+export type GuildConfigType<KeyType extends GuildConfigKey> =
+    (typeof schema.guilds.$inferSelect)[KeyType]
+
+/**
+ * Get the value of a column in the guild config.
+ * @param guildId The ID of the guild to get the time for.
+ * @param key The name of the column.
+ * @returns The saved value, or null if not defined.
+ */
+export async function getGuildConfigValue<T extends GuildConfigKey>(
+    guildId: number,
+    key: T
+): Promise<GuildConfigType<T>> {
+    const result = await db
+        .select({ field: schema.guilds[key] })
+        .from(schema.guilds)
+        .where(eq(schema.guilds.id, guildId))
+    if (result.length === 0) return null
+    return result[0].field
+}
+
+/**
+ * Set the value of a column in the guild config.
+ * @param guildId The ID of the guild to get the time for.
+ * @param key The name of the column.
+ * @param value The new value of the column.
+ */
+export async function setGuildConfigValue<T extends GuildConfigKey>(
+    guildId: number,
+    key: T,
+    value: GuildConfigType<T>
+) {
+    await db
+        .update(schema.guilds)
+        .set({ [key]: value })
+        .where(eq(schema.guilds.id, guildId))
+}
+
 export async function getAnnouncementChannel(
     guild: Guild
 ): Promise<AnnounceChannel | undefined> {
@@ -78,6 +123,39 @@ export async function getResponsibleResponsibleRole(
     const { responsibleResponsibleRole } = result[0]
     if (responsibleResponsibleRole == null) return undefined
     return getRole(responsibleResponsibleRole.toString(), guild)
+}
+
+/**
+ * Get how many milliseconds after midnight reminders should be sent in a guild.
+ * @param guildId The ID of the guild to get the time for.
+ * @returns The saved value, or the default time representing 13:00.
+ */
+export async function getRemindTime(guildId: number): Promise<number> {
+    const DEFAULT = 13 * ONE_HOUR_MS // 13:00
+
+    const result = await db
+        .select({ remindTime: schema.guilds.remindTime })
+        .from(schema.guilds)
+        .where(eq(schema.guilds.id, guildId))
+    if (result.length === 0) return DEFAULT
+    return result[0].remindTime ?? DEFAULT
+}
+
+/**
+ * Get how many milliseconds after midnight announcements should be sent in a
+ * guild.
+ * @param guildId The ID of the guild to get the time for.
+ * @returns The saved value, or the default time representing 09:00.
+ */
+export async function getAnnounceTime(guildId: number): Promise<number> {
+    const DEFAULT = 9 * ONE_HOUR_MS // 09:00
+
+    const result = await db
+        .select({ announceTime: schema.guilds.announceTime })
+        .from(schema.guilds)
+        .where(eq(schema.guilds.id, guildId))
+    if (result.length === 0) return DEFAULT
+    return result[0].announceTime ?? DEFAULT
 }
 
 export async function getDiscoveredReactions(
@@ -291,37 +369,4 @@ export async function removeNoPingUser(
         .update(schema.guilds)
         .set({ noPingUsers })
         .where(eq(schema.guilds.id, guildId))
-}
-
-/**
- * Get how many milliseconds after midnight reminders should be sent in a guild.
- * @param guildId The ID of the guild to get the time for.
- * @returns The saved value, or the default time representing 13:00.
- */
-export async function getRemindTime(guildId: number): Promise<number> {
-    const DEFAULT = 13 * ONE_HOUR_MS // 13:00
-
-    const result = await db
-        .select({ remindTime: schema.guilds.remindTime })
-        .from(schema.guilds)
-        .where(eq(schema.guilds.id, guildId))
-    if (result.length === 0) return DEFAULT
-    return result[0].remindTime ?? DEFAULT
-}
-
-/**
- * Get how many milliseconds after midnight announcements should be sent in a
- * guild.
- * @param guildId The ID of the guild to get the time for.
- * @returns The saved value, or the default time representing 09:00.
- */
-export async function getAnnounceTime(guildId: number): Promise<number> {
-    const DEFAULT = 9 * ONE_HOUR_MS // 09:00
-
-    const result = await db
-        .select({ announceTime: schema.guilds.announceTime })
-        .from(schema.guilds)
-        .where(eq(schema.guilds.id, guildId))
-    if (result.length === 0) return DEFAULT
-    return result[0].announceTime ?? DEFAULT
 }

@@ -5,28 +5,29 @@ import {
     type Calendar,
     type CalendarEvent,
 } from 'iamcal'
-import { getGuildConfiguration } from '../data'
+import { getGuildConfigValue } from '../data'
 
-export function getCalendar(guildId: string): Promise<Calendar | undefined> {
-    return new Promise(resolve => {
-        const configuration = getGuildConfiguration(guildId)
-        const url = configuration.responsibleCalendarUrl
+export async function getCalendar(
+    guildId: number
+): Promise<Calendar | undefined> {
+    const url = await getGuildConfigValue(guildId, 'responsibleCalendarUrl')
+    if (!url) {
+        return undefined
+    }
+    const body = await fetch(url)
+        .then(response => response.text())
+        .catch(reason => {
+            console.warn(`Failed to fetch calendar: ${reason}`)
+            return undefined
+        })
+    if (!body) return undefined
 
-        if (!url) {
-            resolve(undefined)
-        } else {
-            fetch(url)
-                .then(response => response.text())
-                .then(text => parseCalendar(text))
-                .then(calendar => {
-                    resolve(calendar)
-                })
-                .catch(reason => {
-                    console.warn(`Failed to parse calendar: ${reason}`)
-                    resolve(undefined)
-                })
-        }
-    })
+    try {
+        return parseCalendar(body)
+    } catch (error) {
+        console.warn(`Failed to parse calendar: ${error}`)
+        return undefined
+    }
 }
 
 /**
@@ -39,7 +40,7 @@ export function getCalendar(guildId: string): Promise<Calendar | undefined> {
  * @returns The calendar event representing the responsibility week, or undefined if no matching events were found or the calendar could not be fetched
  */
 export async function getResponsibleEvent(
-    guildId: string,
+    guildId: number,
     now: number = Date.now(),
     summaryPattern: RegExp | undefined = /ansvar/i
 ): Promise<CalendarEvent | undefined> {
@@ -83,7 +84,7 @@ export async function getResponsibleEvent(
  * @returns The nicks of the people who are currently responsible
  */
 export async function getResponsibleNicks(
-    guildId: string,
+    guildId: number,
     now: number = Date.now()
 ): Promise<string[] | undefined> {
     const event = await getResponsibleEvent(guildId, now)
