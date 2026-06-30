@@ -4,6 +4,7 @@ import type {
     AnnounceChannel,
     DiscoveredReaction,
     RemindersByDay,
+    Reaction,
 } from './types'
 import {
     getAnnouncementChannel as getGuildAnnouncementChannel,
@@ -156,6 +157,18 @@ export async function getAnnounceTime(guildId: number): Promise<number> {
         .where(eq(schema.guilds.id, guildId))
     if (result.length === 0) return DEFAULT
     return result[0].announceTime ?? DEFAULT
+}
+
+export async function getReactions(): Promise<Reaction[]> {
+    return await db.select().from(schema.reactions)
+}
+
+export async function getReaction(id: number): Promise<Reaction | null> {
+    const result = await db
+        .select()
+        .from(schema.reactions)
+        .where(eq(schema.reactions.id, id))
+    return result[0] ?? null
 }
 
 export async function getDiscoveredReactions(
