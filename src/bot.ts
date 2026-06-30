@@ -14,6 +14,7 @@ import { addReaction } from './features/reactions'
 import { remindersLoop } from './features/reminders'
 import type { ExtendedClient } from './types'
 import commands from './commands'
+import { initGuild } from './data'
 
 const client = new Client({
     intents: [
@@ -90,9 +91,11 @@ client.on(Events.ClientReady, () => {
         console.warn(`Failed to cycle activities: ${reason}`)
     })
 
-    client.guilds.cache.forEach(guild => {
-        announceLoop.start(guild.id)
-        remindersLoop.start(guild.id)
+    client.guilds.cache.forEach(async guild => {
+        const guildSnowflake = guild.id
+        const { id: guildId } = await initGuild(guild.id)
+        announceLoop.start(guildId, guildSnowflake)
+        remindersLoop.start(guildId, guildSnowflake)
 
         // Get initial guild members in each server. Await to avoid spam
         guild.members.fetch().catch(reason => {
@@ -103,13 +106,16 @@ client.on(Events.ClientReady, () => {
     })
 })
 
-client.on(Events.GuildCreate, guild => {
+client.on(Events.GuildCreate, async guild => {
     console.log('Joined new guild')
+    const { id: guildId } = await initGuild(guild.id)
     registerSlashCommands(guild.id).catch(reason => {
         console.error('Failed to register slash commands:', reason)
     })
-    announceLoop.start(guild.id)
-    remindersLoop.start(guild.id)
+
+    const guildSnowflake = guild.id
+    announceLoop.start(guildId, guildSnowflake)
+    remindersLoop.start(guildId, guildSnowflake)
 })
 
 client.on(Events.MessageCreate, message => {

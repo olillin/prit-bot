@@ -82,9 +82,9 @@ export async function getRole(
 export type MaybePromise<T> = T | Promise<T>
 
 export class PerGuildLoop {
-    private _currentGeneration: Map<string, number>
+    private _currentGeneration: Map<number, number>
 
-    getNextTime: (context: GuildLoopContext) => Date
+    getNextTime: (context: GuildLoopContext) => MaybePromise<Date>
     action: (context: GuildLoopContext) => MaybePromise<void>
 
     /**
@@ -92,7 +92,7 @@ export class PerGuildLoop {
      * @param action A function which performs some action once a day.
      */
     constructor(
-        getNextTime: (context: GuildLoopContext) => Date,
+        getNextTime: (context: GuildLoopContext) => MaybePromise<Date>,
         action: (context: GuildLoopContext) => MaybePromise<void>
     ) {
         this.getNextTime = getNextTime
@@ -102,7 +102,7 @@ export class PerGuildLoop {
     }
 
     /** Start a loop for this guild */
-    start(guildId: string) {
+    start(guildId: number, guildSnowflake: string) {
         if (this._currentGeneration.has(guildId)) {
             this.stop(guildId)
         } else {
@@ -111,6 +111,7 @@ export class PerGuildLoop {
 
         const context: GuildLoopContext = {
             guildId,
+            guildSnowflake,
             generation: this.getGeneration(guildId),
         }
 
@@ -118,24 +119,24 @@ export class PerGuildLoop {
     }
 
     /** Stop the loop by increasing the generation. */
-    stop(guildId: string) {
+    stop(guildId: number) {
         if (!this._currentGeneration.has(guildId)) return
         const newGeneration = (this.getGeneration(guildId) + 1) % 1_000_000_000
         this._currentGeneration.set(guildId, newGeneration)
     }
 
     /** Restart the loop */
-    reset(guildId: string) {
+    reset(guildId: number, guildSnowflake: string) {
         this.stop(guildId)
-        this.start(guildId)
+        this.start(guildId, guildSnowflake)
     }
 
-    getGeneration(guildId: string): number {
+    getGeneration(guildId: number): number {
         return this._currentGeneration.get(guildId) ?? 0
     }
 
-    private loop(context: GuildLoopContext): void {
-        const nextTime = this.getNextTime(context)
+    private async loop(context: GuildLoopContext): Promise<void> {
+        const nextTime = await this.getNextTime(context)
         schedule(nextTime, () => {
             // Kill loop if generation has increased
             if (context.generation < this.getGeneration(context.guildId)) return
@@ -164,7 +165,8 @@ export class PerGuildLoop {
     }
 }
 
-interface GuildLoopContext {
+export interface GuildLoopContext {
     generation: number
-    guildId: string
+    guildId: number
+    guildSnowflake: string
 }

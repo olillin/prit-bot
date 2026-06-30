@@ -3,8 +3,7 @@ import {
     EmbedBuilder,
     type ChatInputCommandInteraction,
 } from 'discord.js'
-import { getDiscoveredReactions } from '../data'
-import { getReactions } from '../features/reactions'
+import { getDiscoveredReactions, getGuildId, getReactions } from '../data'
 import { defineCommand } from '../util/guild'
 
 export default defineCommand({
@@ -15,15 +14,22 @@ export default defineCommand({
     async execute(interaction: ChatInputCommandInteraction) {
         if (!interaction.guild) return
 
-        const reactions = getReactions()
-        const discovered = getDiscoveredReactions(interaction.guild)
+        const guildSnowflake = interaction.guildId
+        if (guildSnowflake === null) {
+            throw new Error('Guild id is not defined')
+        }
+        const guildId = await getGuildId(guildSnowflake)
+        if (guildId === null) {
+            throw new Error('Guild is missing from database')
+        }
 
-        const undiscoveredCount =
-            Object.keys(reactions).length - Object.keys(discovered).length
+        const reactions = await getReactions()
+        const discovered = await getDiscoveredReactions(guildId)
 
-        const discoveredPretty = Object.entries(discovered).map(
-            ([id, discoveredBy]) => {
-                const { emoji } = reactions[id]
+        const undiscoveredCount = reactions.length - discovered.length
+
+        const discoveredPretty = discovered.map(
+            ({ id, emoji, discoveredBy }) => {
                 return `${emoji.toString()} **${id}** upptäckt av <@${discoveredBy}>`
             }
         )

@@ -5,13 +5,13 @@ import {
     SlashCommandBuilder,
     type ChatInputCommandInteraction,
 } from 'discord.js'
-import { getNoReactChannels, setNoReactChannels } from '../data'
+import { getGuildId, getNoReactChannels, setNoReactChannels } from '../data'
 import { CommandMap } from '../util/command'
 import { defineCommand } from '../util/guild'
 
 export default defineCommand({
     data: new SlashCommandBuilder()
-        .setName('noreact') //
+        .setName('noreact')
         .setDescription('Markera kanaler att inte reagera i')
         .addSubcommand(subcommand =>
             subcommand
@@ -74,12 +74,16 @@ export default defineCommand({
 async function add(interaction: ChatInputCommandInteraction) {
     const channel = interaction.options.getChannel('channel', true)
     const channelId = channel.id
-    const guildId = interaction.guildId
-    if (!guildId) {
+    const guildSnowflake = interaction.guildId
+    if (guildSnowflake === null) {
         throw new Error('Guild id is not defined')
     }
+    const guildId = await getGuildId(guildSnowflake)
+    if (guildId === null) {
+        throw new Error('Guild is missing from database')
+    }
 
-    const noReactChannels = getNoReactChannels(guildId)
+    const noReactChannels = await getNoReactChannels(guildId)
     if (noReactChannels.has(channelId)) {
         await interaction.reply({
             content: 'Kanalen är redan markerad',
@@ -100,11 +104,16 @@ async function remove(interaction: ChatInputCommandInteraction) {
     const channel = interaction.options.getChannel('channel', true)
     const channelId = channel.id
 
-    const guildId = interaction.guildId
-    if (!guildId) {
+    const guildSnowflake = interaction.guildId
+    if (guildSnowflake === null) {
         throw new Error('Guild id is not defined')
     }
-    const noReactChannels = getNoReactChannels(guildId)
+    const guildId = await getGuildId(guildSnowflake)
+    if (guildId === null) {
+        throw new Error('Guild is missing from database')
+    }
+
+    const noReactChannels = await getNoReactChannels(guildId)
     if (!noReactChannels.has(channelId)) {
         await interaction.reply({
             content: 'Kanalen är inte markerad',
@@ -122,11 +131,16 @@ async function remove(interaction: ChatInputCommandInteraction) {
 }
 
 async function list(interaction: ChatInputCommandInteraction) {
-    const guildId = interaction.guildId
-    if (!guildId) {
+    const guildSnowflake = interaction.guildId
+    if (guildSnowflake === null) {
         throw new Error('Guild id is not defined')
     }
-    const noReactChannels = getNoReactChannels(guildId)
+    const guildId = await getGuildId(guildSnowflake)
+    if (guildId === null) {
+        throw new Error('Guild is missing from database')
+    }
+
+    const noReactChannels = await getNoReactChannels(guildId)
 
     await interaction.reply({
         embeds: [

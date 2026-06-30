@@ -2,10 +2,11 @@ import type { Guild, GuildMember } from 'discord.js'
 import {
     getAnnouncementChannel,
     getAnnounceTime,
+    getGuildId,
     getResponsibleRole,
 } from '../data'
 import { getNextTime } from '../util/dates'
-import { getUsers, PerGuildLoop } from '../util/guild'
+import { getUsers, GuildLoopContext, PerGuildLoop } from '../util/guild'
 import { getResponsibleNicks, getStudyWeek } from '../util/weekInfo'
 import client from '../bot'
 import { sendResponsibilityWeekReminder } from './responsibilityReminder'
@@ -23,7 +24,16 @@ export async function announceWeekIn(guild: Guild): Promise<boolean> {
         return false
     }
 
-    const responsible = await getResponsibleNicks(guild.id)
+    const guildSnowflake = guild.id
+    if (guildSnowflake === null) {
+        throw new Error('Guild id is not defined')
+    }
+    const guildId = await getGuildId(guildSnowflake)
+    if (guildId === null) {
+        throw new Error('Guild is missing from database')
+    }
+
+    const responsible = await getResponsibleNicks(guildId)
 
     const announceChannel = await getAnnouncementChannel(guild)
     if (!announceChannel) {
@@ -106,8 +116,8 @@ async function assignRole(
 
 export const announceLoop = new PerGuildLoop(
     // getNextTime
-    context => {
-        const announceTime = getAnnounceTime(context.guildId)
+    async context => {
+        const announceTime = await getAnnounceTime(context.guildId)
         const nextTime = getNextTime(announceTime)
         console.debug(
             `Scheduling announcements in ${context.guildId} for ${nextTime.toLocaleTimeString()}`
@@ -120,7 +130,7 @@ export const announceLoop = new PerGuildLoop(
         const isMonday = day === 1
         const isSunday = day === 0
 
-        await updateResponsibilityRole(context.guildId).catch(reason => {
+        await updateResponsibilityRole(context).catch(reason => {
             console.warn(
                 `Failed to update responsibility role for guild ${context.guildId}: ${reason}`
             )
@@ -130,7 +140,7 @@ export const announceLoop = new PerGuildLoop(
             // New week
             console.debug(`Sending announcements in ${context.guildId}...`)
             client.guilds
-                .fetch(context.guildId)
+                .fetch(context.guildSnowflake)
                 .then(guild => announceWeekIn(guild))
                 .catch(reason => {
                     console.warn(
@@ -139,18 +149,20 @@ export const announceLoop = new PerGuildLoop(
                 })
         } else if (isSunday) {
             // Reminder if there is no responsibility week
-            sendResponsibilityWeekReminder(context.guildId).catch(reason => {
-                console.warn(
-                    `Failed to send responsibility reminder for guild ${context.guildId}: ${reason}`
-                )
-            })
+            await sendResponsibilityWeekReminder(context.guildSnowflake).catch(
+                reason => {
+                    console.warn(
+                        `Failed to send responsibility reminder for guild ${context.guildId}: ${reason}`
+                    )
+                }
+            )
         }
     }
 )
-async function updateResponsibilityRole(guildId: string) {
+async function updateResponsibilityRole(context: GuildLoopContext) {
     const [guild, responsibleNicks] = await Promise.all([
-        client.guilds.fetch(guildId),
-        getResponsibleNicks(guildId),
+        client.guilds.fetch(context.guildSnowflake.toString()),
+        getResponsibleNicks(context.guildId),
     ])
     if (responsibleNicks) {
         const users = getUsers(responsibleNicks, guild)

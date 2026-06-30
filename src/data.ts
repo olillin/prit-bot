@@ -25,15 +25,37 @@ export const DAYS = [
     'Söndagar',
 ]
 
+export async function initGuild(
+    guildSnowflake: string | bigint
+): Promise<typeof schema.guilds.$inferSelect> {
+    const result = await db
+        .insert(schema.guilds)
+        .values({ snowflake: BigInt(guildSnowflake) })
+        .onConflictDoNothing()
+        .returning()
+    return result[0]
+}
+
 export async function getGuildId(
     guildSnowflake: string | bigint
 ): Promise<number | null> {
-    const guildIdResult = await db
+    const result = await db
         .select({ guildId: schema.guilds.id })
         .from(schema.guilds)
         .where(eq(schema.guilds.snowflake, BigInt(guildSnowflake)))
-    if (guildIdResult.length === 0) return null
-    return guildIdResult[0].guildId
+    if (result.length === 0) return null
+    return result[0].guildId
+}
+
+export async function getGuildSnowflake(
+    guildId: number
+): Promise<bigint | null> {
+    const result = await db
+        .select({ snowflake: schema.guilds.snowflake })
+        .from(schema.guilds)
+        .where(eq(schema.guilds.id, guildId))
+    if (result.length === 0) return null
+    return result[0].snowflake
 }
 
 export type GuildConfigKey =
@@ -43,8 +65,9 @@ export type GuildConfigKey =
     | 'responsibleCalendarUrl'
     | 'announceTime'
     | 'remindTime'
-export type GuildConfigType<KeyType extends GuildConfigKey> =
+export type GuildConfigType<KeyType extends GuildConfigKey> = NonNullable<
     (typeof schema.guilds.$inferSelect)[KeyType]
+>
 
 /**
  * Get the value of a column in the guild config.
@@ -55,7 +78,7 @@ export type GuildConfigType<KeyType extends GuildConfigKey> =
 export async function getGuildConfigValue<T extends GuildConfigKey>(
     guildId: number,
     key: T
-): Promise<GuildConfigType<T>> {
+): Promise<GuildConfigType<T> | null> {
     const result = await db
         .select({ field: schema.guilds[key] })
         .from(schema.guilds)
@@ -73,7 +96,7 @@ export async function getGuildConfigValue<T extends GuildConfigKey>(
 export async function setGuildConfigValue<T extends GuildConfigKey>(
     guildId: number,
     key: T,
-    value: GuildConfigType<T>
+    value: GuildConfigType<T> | null
 ) {
     await db
         .update(schema.guilds)
