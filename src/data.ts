@@ -3,8 +3,8 @@ import { ONE_HOUR_MS } from 'iamcal'
 import type {
     AnnounceChannel,
     DiscoveredReaction,
-    RemindersByDay,
     Reaction,
+    RemindersByDay,
 } from './types'
 import {
     getAnnouncementChannel as getGuildAnnouncementChannel,
@@ -28,11 +28,19 @@ export const DAYS = [
 export async function initGuild(
     guildSnowflake: string | bigint
 ): Promise<typeof schema.guilds.$inferSelect> {
+    const snowflake = BigInt(guildSnowflake)
     const result = await db
         .insert(schema.guilds)
-        .values({ snowflake: BigInt(guildSnowflake) })
+        .values({ snowflake })
         .onConflictDoNothing()
         .returning()
+    if (result.length === 0) {
+        const result = await db
+            .select()
+            .from(schema.guilds)
+            .where(eq(schema.guilds.snowflake, snowflake))
+        return result[0]
+    }
     return result[0]
 }
 
@@ -268,7 +276,7 @@ export async function getNoReactChannels(
     const result = await db
         .select({ noReactChannels: schema.guilds.noReactChannels })
         .from(schema.guilds)
-        .where(eq(schema.discoveredReactions.guildId, guildId))
+        .where(eq(schema.guilds.id, guildId))
 
     if (result.length === 0) return new Set()
     const { noReactChannels } = result[0]
@@ -300,20 +308,17 @@ export async function getReminders(guildId: number): Promise<RemindersByDay> {
         .select()
         .from(schema.reminders)
         .where(eq(schema.reminders.guildId, guildId))
-        .groupBy(schema.reminders.day)
 
-    const days: RemindersByDay = {
-        1: [],
-        2: [],
-        3: [],
-        4: [],
-        5: [],
-        6: [],
-        7: [],
-    }
+    const days: RemindersByDay = {}
 
     result.forEach(reminder => {
-        days[reminder.day].push(reminder.message)
+        if (days[reminder.day] === undefined) {
+            days[reminder.day] = []
+        }
+        days[reminder.day].push({
+            id: reminder.id,
+            message: reminder.message,
+        })
     })
     return days
 }

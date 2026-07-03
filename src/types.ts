@@ -25,6 +25,11 @@ export interface DiscoveredReaction extends Reaction {
     discoveredBy: string
 }
 
+export interface Reminder {
+    id: number
+    message: string
+}
+
 export interface RemindersByDay {
-    [day: number]: string[]
+    [day: number]: Reminder[]
 }
