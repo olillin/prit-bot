@@ -92,7 +92,7 @@ async function add(interaction: ChatInputCommandInteraction) {
         return
     }
     noReactChannels.add(channelId)
-    setNoReactChannels(guildId, noReactChannels)
+    await setNoReactChannels(guildId, noReactChannels)
 
     await interaction.reply({
         content: `Kommer inte längre skicka reaktioner i kanalen <#${channelId}>`,
@@ -122,7 +122,7 @@ async function remove(interaction: ChatInputCommandInteraction) {
         return
     }
     noReactChannels.delete(channelId)
-    setNoReactChannels(guildId, noReactChannels)
+    await setNoReactChannels(guildId, noReactChannels)
 
     await interaction.reply({
         content: `Kommer reagera i kanalen <#${channelId}>`,

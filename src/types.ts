@@ -7,6 +7,8 @@ import type {
 } from 'discord.js'
 import type { CommandDefinition } from './util/command'
 
+export type MaybePromise<T> = T | Promise<T>
+
 export interface ExtendedClient extends Client {
     commands: Collection<string, CommandDefinition>
 }

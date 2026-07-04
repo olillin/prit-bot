@@ -280,7 +280,7 @@ export async function getNoReactChannels(
 
     if (result.length === 0) return new Set()
     const { noReactChannels } = result[0]
-    return new Set(noReactChannels.map(BigInt.toString))
+    return new Set(noReactChannels.map(channel => channel.toString()))
 }
 
 /**
@@ -348,7 +348,6 @@ export async function addReminder(
  * @param guildId The ID of the guild to remove the reminder from
  */
 export async function removeReminder(id: number, guildId: number) {
-    // TODO: Make sure an error is thrown when there is no matching entry
     await db
         .delete(schema.reminders)
         .where(

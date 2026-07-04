@@ -23,6 +23,7 @@ import {
     GuildConfigType,
     setGuildConfigValue,
 } from '../data'
+import { MaybePromise } from '../types'
 
 export interface CommandDefinition {
     data:
@@ -110,7 +111,7 @@ export interface ConfigurationCommandOptions<
     set: (
         value: CommandOptionReturnType<OptionType>,
         context: ChatInputCommandInteraction
-    ) => GuildConfigType<KeyType> | Promise<GuildConfigType<KeyType>>
+    ) => MaybePromise<GuildConfigType<KeyType>>
 
     /**
      * Convert the saved value to the string representation which should be sent
@@ -118,7 +119,7 @@ export interface ConfigurationCommandOptions<
     get: (
         value: GuildConfigType<KeyType>,
         context: ChatInputCommandInteraction
-    ) => string | Promise<string>
+    ) => MaybePromise<string>
 
     /**
      * Will be run when the value is changed or removed.
@@ -128,7 +129,7 @@ export interface ConfigurationCommandOptions<
     onChange?: (
         value: GuildConfigType<KeyType> | undefined,
         context: ChatInputCommandInteraction
-    ) => void
+    ) => MaybePromise<void>
 }
 
 export function defineConfigurationCommand<
@@ -392,7 +393,8 @@ export async function executeConfigurationCommand<
             })
         }
 
-        if (command.onChange) command.onChange(convertedValue, interaction)
+        if (command.onChange)
+            await command.onChange(convertedValue, interaction)
     } else if (subcommand === 'unset') {
         const oldValue = await getGuildConfigValue(guildId, command.key)
         if (oldValue == undefined) {
@@ -410,7 +412,7 @@ export async function executeConfigurationCommand<
             flags: MessageFlags.Ephemeral,
         })
 
-        if (command.onChange) command.onChange(undefined, interaction)
+        if (command.onChange) await command.onChange(undefined, interaction)
     } else if (subcommand === 'get') {
         const value = await getGuildConfigValue(guildId, command.key)
         if (value == undefined) {

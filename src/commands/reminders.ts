@@ -126,7 +126,7 @@ async function add(interaction: ChatInputCommandInteraction) {
         throw new Error('Guild is missing from database')
     }
 
-    addReminder(guildId, day, message)
+    await addReminder(guildId, day, message)
 
     await interaction.reply({
         content: `Skapade ny påminnelse på ${dayString} som säger: "${message}"`,
@@ -158,7 +158,7 @@ async function remove(interaction: ChatInputCommandInteraction) {
     }
 
     try {
-        removeReminder(reminder.id, guildId)
+        await removeReminder(reminder.id, guildId)
     } catch (message) {
         if (typeof message === 'string') {
             await interaction.reply({
@@ -193,7 +193,7 @@ async function list(interaction: ChatInputCommandInteraction) {
     const reminders = await getReminders(guildId)
 
     if (Object.keys(reminders).length === 0) {
-        interaction.reply({
+        await interaction.reply({
             content: `Det finns inga påminnelser än. Skapa en med </reminders add:${interaction.commandId}>`,
             flags: MessageFlags.Ephemeral,
         })
@@ -258,7 +258,7 @@ async function mute(interaction: ChatInputCommandInteraction) {
     }
 
     try {
-        addNoPingUser(guildId, interaction.user.id)
+        await addNoPingUser(guildId, interaction.user.id)
     } catch (error) {
         console.warn('Failed to unmute reminders:', error)
         await replyWithError(interaction, error, true)
@@ -281,7 +281,7 @@ async function unmute(interaction: ChatInputCommandInteraction) {
     }
 
     try {
-        removeNoPingUser(guildId, interaction.user.id)
+        await removeNoPingUser(guildId, interaction.user.id)
     } catch (error) {
         console.warn('Failed to unmute reminders:', error)
         await replyWithError(interaction, error, true)

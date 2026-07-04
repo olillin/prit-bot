@@ -8,6 +8,7 @@ import {
 import type { AnnounceChannel } from '../types'
 import type { CommandDefinition } from './command'
 import { schedule } from './dates'
+import { MaybePromise } from 'rollup'
 
 /** Get a user in a guild from their nick */
 
@@ -79,8 +80,6 @@ export async function getRole(
     return role
 }
 
-export type MaybePromise<T> = T | Promise<T>
-
 export class PerGuildLoop {
     private _currentGeneration: Map<number, number>
 
@@ -115,7 +114,7 @@ export class PerGuildLoop {
             generation: this.getGeneration(guildId),
         }
 
-        this.loop(context)
+        void this.loop(context)
     }
 
     /** Stop the loop by increasing the generation. */
@@ -150,9 +149,7 @@ export class PerGuildLoop {
                         reason
                     )
                 })
-                .then(() => {
-                    this.loop(context)
-                })
+                .then(() => this.loop(context))
                 .catch(reason => {
                     console.error(
                         'Failed to continue guild loop. Context:',

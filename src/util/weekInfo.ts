@@ -25,7 +25,7 @@ export async function getCalendar(
     try {
         return parseCalendar(body)
     } catch (error) {
-        console.warn(`Failed to parse calendar: ${error}`)
+        console.warn('Failed to parse calendar: ', error)
         return undefined
     }
 }

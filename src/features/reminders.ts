@@ -145,15 +145,18 @@ export function collapseReminderIds(reminders: RemindersByDay): RemindersByDay {
         .flatMap(([_, rs]) => rs.map(r => r.id))
         .sort((a, b) => a - b)
 
-    const mappedEntries = entries.map(([day, rs]) => [
-        day,
-        rs.map(({ id, message }) => ({
-            id: ids.indexOf(id) + 1,
-            message,
-        })),
-    ])
+    const mappedEntries = entries.map(
+        ([day, rs]) =>
+            [
+                day,
+                rs.map(({ id, message }) => ({
+                    id: ids.indexOf(id) + 1,
+                    message,
+                })),
+            ] as const
+    )
 
-    return Object.fromEntries(mappedEntries)
+    return Object.fromEntries(mappedEntries) satisfies RemindersByDay
 }
 
 /**
@@ -168,8 +171,8 @@ export function getOriginalReminder(
     reminders: RemindersByDay
 ): Reminder | null {
     const flatReminders = Object.values(reminders).flatMap(
-        rs => rs
-    ) as unknown as Reminder[]
+        rs => rs as Reminder[]
+    )
     flatReminders.sort((a, b) => a.id - b.id)
     return flatReminders[localId - 1] ?? null
 }

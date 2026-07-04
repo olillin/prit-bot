@@ -71,7 +71,7 @@ export async function canReact(message: Message): Promise<boolean> {
  * @returns If any reaction was added.
  */
 export async function addReaction(message: Message): Promise<boolean> {
-    const reactToMessage = canReact(message)
+    const reactToMessage = await canReact(message)
     if (!reactToMessage) return false
 
     const reactions = await getReactions()
