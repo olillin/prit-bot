@@ -1,0 +1,315 @@
+{
+    "id": "c8ba9a57-082e-4fbb-b4f3-8f89501c6bcb",
+    "prevId": "00000000-0000-0000-0000-000000000000",
+    "version": "7",
+    "dialect": "postgresql",
+    "tables": {
+        "public.activities": {
+            "name": "activities",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "integer",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "identity": {
+                        "type": "always",
+                        "name": "activities_id_seq",
+                        "schema": "public",
+                        "increment": "1",
+                        "startWith": "1",
+                        "minValue": "1",
+                        "maxValue": "2147483647",
+                        "cache": "1",
+                        "cycle": false
+                    }
+                },
+                "name": {
+                    "name": "name",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "type": {
+                    "name": "type",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'Custom'"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.discovered_reactions": {
+            "name": "discovered_reactions",
+            "schema": "",
+            "columns": {
+                "guild_id": {
+                    "name": "guild_id",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "reaction_id": {
+                    "name": "reaction_id",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "user_snowflake": {
+                    "name": "user_snowflake",
+                    "type": "bigint",
+                    "primaryKey": false,
+                    "notNull": true
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "discovered_reactions_guild_id_guilds_id_fk": {
+                    "name": "discovered_reactions_guild_id_guilds_id_fk",
+                    "tableFrom": "discovered_reactions",
+                    "tableTo": "guilds",
+                    "columnsFrom": ["guild_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "discovered_reactions_reaction_id_reactions_id_fk": {
+                    "name": "discovered_reactions_reaction_id_reactions_id_fk",
+                    "tableFrom": "discovered_reactions",
+                    "tableTo": "reactions",
+                    "columnsFrom": ["reaction_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {
+                "discovered_reactions_guild_id_reaction_id_pk": {
+                    "name": "discovered_reactions_guild_id_reaction_id_pk",
+                    "columns": ["guild_id", "reaction_id"]
+                }
+            },
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.guilds": {
+            "name": "guilds",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "integer",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "identity": {
+                        "type": "always",
+                        "name": "guilds_id_seq",
+                        "schema": "public",
+                        "increment": "1",
+                        "startWith": "1",
+                        "minValue": "1",
+                        "maxValue": "2147483647",
+                        "cache": "1",
+                        "cycle": false
+                    }
+                },
+                "snowflake": {
+                    "name": "snowflake",
+                    "type": "bigint",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "announce_channel": {
+                    "name": "announce_channel",
+                    "type": "bigint",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "responsible_role": {
+                    "name": "responsible_role",
+                    "type": "bigint",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "responsible_responsible_role": {
+                    "name": "responsible_responsible_role",
+                    "type": "bigint",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "responsible_calendar_url": {
+                    "name": "responsible_calendar_url",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "announce_time": {
+                    "name": "announce_time",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "remind_time": {
+                    "name": "remind_time",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "no_react_channels": {
+                    "name": "no_react_channels",
+                    "type": "bigint[]",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "ARRAY[]::bigint[]"
+                },
+                "no_ping_users": {
+                    "name": "no_ping_users",
+                    "type": "bigint[]",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "ARRAY[]::bigint[]"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "guilds_snowflake_unique": {
+                    "name": "guilds_snowflake_unique",
+                    "nullsNotDistinct": false,
+                    "columns": ["snowflake"]
+                }
+            },
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.reactions": {
+            "name": "reactions",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "integer",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "identity": {
+                        "type": "always",
+                        "name": "reactions_id_seq",
+                        "schema": "public",
+                        "increment": "1",
+                        "startWith": "1",
+                        "minValue": "1",
+                        "maxValue": "2147483647",
+                        "cache": "1",
+                        "cycle": false
+                    }
+                },
+                "display_name": {
+                    "name": "display_name",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "pattern": {
+                    "name": "pattern",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "emoji": {
+                    "name": "emoji",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.reminders": {
+            "name": "reminders",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "integer",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "identity": {
+                        "type": "always",
+                        "name": "reminders_id_seq",
+                        "schema": "public",
+                        "increment": "1",
+                        "startWith": "1",
+                        "minValue": "1",
+                        "maxValue": "2147483647",
+                        "cache": "1",
+                        "cycle": false
+                    }
+                },
+                "guild_id": {
+                    "name": "guild_id",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "day": {
+                    "name": "day",
+                    "type": "smallint",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "message": {
+                    "name": "message",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "reminders_guild_id_guilds_id_fk": {
+                    "name": "reminders_guild_id_guilds_id_fk",
+                    "tableFrom": "reminders",
+                    "tableTo": "guilds",
+                    "columnsFrom": ["guild_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        }
+    },
+    "enums": {},
+    "schemas": {},
+    "sequences": {},
+    "roles": {},
+    "policies": {},
+    "views": {},
+    "_meta": {
+        "columns": {},
+        "schemas": {},
+        "tables": {}
+    }
+}

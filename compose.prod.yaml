@@ -1,0 +1,56 @@
+# This is an example of how to run the bot in production using the image
+# from GitHub Packages and bind mounts for data and configuration files.
+
+name: prit-bot
+
+services:
+    app:
+        image: ghcr.io/olillin/prit-bot:latest
+        restart: unless-stopped
+
+        environment:
+            NODE_ENV: production
+            TOKEN: <DISCORD BOT TOKEN>
+            DATABASE_URL: postgresql://postgres:<DATABASE PASSWORD>@db:5432/prit-bot
+
+        volumes:
+            - type: bind
+              source: ./data.json
+              target: /usr/src/app/data.json
+              bind:
+                  create_host_path: false
+            - type: bind
+              source: ./reactions.json
+              target: /usr/src/app/reactions.json
+              read_only: true
+              bind:
+                  create_host_path: false
+            - type: bind
+              source: ./activities.json
+              target: /usr/src/app/activities.json
+              read_only: true
+              bind:
+                  create_host_path: false
+
+        depends_on:
+            db:
+                condition: service_healthy
+    db:
+        image: postgres:18
+        restart: always
+        user: postgres
+        volumes:
+            - db-data:/var/lib/postgresql
+        environment:
+            - POSTGRES_DB=prit-bot
+            - POSTGRES_PASSWORD=<DATABASE PASSWORD>
+        expose:
+            - 5432
+        healthcheck:
+            test: ['CMD', 'pg_isready']
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+volumes:
+    db-data:

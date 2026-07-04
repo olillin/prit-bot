@@ -1,31 +1,25 @@
-# This is an example of how to run the bot in production using the image
-# from GitHub Packages and bind mounts for data and configuration files.
+# DO NOT USE IN PRODUCTION, THIS CONFIGURATION IS INTENTIONALLY INSECURE
+
+# This compose file runs the database for development.
+# Copy .env.example and fill out your Discord bot token to get started.
 
 name: prit-bot
 
 services:
-    app:
-        image: ghcr.io/olillin/prit-bot
+    db:
+        image: postgres:18
+        container_name: prit-bot-dev-db
         restart: unless-stopped
-
+        user: postgres
         environment:
-            TOKEN: # Discord bot token goes here
+            - POSTGRES_DB=prit-bot
+            - POSTGRES_PASSWORD=secret-dev-password
 
-        volumes:
-            - type: bind
-              source: ./data.json
-              target: /usr/src/app/data.json
-              bind:
-                  create_host_path: false
-            - type: bind
-              source: ./reactions.json
-              target: /usr/src/app/reactions.json
-              read_only: true
-              bind:
-                  create_host_path: false
-            - type: bind
-              source: ./activities.json
-              target: /usr/src/app/activities.json
-              read_only: true
-              bind:
-                  create_host_path: false
+        ports:
+            - '5432:5432'
+
+        healthcheck:
+            test: ['CMD', 'pg_isready']
+            interval: 10s
+            timeout: 5s
+            retries: 5

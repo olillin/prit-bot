@@ -25,6 +25,7 @@ import {
 } from '../util/guild'
 import { announceLoop } from '../features/announcements'
 import { remindersLoop } from '../features/reminders'
+import { getGuildId } from '../data'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const commands: ConfigurationCommandOptions<any, any>[] = [
@@ -72,11 +73,14 @@ const commands: ConfigurationCommandOptions<any, any>[] = [
                 )
             }
 
-            return channel.id
+            return BigInt(channel.id)
         },
         get: async (value, context) => {
             const guild = context.guild!
-            const channel = await getAnnouncementChannel(value, guild)
+            const channel = await getAnnouncementChannel(
+                value.toString(),
+                guild
+            )
             if (!channel) {
                 throw new CommandResponseError(
                     'Den sparade kanalen för utskick finns inte längre'
@@ -101,11 +105,11 @@ const commands: ConfigurationCommandOptions<any, any>[] = [
                 )
             }
 
-            return value.id
+            return BigInt(value.id)
         },
         get: async (value, context) => {
             const guild = context.guild!
-            const role = await getRole(value, guild)
+            const role = await getRole(value.toString(), guild)
             if (!role) {
                 throw new CommandResponseError(
                     'Den sparade rollen för ansvarsvecka finns inte längre'
@@ -130,11 +134,11 @@ const commands: ConfigurationCommandOptions<any, any>[] = [
                 )
             }
 
-            return value.id
+            return BigInt(value.id)
         },
         get: async (value, context) => {
             const guild = context.guild!
-            const role = await getRole(value, guild)
+            const role = await getRole(value.toString(), guild)
             if (!role) {
                 throw new CommandResponseError(
                     'Den sparade rollen för den som sätter ansvarsvecka finns inte längre'
@@ -157,15 +161,23 @@ const commands: ConfigurationCommandOptions<any, any>[] = [
 
         get: (value, _context) => millisecondsToTimeString(value),
 
-        onChange: (_value, context) => {
-            announceLoop.reset(context.guildId!)
+        onChange: async (_value, context) => {
+            const guildSnowflake = context.guildId
+            if (guildSnowflake === null) {
+                throw new Error('Guild id is not defined')
+            }
+            const guildId = await getGuildId(guildSnowflake)
+            if (guildId === null) {
+                throw new Error('Guild is missing from database')
+            }
+            announceLoop.reset(guildId, guildSnowflake)
         },
     }),
 
     defineConfigurationCommand({
         type: ApplicationCommandOptionType.String as const,
-        key: 'remindersTime' as const,
-        name: 'reminderstime',
+        key: 'remindTime' as const,
+        name: 'remindtime',
         description: 'Tid som påminnelser skickas ut',
 
         set: (value, _context) => {
@@ -175,8 +187,16 @@ const commands: ConfigurationCommandOptions<any, any>[] = [
 
         get: (value, _context) => millisecondsToTimeString(value),
 
-        onChange: (_value, context) => {
-            remindersLoop.reset(context.guildId!)
+        onChange: async (_value, context) => {
+            const guildSnowflake = context.guildId
+            if (guildSnowflake === null) {
+                throw new Error('Guild id is not defined')
+            }
+            const guildId = await getGuildId(guildSnowflake)
+            if (guildId === null) {
+                throw new Error('Guild is missing from database')
+            }
+            remindersLoop.reset(guildId, guildSnowflake)
         },
     }),
 ]

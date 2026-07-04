@@ -1,48 +1,39 @@
-import type { ActivityOptions, ClientUser } from 'discord.js'
+import db from '../db/client'
+import { ActivityType, type ActivityOptions, type ClientUser } from 'discord.js'
+import { activities } from '../db/schema'
+import { sql } from 'drizzle-orm'
 
-import { ActivityType } from 'discord.js'
-import fs from 'fs'
-import { ACTIVITIES_FILE } from '../environment'
+export const DEFAULT_ACTIVITY: ActivityOptions = {
+    name: 'Dansbandstechno',
+    type: ActivityType.Listening,
+}
 
-export const DEFAULT_ACTIVITIES: ActivityOptions[] = [
-    {
-        name: 'Dansbandstechno',
-        type: ActivityType.Listening,
-    },
-]
+export async function getRandomActivity(): Promise<ActivityOptions> {
+    const randomActivities = await db
+        .select()
+        .from(activities)
+        .orderBy(sql`random()`)
+        .limit(1)
+    if (randomActivities.length === 0) {
+        console.warn(`Empty activities table, using default activity`)
+        return DEFAULT_ACTIVITY
+    }
 
-export function getActivities(): ActivityOptions[] {
-    if (fs.existsSync(ACTIVITIES_FILE)) {
-        const text = fs.readFileSync(ACTIVITIES_FILE, 'utf8')
-
-        try {
-            const parsed = JSON.parse(text) as ActivityOptions[]
-
-            if (parsed.length === 0) {
-                console.warn(
-                    `Empty activities in ${ACTIVITIES_FILE}, using default activities`
-                )
-                return DEFAULT_ACTIVITIES
-            }
-
-            parsed.forEach(activity => {
-                if (activity.type) {
-                    activity.type = ActivityType[
-                        activity.type
-                    ] as unknown as ActivityType
-                    if (activity.type === undefined)
-                        throw new Error('Invalid activity type')
-                }
-            })
-
-            return parsed
-        } catch {
+    const activity = randomActivities[0]
+    let type: undefined | ActivityType = undefined
+    if (activity.type) {
+        type = ActivityType[activity.type]
+        if (type === undefined) {
             console.warn(
-                `Invalid activities in ${ACTIVITIES_FILE}, using default activities`
+                `Found invalid activity type '${activity.type}', using default type`
             )
         }
     }
-    return DEFAULT_ACTIVITIES
+
+    return {
+        name: activity.name,
+        type,
+    }
 }
 
 /**
@@ -50,21 +41,11 @@ export function getActivities(): ActivityOptions[] {
  * @param clientUser Discord client user to change activity for
  * @param interval Delay between activity changes in milliseconds
  */
-export function cycleActivities(
+export async function cycleActivities(
     clientUser: ClientUser,
-    interval: number,
-    previousActivity: ActivityOptions | undefined = undefined
+    interval: number
 ) {
-    // Get new activity
-    const activities = getActivities()
-    let activity = previousActivity
-    while (
-        activity == undefined ||
-        (activities.length > 1 &&
-            JSON.stringify(activity) === JSON.stringify(previousActivity))
-    ) {
-        activity = activities[Math.floor(Math.random() * activities.length)]
-    }
+    const activity = await getRandomActivity()
 
     console.log(
         `Set activity to (${ActivityType[activity.type!]}) ${activity.name}`
@@ -72,6 +53,8 @@ export function cycleActivities(
     clientUser.setActivity(activity)
 
     setTimeout(() => {
-        cycleActivities(clientUser, interval, activity)
+        cycleActivities(clientUser, interval).catch(reason => {
+            console.warn(`Failed to cycle activities: ${reason}`)
+        })
     }, interval)
 }

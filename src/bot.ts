@@ -2,6 +2,7 @@ import {
     Client,
     Events,
     GatewayIntentBits,
+    Guild,
     MessageFlags,
     REST,
     Routes,
@@ -14,6 +15,7 @@ import { addReaction } from './features/reactions'
 import { remindersLoop } from './features/reminders'
 import type { ExtendedClient } from './types'
 import commands from './commands'
+import { initGuild } from './data'
 
 const client = new Client({
     intents: [
@@ -86,32 +88,52 @@ async function registerSlashCommands(guildId: string) {
 }
 
 client.on(Events.ClientReady, () => {
-    cycleActivities(client.user!, ONE_HOUR_MS)
+    cycleActivities(client.user!, ONE_HOUR_MS).catch(reason => {
+        console.warn(`Failed to cycle activities: ${reason}`)
+    })
 
-    client.guilds.cache.forEach(guild => {
-        announceLoop.start(guild.id)
-        remindersLoop.start(guild.id)
-
-        // Get initial guild members in each server. Await to avoid spam
-        guild.members.fetch().catch(reason => {
-            console.warn(
-                `Failed to fetch members in ${guild.id}, cache may be outdated: ${reason}`
-            )
-        })
+    const guilds = client.guilds.cache.values()
+    processGuilds(guilds).catch(reason => {
+        console.error(`Failed to process guilds: ${reason}`)
     })
 })
 
-client.on(Events.GuildCreate, guild => {
-    console.log('Joined new guild')
+async function processGuilds(guilds: Iterable<Guild>) {
+    for (const guild of guilds) {
+        await processGuild(guild)
+    }
+}
+
+async function processGuild(guild: Guild) {
+    const guildSnowflake = guild.id
+    const { id: guildId } = await initGuild(guild.id)
+
     registerSlashCommands(guild.id).catch(reason => {
         console.error('Failed to register slash commands:', reason)
     })
-    announceLoop.start(guild.id)
-    remindersLoop.start(guild.id)
+
+    announceLoop.start(guildId, guildSnowflake)
+    remindersLoop.start(guildId, guildSnowflake)
+
+    // Get initial guild members in each server. Await to avoid spam
+    await guild.members.fetch().catch(reason => {
+        console.warn(
+            `Failed to fetch members in ${guild.id}, cache may be outdated: ${reason}`
+        )
+    })
+}
+
+client.on(Events.GuildCreate, guild => {
+    console.log('Joined new guild')
+    processGuild(guild).catch(reason => {
+        console.error(`Failed to process new guild: ${reason}`)
+    })
 })
 
 client.on(Events.MessageCreate, message => {
-    addReaction(message)
+    addReaction(message).catch(reason => {
+        console.error(`Failed to add reaction to message: ${reason}`)
+    })
 
     // Make fun of people trying to use @channel
     if (message.content.includes('@channel')) {

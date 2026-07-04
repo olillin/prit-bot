@@ -6,15 +6,21 @@ import {
 } from 'discord.js'
 import {
     addReminder,
-    addReminderMutedUser,
-    getReminderData,
+    addNoPingUser,
+    getReminders,
     removeReminder,
-    removeReminderMutedUser,
+    removeNoPingUser,
     DAYS,
+    getGuildId,
 } from '../data'
-import { announceReminders } from '../features/reminders'
+import {
+    announceReminders,
+    collapseReminderIds,
+    getOriginalReminder,
+} from '../features/reminders'
 import { CommandMap, editReplyWithError, replyWithError } from '../util/command'
 import { defineCommand } from '../util/guild'
+import { Reminder } from '../types'
 
 export default defineCommand({
     data: new SlashCommandBuilder()
@@ -47,20 +53,11 @@ export default defineCommand({
             subcommand
                 .setName('remove')
                 .setDescription('Ta bort en påminnelse')
-                .addStringOption(option =>
-                    option
-                        .setName('day')
-                        .setDescription('Dag att hantera påminnelser för')
-                        .setChoices(
-                            DAYS.map(day => ({ name: day, value: day }))
-                        )
-                        .setRequired(true)
-                )
                 .addIntegerOption(option =>
                     option
-                        .setName('index')
+                        .setName('id')
                         .setDescription(
-                            'Index av påminnelsen att ta bort, kolla med `/reminders list`'
+                            'Id av påminnelsen att ta bort, kolla med `/reminders list`'
                         )
                         .setMinValue(1)
                         .setRequired(true)
@@ -119,12 +116,17 @@ async function add(interaction: ChatInputCommandInteraction) {
         })
         return
     }
-    const guildId = interaction.guildId
-    if (!guildId) {
-        throw new Error('Guild id is not defined')
+    const guildSnowflake = interaction.guildId
+    if (!guildSnowflake) {
+        throw new Error('Guild snowflake is not defined')
     }
 
-    addReminder(guildId, day, message)
+    const guildId = await getGuildId(guildSnowflake)
+    if (!guildId) {
+        throw new Error('Guild is missing from database')
+    }
+
+    await addReminder(guildId, day, message)
 
     await interaction.reply({
         content: `Skapade ny påminnelse på ${dayString} som säger: "${message}"`,
@@ -133,19 +135,30 @@ async function add(interaction: ChatInputCommandInteraction) {
 }
 
 async function remove(interaction: ChatInputCommandInteraction) {
-    const dayString = interaction.options.getString('day', true)
-    const day = DAYS.indexOf(dayString) + 1
-
-    // Get index
-    const index = interaction.options.getInteger('index', true) - 1
-
-    const guildId = interaction.guildId
-    if (!guildId) {
+    const guildSnowflake = interaction.guildId
+    if (guildSnowflake === null) {
         throw new Error('Guild id is not defined')
+    }
+    const guildId = await getGuildId(guildSnowflake)
+    if (guildId === null) {
+        throw new Error('Guild could not be found')
+    }
+
+    // Get id
+    const localId = interaction.options.getInteger('id', true)
+    const reminders = await getReminders(guildId)
+    const reminder = getOriginalReminder(localId, reminders)
+
+    if (reminder === null) {
+        await interaction.reply({
+            content: `Kunde inte hitta påminnelse #${localId}`,
+            flags: MessageFlags.Ephemeral,
+        })
+        return
     }
 
     try {
-        removeReminder(guildId, day, index)
+        await removeReminder(reminder.id, guildId)
     } catch (message) {
         if (typeof message === 'string') {
             await interaction.reply({
@@ -163,37 +176,52 @@ async function remove(interaction: ChatInputCommandInteraction) {
 
     // Success message
     await interaction.reply({
-        content: `Tog bort påminnelse ${index + 1} på ${dayString}`,
+        content: `Tog bort påminnelse #${localId} "${reminder.message}"`,
         flags: MessageFlags.Ephemeral,
     })
 }
 
 async function list(interaction: ChatInputCommandInteraction) {
-    const guildId = interaction.guildId
-    if (!guildId) {
+    const guildSnowflake = interaction.guildId
+    if (guildSnowflake === null) {
         throw new Error('Guild id is not defined')
     }
-    const reminders = getReminderData(guildId).days
+    const guildId = await getGuildId(guildSnowflake)
+    if (guildId === null) {
+        throw new Error('Guild could not be found')
+    }
+    const reminders = await getReminders(guildId)
+
+    if (Object.keys(reminders).length === 0) {
+        await interaction.reply({
+            content: `Det finns inga påminnelser än. Skapa en med </reminders add:${interaction.commandId}>`,
+            flags: MessageFlags.Ephemeral,
+        })
+        return
+    }
+
+    const localReminders = Object.entries(
+        collapseReminderIds(reminders)
+    ) as unknown as [number, Reminder[]][]
 
     const embed = new EmbedBuilder()
         .setTitle('Påminnelser för Ansvarsveckor')
         .setColor('#ffbb00')
 
-    if (Object.keys(reminders).length === 0) {
-        embed.setDescription('Det finns inga påminnelser')
-    } else {
-        embed.addFields(
-            Object.entries(reminders).map(([day, reminders]) => {
-                const prettyDay = DAYS[parseInt(day) - 1]
-                return {
-                    name: prettyDay,
-                    value: reminders
-                        .map((message, i) => `${i + 1}. ${message}`)
-                        .join('\n'),
-                }
-            })
-        )
-    }
+    embed.addFields(
+        localReminders.map(([day, reminders]) => {
+            const prettyDay = DAYS[day - 1]
+            return {
+                name: prettyDay,
+                value:
+                    reminders.length === 0
+                        ? '-# *Inga påminnelser*'
+                        : reminders
+                              .map(({ id, message }) => `#${id}. ${message}`)
+                              .join('\n'),
+            }
+        })
+    )
 
     await interaction.reply({
         embeds: [embed],
@@ -220,13 +248,17 @@ async function send(interaction: ChatInputCommandInteraction) {
 }
 
 async function mute(interaction: ChatInputCommandInteraction) {
-    const guildId = interaction.guildId
-    if (!guildId) {
+    const guildSnowflake = interaction.guildId
+    if (!guildSnowflake) {
         throw new Error('Guild id is not defined')
+    }
+    const guildId = await getGuildId(guildSnowflake)
+    if (!guildId) {
+        throw new Error('Guild is missing from database')
     }
 
     try {
-        addReminderMutedUser(guildId, interaction.user.id)
+        await addNoPingUser(guildId, interaction.user.id)
     } catch (error) {
         console.warn('Failed to unmute reminders:', error)
         await replyWithError(interaction, error, true)
@@ -239,13 +271,17 @@ async function mute(interaction: ChatInputCommandInteraction) {
 }
 
 async function unmute(interaction: ChatInputCommandInteraction) {
-    const guildId = interaction.guildId
-    if (!guildId) {
+    const guildSnowflake = interaction.guildId
+    if (!guildSnowflake) {
         throw new Error('Guild id is not defined')
+    }
+    const guildId = await getGuildId(guildSnowflake)
+    if (!guildId) {
+        throw new Error('Guild is missing from database')
     }
 
     try {
-        removeReminderMutedUser(guildId, interaction.user.id)
+        await removeNoPingUser(guildId, interaction.user.id)
     } catch (error) {
         console.warn('Failed to unmute reminders:', error)
         await replyWithError(interaction, error, true)

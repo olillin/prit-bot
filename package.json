@@ -20,8 +20,10 @@
         "startenv": "node --env-file=.env .",
         "fmt": "oxfmt",
         "fmt:check": "oxfmt --check",
-        "lint": "oxlint",
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "postinstall": "(copy-env-cli || true)",
+        "lint": "oxlint -c .oxlintrc.json",
+        "test": "vitest",
+        "migrate-from-json": "tsx --env-file=.env src/db/migrateFromJson.ts"
     },
     "packageManager": "pnpm@10.28.0",
     "dependencies": {
@@ -29,16 +31,23 @@
         "@rollup/plugin-json": "^6.1.0",
         "@rollup/plugin-node-resolve": "^16.0.3",
         "discord.js": "^14.26.4",
+        "drizzle-orm": "^0.45.2",
         "iamcal": "^4.1.1",
+        "pg": "^8.22.0",
         "rollup": "^4.62.2",
         "typescript": "^5.9.3"
     },
     "devDependencies": {
-        "@types/node": "^22.20.0",
+        "@types/node": "^24.13.2",
+        "@types/pg": "^8.20.0",
+        "copy-env-cli": "^1.0.0",
+        "drizzle-kit": "^0.31.10",
         "globals": "^16.5.0",
         "oxfmt": "^0.41.0",
         "oxlint": "^1.71.0",
         "oxlint-tsgolint": "^0.17.4",
-        "rolldown": "1.0.0-rc.9"
+        "rolldown": "1.0.0-rc.9",
+        "tsx": "^4.22.4",
+        "vitest": "^4.1.9"
     }
 }

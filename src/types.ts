@@ -7,59 +7,31 @@ import type {
 } from 'discord.js'
 import type { CommandDefinition } from './util/command'
 
+export type MaybePromise<T> = T | Promise<T>
+
 export interface ExtendedClient extends Client {
     commands: Collection<string, CommandDefinition>
 }
 
 export type AnnounceChannel = NewsChannel | TextChannel
 
-export interface FullData {
-    guilds?: {
-        [guildId: string]: GuildData
-    }
-}
-
-export interface GuildData {
-    configuration?: GuildConfiguration
-    discoveredReactions?: DiscoveredReactionsData
-    noReactChannels?: string[]
-    reminders?: RemindersData
-}
-
-export interface GuildConfiguration {
-    announceChannel?: string
-    responsibleRole?: string
-    responsibleResponsibleRole?: string
-    responsibleCalendarUrl?: string
-    /** Milliseconds after midnight that announcements should be sent */
-    announceTime?: number
-    /** Milliseconds after midnight that reminders should be sent */
-    remindersTime?: number
-}
-
-export interface ReactionsDefinition {
+export interface Reaction {
+    id: number
+    displayName: string
     pattern: string
     emoji: EmojiIdentifierResolvable
 }
 
-export interface ReactionsConfig {
-    [id: string]: ReactionsDefinition
+export interface DiscoveredReaction extends Reaction {
+    /** Snowflake of user who discovered the reaction. */
+    discoveredBy: string
 }
 
-export interface DiscoveredReactionsData {
-    [id: string]: string
+export interface Reminder {
+    id: number
+    message: string
 }
 
-export interface RemindersData {
-    days?: {
-        [day: string]: string[]
-    }
-    muted?: string[]
-}
-
-export interface ParsedRemindersData {
-    days: {
-        [day: number]: string[]
-    }
-    muted: string[]
+export interface RemindersByDay {
+    [day: number]: Reminder[]
 }

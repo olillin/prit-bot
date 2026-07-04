@@ -2,6 +2,7 @@ data.json
 activities.json
 reactions.json
 bundle
+src/generated/
 
 # Logs
 logs

@@ -1,16 +1,21 @@
 import { ONE_DAY_MS } from 'iamcal'
 import { getResponsibleNicks } from '../util/weekInfo'
-import { getResponsibleResponsibleRole } from '../data'
+import { getGuildId, getResponsibleResponsibleRole } from '../data'
 import client from '../bot'
 
 /**
  * Send a reminder to set the responsibility week next week.
- * @param guildId The guild to check
+ * @param guildSnowflake The guild to check
  * @returns Whether or not the reminder was sent.
  */
 export async function sendResponsibilityWeekReminder(
-    guildId: string
+    guildSnowflake: string
 ): Promise<boolean> {
+    const guildId = await getGuildId(guildSnowflake)
+    if (guildId === null) {
+        throw new Error('Failed to get guild id')
+    }
+
     // Check if there is anybody responsible
     const nextWeek = Date.now() + ONE_DAY_MS * 7
     let responsibleNextWeek: string[] | undefined = undefined
@@ -28,7 +33,7 @@ export async function sendResponsibilityWeekReminder(
     if (responsibleExists) return false
 
     // Get who to send to
-    const guild = await client.guilds.fetch(guildId)
+    const guild = await client.guilds.fetch(guildSnowflake)
     const responsibleResponsibleRole =
         await getResponsibleResponsibleRole(guild)
     if (!responsibleResponsibleRole) {

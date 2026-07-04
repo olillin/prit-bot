@@ -7,7 +7,7 @@ import { defineCommand } from '../util/guild'
 
 export default defineCommand({
     data: new SlashCommandBuilder()
-        .setName('recheck') //
+        .setName('recheck')
         .setDescription('Kolla om de senaste meddelandena för reaktioner')
         .addIntegerOption(option =>
             option
@@ -37,13 +37,13 @@ export default defineCommand({
         }
 
         let reactionCount = 0
-        lastMessages?.forEach(message => {
-            const success = addReaction(message)
+        for (const [_, message] of lastMessages) {
+            const success = await addReaction(message)
             if (success) reactionCount++
-        })
+        }
 
         await interaction.editReply(
-            `Kollat meddelanden och hittade ${reactionCount} reaktioner.`
+            `Kollat om och reagerade på ${reactionCount} meddelanden.`
         )
     },
 })
