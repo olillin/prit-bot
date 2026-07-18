@@ -23,18 +23,13 @@ issue to do so!
    after `TOKEN=`. It should have been created automatically after running
    `pnpm install`. If not, copy `.env.example`.
 
-3. Create three JSON files with an empty JSON object in them (`{}`):
-    - `data.json`
-    - `activities.json`
-    - `reactions.json`
-
-4. Run the development compose file to start the database:
+3. Run the development compose file to start the database:
 
     ```console
     docker compose up -d
     ```
 
-5. Build the bot and start it when you make changes:
+4. Build the bot and start it when you make changes:
 
     ```console
     pnpm build
