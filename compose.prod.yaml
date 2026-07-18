@@ -13,25 +13,6 @@ services:
             TOKEN: <DISCORD BOT TOKEN>
             DATABASE_URL: postgresql://postgres:<DATABASE PASSWORD>@db:5432/prit-bot
 
-        volumes:
-            - type: bind
-              source: ./data.json
-              target: /usr/src/app/data.json
-              bind:
-                  create_host_path: false
-            - type: bind
-              source: ./reactions.json
-              target: /usr/src/app/reactions.json
-              read_only: true
-              bind:
-                  create_host_path: false
-            - type: bind
-              source: ./activities.json
-              target: /usr/src/app/activities.json
-              read_only: true
-              bind:
-                  create_host_path: false
-
         depends_on:
             db:
                 condition: service_healthy

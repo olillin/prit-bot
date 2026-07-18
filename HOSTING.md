@@ -19,17 +19,12 @@ To run the bot you need Docker compose, see the
       and the **Send Messages**, **Manage Roles** and **Mention Everyone**
       permissions.
 
-2. Copy the `compose.yaml` file from this repository into a new directory.
+2. Copy the `compose.prod.yaml` file from this repository into a new directory.
 
-3. Open the file and replace the comment after `TOKEN: ` with the bot token
-   from the Discord Developer Portal.
+3. Open the file and replace `<DISCORD BOT TOKEN>` with the bot token
+   from the Discord Developer Portal and `<DATABASE PASSWORD>` with a secure database password.
 
-4. Create three JSON files with an empty JSON object in them (`{}`):
-    - `data.json`
-    - `activities.json`
-    - `reactions.json`
-
-5. Then run the compose file:
+4. Then run the compose file:
 
     ```console
     docker compose up
