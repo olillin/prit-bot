@@ -7,13 +7,13 @@ FROM node:24-alpine AS base
 # Set working directory for all build stages.
 WORKDIR /usr/src/app
 
-# Install pnpm
-RUN yarn global add pnpm
-
 
 ################################################################################
 # Create a stage for installing production dependecies.
 FROM base AS deps
+
+# Install pnpm
+RUN yarn global add pnpm
 
 # Download dependencies as a separate step to take advantage of Docker's caching.
 # Leverage a cache mount to /root/.npm to speed up subsequent builds.
@@ -29,6 +29,9 @@ RUN --mount=type=bind,source=package.json,target=package.json \
 ################################################################################
 # Create a stage for building the application.
 FROM deps AS build
+
+# Install pnpm
+RUN yarn global add pnpm
 
 # Install dev dependencies for build
 RUN --mount=type=bind,source=package.json,target=package.json \
@@ -56,15 +59,8 @@ ENV NODE_ENV=production
 RUN chown -R node:node /usr/src/app
 USER node
 
-# Copy package.json so that package manager commands can be used.
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .
-
-# Copy the production dependencies from the deps stage and also
-# the built application from the build stage into the image.
-COPY --from=build /usr/src/app/bundle ./bundle
-
-# Expose the port that the application listens on.
-EXPOSE 8080
+# Copy the built application from the build stage into the image.
+COPY --from=build /usr/src/app/bundle .
 
 # Run the application.
-CMD ["pnpm", "start"]
+CMD ["node", "main.js"]
