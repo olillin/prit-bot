@@ -1,0 +1,12 @@
+node_modules/
+bundle/
+out/
+
+test/
+compose*.yaml
+eslint.config.mjs
+flake.nix
+flake.lock
+
+*.md
+
