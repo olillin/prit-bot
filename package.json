@@ -24,7 +24,7 @@
         "test": "vitest",
         "migrate-from-json": "tsx --env-file=.env src/db/migrateFromJson.ts"
     },
-    "packageManager": "pnpm@10.28.0",
+    "packageManager": "pnpm@11.20.0",
     "dependencies": {
         "@rollup/plugin-commonjs": "^29.0.3",
         "@rollup/plugin-json": "^6.1.0",
