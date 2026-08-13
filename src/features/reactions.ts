@@ -21,9 +21,9 @@ import {
  * @returns The message content without the ignored parts.
  */
 export function removeIgnoredForReaction(message: string): string {
-    // Ignore URLs
+    // Ignore URLs and Discord emojis
     const ignorePattern =
-        /\b(?<!@)(?:[a-z]+:\/\/)?(?:[a-z0-9]+(?:-[a-z0-9]+)*\.)+[a-zA-Z]{2,}(?:\/[^\s]*)?\b/gm
+        /(\b[a-z]+:\/\/(?:[a-z0-9]+(?:-[a-z0-9]+)*\.)+[a-zA-Z]{2,}(?:\/[^\s]*)?\b|:\w+:)/gm
     return message.replace(ignorePattern, '')
 }
 
