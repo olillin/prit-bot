@@ -29,8 +29,8 @@ export default defineCommand({
         const undiscoveredCount = reactions.length - discovered.length
 
         const discoveredPretty = discovered.map(
-            ({ id, emoji, discoveredBy }) => {
-                return `${emoji.toString()} **${id}** upptäckt av <@${discoveredBy}>`
+            ({ displayName, emoji, discoveredBy }) => {
+                return `${emoji.toString()} **${displayName}** upptäckt av <@${discoveredBy}>`
             }
         )
         const body =
