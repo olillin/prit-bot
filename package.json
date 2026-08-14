@@ -22,6 +22,8 @@
         "postinstall": "(copy-env-cli || true)",
         "lint": "oxlint -c .oxlintrc.json",
         "test": "vitest",
+        "db:generate": "drizzle-kit generate",
+        "db:migrate": "echo \"Error: Drizzle is migrated automatically when the bot runs, you do not need to migrate manually\" && exit 1",
         "migrate-from-json": "tsx --env-file=.env src/db/migrateFromJson.ts"
     },
     "packageManager": "pnpm@11.20.0",
