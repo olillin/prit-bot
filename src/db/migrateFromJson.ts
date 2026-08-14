@@ -1,4 +1,4 @@
-import db from './client'
+import db, { endDatabaseConnection } from './client'
 import * as schema from './schema'
 import * as fs from 'node:fs'
 import { DATA_FILE, REACTIONS_FILE, ACTIVITIES_FILE } from '../environment'
@@ -219,8 +219,6 @@ await db.transaction(async tx => {
             await migrateGuild(tx, guildSnowflake, guildData, reactionsIndex)
         }
         console.log(`✅ Migrated ${Object.keys(guilds).length} guilds`)
-
-        console.log('✅ Migrated successfully')
     } catch (error) {
         console.error('❌ Failed to migrate from JSON data, see error below')
         console.error(error)
@@ -233,5 +231,10 @@ await db.transaction(async tx => {
             if (!(error2 instanceof TransactionRollbackError)) throw error2
             process.exit(1)
         }
+
+        process.exit(1)
     }
 })
+
+console.log('✅ Migrated successfully')
+await endDatabaseConnection()
