@@ -8,8 +8,10 @@ const pool = new Pool({
 })
 const db = drizzle(pool)
 
-console.log('Applying Drizzle migrations to database')
-await migrate(db, { migrationsFolder: 'drizzle/' })
+if (process.env.NODE_ENV !== 'test') {
+    console.log('Applying Drizzle migrations to database')
+    await migrate(db, { migrationsFolder: 'drizzle/' })
+}
 
 /**
  * End the database connection.
